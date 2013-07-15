@@ -1,0 +1,1087 @@
+# coding=utf-8
+
+import struct
+from datetime import datetime
+import logging
+import signal
+from collections import deque
+import threading
+
+import hbus_crypto
+
+from twisted.internet import reactor
+
+def getMillis(td):
+    
+    return (td.days * 24 * 60 * 60 + td.seconds) * 1000 + td.microseconds / 1000.0
+
+def nonBlockingDelay(td):
+    
+    now = datetime.now()
+    
+    while getMillis(datetime.now() - now) < td:
+        pass
+    
+class hbusCommand:
+    
+    def __init__(self,value,minimumSize,maximumSize, descStr):
+        
+        self.commandByte = value
+        self.minimumLength = minimumSize
+        self.maximumLength = maximumSize
+        self.descString = descStr
+        
+    def __repr__(self):
+        
+        return self.descString+"("+str(hex(self.commandByte))+")"
+    
+    def __eq__(self, other):
+        if isinstance(other, hbusCommand):
+            return self.commandByte == other.commandByte
+        return NotImplemented
+
+HBUS_PUBKEY_SIZE = 192
+HBUS_SIGNATURE_SIZE = 192 #assinatura é 192, mas é acompanhada de mais um byte que é e/f/r (193 bytes)
+
+HBUSCOMMAND_SETCH = hbusCommand(0x01,3,32,"SETCH")
+HBUSCOMMAND_GETCH = hbusCommand(0x04,1,1,"GETCH")
+HBUSCOMMAND_SEARCH = hbusCommand(0x03,0,0,"SEARCH")
+HBUSCOMMAND_ACK = hbusCommand(0x06,0,0,"ACK")
+HBUSCOMMAND_QUERY = hbusCommand(0x07,1,1,"QUERY")
+HBUSCOMMAND_QUERY_RESP = hbusCommand(0x08,3,32,"QUERY_RESP")
+HBUSCOMMAND_RESPONSE = hbusCommand(0x10,1,32,"RESP")
+HBUSCOMMAND_ERROR = hbusCommand(0x20,2,2,"ERROR")
+HBUSCOMMAND_BUSLOCK = hbusCommand(0xF0,0,0,"BUSLOCK")
+HBUSCOMMAND_BUSUNLOCK = hbusCommand(0xF1,0,0,"BUSUNLOCK")
+HBUSCOMMAND_SOFTRESET = hbusCommand(0xF2,0,HBUS_SIGNATURE_SIZE+2,"SOFTRESET") #tamanho máximo é HBUS_SIGNATURE_SIZE + 2 -> (PSZ;e/f/r;assinatura)
+HBUSCOMMAND_QUERY_EP = hbusCommand(0x11,1,1,"QUERY_EP")
+HBUSCOMMAND_QUERY_INT = hbusCommand(0x12,1,1,"QUERY_INT")
+HBUSCOMMAND_STREAMW = hbusCommand(0x40,2,2,"STREAMW")
+HBUSCOMMAND_STREAMR = hbusCommand(0x41,2,2,"STREAMR")
+HBUSCOMMAND_INT = hbusCommand(0x80,1,1,"INT")
+HBUSCOMMAND_KEYSET = hbusCommand(0xA0,HBUS_PUBKEY_SIZE+1,HBUS_PUBKEY_SIZE+1,"KEYSET")
+HBUSCOMMAND_KEYRESET = hbusCommand(0xA1,1,1,"KEYRESET")
+
+HBUS_COMMANDLIST = (HBUSCOMMAND_SETCH,HBUSCOMMAND_SEARCH,HBUSCOMMAND_GETCH,HBUSCOMMAND_ACK,HBUSCOMMAND_QUERY,HBUSCOMMAND_QUERY_RESP,HBUSCOMMAND_RESPONSE,
+                    HBUSCOMMAND_ERROR,HBUSCOMMAND_BUSLOCK,HBUSCOMMAND_BUSUNLOCK,HBUSCOMMAND_SOFTRESET, HBUSCOMMAND_QUERY_EP, HBUSCOMMAND_QUERY_INT, HBUSCOMMAND_STREAMW, 
+                    HBUSCOMMAND_STREAMR, HBUSCOMMAND_INT, HBUSCOMMAND_KEYSET, HBUSCOMMAND_KEYRESET)
+HBUS_COMMANDBYTELIST = (x.commandByte for x in HBUS_COMMANDLIST)
+
+HBUS_BROADCAST_ADDRESS = 255
+
+
+
+class hbusInstruction:
+    
+    params = []
+    paramSize = 0
+    
+    def __init__(self, command, paramSize=0, params=()):
+        
+        self.command = command
+        
+        if command not in HBUS_COMMANDLIST:
+            if command == None:
+                raise ValueError("Erro desconhecido")
+            else:
+                raise ValueError("Comando inválido: %d" % ord(command.commandByte))
+        
+        self.paramSize = paramSize
+        self.params = params
+        
+        if (len(params)) > command.maximumLength:
+            
+            raise ValueError("Comando mal-formado, "+str(len(params))+" > "+str(command.maximumLength))
+        
+        if (len(params)+1) < command.minimumLength:
+            
+            raise ValueError("Comando mal-formado, "+str(len(params))+" < "+str(command.minimumLength))
+        
+    def __repr__(self):
+        
+        if (self.paramSize > 0):
+            
+            try:
+                return str(self.command)+str([hex(ord(x)) for x in self.params])
+            except TypeError:
+                return str(self.command)+str(self.params)
+        else:
+            return str(self.command)
+
+class hbusDeviceAddress:
+    
+    def __init__(self, busID, devID):
+        
+        self.hbusAddressBusNumber = busID
+        self.hbusAddressDevNumber = devID
+        
+    def __repr__(self):
+        
+        return "(BUS ID = "+str(self.hbusAddressBusNumber)+", DEV ID = "+str(self.hbusAddressDevNumber)+")"
+    
+    def __eq__(self, other):
+        if isinstance(other, hbusDeviceAddress):
+            return self.hbusAddressBusNumber == other.hbusAddressBusNumber and self.hbusAddressDevNumber == other.hbusAddressDevNumber
+        return NotImplemented
+    
+    def getGlobalID(self):
+        
+        return self.hbusAddressBusNumber*32 + self.hbusAddressDevNumber
+
+class hbusOperation:
+    
+    def __init__(self, instruction, destination, source):
+        
+        self.instruction = instruction
+        
+        self.hbusOperationDestination = destination
+        self.hbusOperationSource = source
+        
+    def __repr__(self):
+        
+        return "HBUSOP: "+str(self.hbusOperationSource)+"->"+str(self.hbusOperationDestination)+" "+str(self.instruction)
+        
+    def getString(self):
+        
+        header = struct.pack('4c',chr(self.hbusOperationSource.hbusAddressBusNumber),chr(self.hbusOperationSource.hbusAddressDevNumber),
+                                  chr(self.hbusOperationDestination.hbusAddressBusNumber),chr(self.hbusOperationDestination.hbusAddressDevNumber))
+        
+        instruction = struct.pack('c',chr(self.instruction.command.commandByte))
+        
+        #if self.instruction.paramSize:
+            
+        #    instruction = instruction + struct.pack('c',chr(self.instruction.paramSize))
+            
+        for p in self.instruction.params:
+            
+            if (type(p) is str):
+                instruction = instruction + struct.pack('c',p)
+            else:
+                instruction = instruction + struct.pack('c',chr(p))
+        
+        terminator = '\xFF'
+                          
+        return header+instruction+terminator
+
+class hbusKeySet:
+    
+    privateq = None
+    privatep = None
+    
+    def __init__(self,p,q):
+        
+        self.privatep = p
+        self.privateq = q
+        
+    def pubKeyInt(self):
+        
+        return self.privatep*self.privateq
+    
+    def pubKeyStr(self):
+        
+        h = hex(self.privatep*self.privateq)[2:].rstrip('L')
+        
+        if (len(h) % 2):
+            h = '0%s' % h
+            
+        while (len(h) < HBUS_PUBKEY_SIZE*2):
+            h = '00%s' % h
+            
+        h = h.decode('hex')
+            
+        #packStr = str(192)+'s'
+        
+        return list(h)#struct.pack(packStr,h)
+    
+p = 342604160482313166816112334007089110910258720251016392985178072980194817098198724574409056226636958394678465934459619696622719424740669649868502396485869067283396294556282972464396510025180816154985285048268006216979372669280971
+q = 609828164381195487560324418811535461583859042182887774624946398207269636262857827797730598026846661116173290667288561275278714668006770186716586859843775717295061922379022086436506552898287802124771661400922779346993469164594119
+HBUS_ASYMMETRIC_KEYS = hbusKeySet(p,q);
+
+class hbusSlaveCapabilities:
+    
+    hbusSlaveAuthSupport = 8
+    hbusSlaveEndpointSupport = 2
+    hbusSlaveUCODESupport = 16
+    hbusSlaveIntSupport = 4
+    hbusSlaveCryptoSupport = 1
+
+class hbusBusStatus:
+    
+    hbusBusFree = 0
+    hbusBusLockedThis = 1
+    hbusBusLockedOther = 2
+    
+class hbusMasterRxState:
+    
+    hbusRXSBID = 0
+    hbusRXSDID = 1
+    hbusRXTBID = 2
+    hbusRXTDID = 3
+    hbusRXCMD  = 4
+    hbusRXADDR = 5
+    hbusRXPSZ  = 6
+    hbusRXPRM  = 7
+    hbusRXSTP  = 8
+    
+class hbusSlaveObjectPermissions:
+    
+    hbusSlaveObjectRead = 1
+    hbusSlaveObjectWrite = 2
+    hbusSlaveObjectReadWrite = 3
+
+class hbusSlaveObjectInfo:
+    
+    objectPermissions = 0
+    objectDescription = None
+    objectSize = 0
+    objectLastValue = None
+    
+    def __repr__(self):
+        
+        return self.objectDescription
+    
+class hbusSlaveEndpointInfo:
+    
+    endpointDirection = 0
+    endpointDescription = None
+    endpointBlockSize = 0
+    
+    def __repr__(self):
+        
+        return self.endpointDescription
+    
+class hbusSlaveInterruptInfo:
+    
+    interruptFlags = 0
+    interruptDescription = None
+    
+    def __repr__(self):
+        
+        return self.interruptDescription
+    
+class hbusSlaveInfo:
+    
+    hbusSlaveAddress = None
+    
+    hbusSlaveDescription = None
+    hbusSlaveUniqueDeviceInfo = None
+    hbusSlaveObjectCount = 0
+    hbusSlaveEndpointCount = 0
+    hbusSlaveInterruptCount = 0
+    hbusSlaveCapabilities = 0
+    
+    basicInformationRetrieved = False
+    extendedInformationRetrieved = False
+    
+    hbusSlaveObjects = {}
+    hbusSlaveEndpoints = {}
+    hbusSlaveInterrupts = {}
+    
+    def __init__(self,explicitSlaveAddress):
+        self.hbusSlaveAddress = explicitSlaveAddress
+
+class hbusMasterState:
+    
+    hbusMasterStarting = 0
+    hbusMasterIdle = 1
+    hbusMasterSearching = 2
+    hbusMasterAddressing = 3
+    hbusMasterScanning = 4
+    hbusMasterOperational = 5
+
+class hbusMaster:
+    
+    hbusSerialRxTimeout = 100
+    
+    hbusBusState = hbusBusStatus.hbusBusFree
+    hbusBusLockedWith = None
+    hbusRxState = hbusMasterRxState.hbusRXSBID
+    
+    communicationBuffer = []
+    RxTimer = datetime.now()
+    SearchTimer = None
+    
+    receivedMessages = []
+    expectedResponseQueue = deque()
+    
+    removeQueue = []
+    
+    detectedSlaveList = {}
+    
+    registeredSlaveCount = 0
+    
+    masterState = hbusMasterState.hbusMasterStarting
+    
+    commandDelay = datetime.now()
+    
+    hbusDeviceSearchTimer = datetime.now()
+    
+    hbusDeviceSearchInterval = 60000
+    
+    autoSearch = True
+    
+    nextSlaveCapabilities = None
+    nextSlaveUID = None
+    
+    hbusDeviceScanningTimeout = False
+    
+    def __init__(self, port, baudrate=100000, busno = 0):
+        
+        self.serialPort = port
+        self.serialBaud = baudrate
+        self.hbusMasterAddr = hbusDeviceAddress(busno, 0)
+        
+        self.logger = logging.getLogger('hbus_skeleton.hbusmaster')
+        
+        signal.signal(signal.SIGALRM, self.handleAlarm)
+        
+        #self.hbusSerial = hbusSerialConnection(port,baudrate,self.hbusSerialRxTimeout)
+    
+        self.serialCreate()
+    
+    def serialCreate(self):
+        
+        pass #overload!!
+    
+    def serialConnected(self):
+        
+        #reseta todos dispositivos
+        
+        address = hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,HBUS_BROADCAST_ADDRESS)
+        
+        size = HBUS_SIGNATURE_SIZE+1
+        
+        myParamList = [chr(size)]
+        
+        msg = struct.pack('cccccc',chr(self.hbusMasterAddr.hbusAddressBusNumber),chr(self.hbusMasterAddr.hbusAddressDevNumber),chr(address.hbusAddressBusNumber),
+                                chr(address.hbusAddressDevNumber),chr(HBUSCOMMAND_SOFTRESET.commandByte),myParamList[0])
+                    
+        sig = hbus_crypto.hbusCrypto_RabinWilliamsSign(msg, HBUS_ASYMMETRIC_KEYS.privatep, HBUS_ASYMMETRIC_KEYS.privateq,HBUS_SIGNATURE_SIZE)
+        
+        myParamList.extend(sig.getByteString())
+        
+        self.sendCommand(HBUSCOMMAND_SOFTRESET,address,params=myParamList)
+        
+        self.logger.debug("Aguardando RESET dos escravos...")
+        
+        signal.alarm(1)
+        
+        #self.detectSlaves()
+        
+    def serialWrite(self, string):
+        
+        pass #fazer overload
+    
+    def serialRead(self,size):
+        
+        pass #overload
+    
+    def serialNewData(self,data):
+        
+        lasthbusState = self.hbusRxState
+        
+        #self.logger.debug("DADOS %s",[d for d in data])
+        
+        if self.hbusSerialRxTimeout < getMillis(self.RxTimer - datetime.now()):
+            self.hbusBusState = hbusMasterRxState.hbusRXSBID
+            self.communicationBuffer = []
+            
+            self.logger.warning("HBUSOP Timeout")
+            self.logger.debug("COM BUF = "+self.communicationBuffer)
+        
+        for d in data:
+            
+            if self.hbusRxState == hbusMasterRxState.hbusRXSBID:
+                
+                self.communicationBuffer = []
+                
+                self.communicationBuffer.append(d)
+                
+                self.hbusRxState = hbusMasterRxState.hbusRXSDID
+                
+            elif self.hbusRxState == hbusMasterRxState.hbusRXSDID:
+                
+                self.communicationBuffer.append(d)
+                
+                self.hbusRxState = hbusMasterRxState.hbusRXTBID
+                
+            elif self.hbusRxState == hbusMasterRxState.hbusRXTBID:
+                
+                self.communicationBuffer.append(d)
+                
+                self.hbusRxState = hbusMasterRxState.hbusRXTDID
+                
+            elif self.hbusRxState == hbusMasterRxState.hbusRXTDID:
+                
+                self.communicationBuffer.append(d)
+                
+                self.hbusRxState = hbusMasterRxState.hbusRXCMD
+                
+            elif self.hbusRxState == hbusMasterRxState.hbusRXCMD:
+                
+                self.communicationBuffer.append(d)
+            
+                if ord(d) == HBUSCOMMAND_ACK.commandByte or ord(d) == HBUSCOMMAND_SEARCH.commandByte or ord(d) == HBUSCOMMAND_BUSLOCK.commandByte or ord(d) == HBUSCOMMAND_BUSUNLOCK.commandByte or ord(d) == HBUSCOMMAND_SOFTRESET.commandByte:
+                    self.hbusRxState = hbusMasterRxState.hbusRXSTP
+                else:
+                    self.hbusRxState = hbusMasterRxState.hbusRXADDR
+                self.commandDelay
+            elif self.hbusRxState == hbusMasterRxState.hbusRXADDR:
+                
+                self.communicationBuffer.append(d)
+                
+                if ord(self.communicationBuffer[4]) == HBUSCOMMAND_GETCH.commandByte or ord(self.communicationBuffer[4]) == HBUSCOMMAND_QUERY.commandByte or\
+                ord(self.communicationBuffer[4]) == HBUSCOMMAND_QUERY_EP.commandByte or ord(self.communicationBuffer[4]) == HBUSCOMMAND_QUERY_INT.commandByte:
+                    self.hbusRxState = hbusMasterRxState.hbusRXSTP
+                else:
+                    self.hbusRxState = hbusMasterRxState.hbusRXPSZ
+                
+            elif self.hbusRxState == hbusMasterRxState.hbusRXPSZ:
+                
+                if ord(self.communicationBuffer[4]) != HBUSCOMMAND_STREAMW.commandByte and ord(self.communicationBuffer[4]) != HBUSCOMMAND_STREAMR.commandByte:
+                    if ord(d) > 24:
+                        d = chr(24)
+                
+                self.communicationBuffer.append(d)
+                self.lastPacketParamSize = ord(d)
+                
+                if ord(self.communicationBuffer[4]) == HBUSCOMMAND_STREAMW.commandByte or ord(self.communicationBuffer[4]) == HBUSCOMMAND_STREAMR.commandByte:
+                    self.hbusRxState = hbusMasterRxState.hbusRXSTP
+                else:
+                    if ord(d) > 0:
+                        self.hbusRxState = hbusMasterRxState.hbusRXPRM
+                    else:
+                        self.hbusRxState = hbusMasterRxState.hbusRXSTP #faltava
+                
+            elif self.hbusRxState == hbusMasterRxState.hbusRXPRM:
+                
+                if len(self.communicationBuffer) <= (6 + self.lastPacketParamSize):
+                    self.communicationBuffer.append(d)
+                else:
+                    
+                #self.hbusRxState = hbusMasterRxState.hbusRXSTP
+                    if ord(d) == 0xFF:
+                        self.communicationBuffer.append(d)
+                        
+                        self.logger.debug("pacote recebido, processando...")
+                        self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
+                        
+                        self.hbusRxState = hbusMasterRxState.hbusRXSBID
+                        
+                        t = threading.Thread(target=self.parseReceivedData(self.communicationBuffer))
+                        t.start()
+                        
+                    else:
+                        self.logger.debug("pacote mal-formado, erro no fechamento")
+                        self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
+                        
+                        #print self.communicationBuffer
+            
+            elif self.hbusRxState == hbusMasterRxState.hbusRXSTP:
+                
+                self.communicationBuffer.append(d)
+                
+                self.logger.debug("pacote recebido, processando...")
+                self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
+                
+                self.hbusRxState = hbusMasterRxState.hbusRXSBID
+                
+                if ord(d) == 0xFF:
+                        t = threading.Thread(target=self.parseReceivedData(self.communicationBuffer))
+                        t.start()
+                else:
+                    self.logger.debug("pacote mal-formado, erro no fechamento")
+                    self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
+                
+            else:
+                self.logger.error("HBUSOP erro fatal na recepção")
+                raise IOError("erro fatal na recepção")
+            
+            self.RxTimer = datetime.now()
+            
+        #if lasthbusState != self.hbusRxState:
+        #    self.logger.debug("Mudança de estado "+str(lasthbusState)+" -> "+str(self.hbusRxState))
+    
+    def getCommand(self,cmdbyte):
+        
+        for c in HBUS_COMMANDLIST:
+            
+            if c.commandByte == cmdbyte:
+                return c
+            
+        return None
+    
+    def setNextSlaveCapabilities(self,params):
+        
+        self.nextSlaveCapabilities = ord(params[3])
+        self.nextSlaveUID = params[4:7]
+        
+        if (self.nextSlaveCapabilities & hbusSlaveCapabilities.hbusSlaveAuthSupport):
+            self.logger.debug("Novo escravo tem suporte AUTH")
+        
+        myParamList = [chr(HBUS_PUBKEY_SIZE)]
+        myParamList.extend(HBUS_ASYMMETRIC_KEYS.pubKeyStr())
+        
+        #registra escravo no proximo endereço disponível
+        if (self.nextSlaveCapabilities & hbusSlaveCapabilities.hbusSlaveAuthSupport):
+            self.sendCommand(HBUSCOMMAND_KEYSET, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber, self.registeredSlaveCount+1),myParamList)
+        else:
+            self.sendCommand(HBUSCOMMAND_SEARCH, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber, self.registeredSlaveCount+1))
+            
+        #modifica estado interno do BUSLOCK
+        self.hbusBusLockedWith = hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber, self.registeredSlaveCount+1)
+        
+        #envia BUSUNLOCK imediatamente
+        self.sendCommand(HBUSCOMMAND_BUSUNLOCK, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,self.registeredSlaveCount+1))
+        
+        self.registerNewSlave(hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,self.registeredSlaveCount+1))
+        
+        self.registeredSlaveCount = self.registeredSlaveCount + 1
+        
+        self.masterState = hbusMasterState.hbusMasterSearching
+        
+    def parseReceivedData(self,data):
+        
+        if len(data) < 7:
+            pSize = 0
+            params = ()
+        else:
+            pSize = ord(data[6])
+            params = data[7:7+ord(data[6])]
+            
+        #if ord(data[4]) not in HBUS_COMMANDBYTELIST:
+            #comando inválido
+        #    self.logger.warning("Comando inválido recebido: "+str(ord(data[4])))
+        #    return None
+        #self.logger.debug('psize %d' % pSize)
+        
+        busOp = hbusOperation(hbusInstruction(self.getCommand(ord(data[4])), pSize, params), hbusDeviceAddress(ord(data[2]), ord(data[3])), hbusDeviceAddress(ord(data[0]),ord(data[1])))
+        
+        self.logger.debug(busOp)
+        #print busOp
+        
+        if busOp.hbusOperationDestination == self.hbusMasterAddr:
+            
+            self.receivedMessages.append(busOp)
+            
+            if busOp.instruction.command == HBUSCOMMAND_BUSLOCK:
+                self.hbusBusState = hbusBusStatus.hbusBusLockedThis
+                self.hbusBusLockedWith = busOp.hbusOperationSource
+                self.nextSlaveCapabilities = None
+                self.nextSlaveUID = None
+                
+                #caso especial: buslock de (x,255)
+                if busOp.hbusOperationSource.hbusAddressDevNumber == HBUS_BROADCAST_ADDRESS and self.masterState == hbusMasterState.hbusMasterSearching:
+                    
+                    self.expectResponse(HBUSCOMMAND_RESPONSE, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber, HBUS_BROADCAST_ADDRESS),action=self.setNextSlaveCapabilities)
+                    self.sendCommand(HBUSCOMMAND_GETCH, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,HBUS_BROADCAST_ADDRESS),params=[chr(0)])
+                    
+                    self.masterState = hbusMasterState.hbusMasterAddressing
+                
+                
+            elif busOp.instruction.command == HBUSCOMMAND_BUSUNLOCK:
+                self.hbusBusState = hbusBusStatus.hbusBusFree
+                self.hbusBusLockedWith = None
+            
+            if len(self.expectedResponseQueue) > 0:
+                
+                #removeQueue = []
+                
+                for r in self.expectedResponseQueue:
+                    
+                    if r in self.removeQueue:
+                        continue
+                
+                #r = self.expectedResponseQueue[0]
+                    if r[1] == busOp.hbusOperationSource and r[0] == busOp.instruction.command:
+                        if r[2] > getMillis((datetime.now() - r[3])):
+                            #ok
+                            if r[4] != None:
+                                if r[5] != None:
+                                    r[4]((r[5],busOp.instruction.params))
+                                    
+                                    #self.logger.debug("HBUSOP RESPONSE OK")
+                                    self.removeQueue.append(r)
+                                    break
+                                    
+                                else:
+                                    r[4](busOp.instruction.params)
+                                    self.removeQueue.append(r)
+                                    break
+                                    
+                                    #self.logger.debug("HBUSOP RESPONSE OK")
+                        else:
+                            #timeout
+                            
+                            self.logger.warning("HBUSOP RESPONSE Timeout")
+                            if self.masterState == hbusMasterState.hbusMasterScanning:
+                                self.hbusDeviceScanningTimeout = True
+                            
+                        #self.expectedResponseQueue.popleft()
+                        self.removeQueue.append(r)
+                    
+                    elif r[2] < getMillis((datetime.now() - r[3])):
+                        
+                        self.logger.warning("HBUSOP RESPONSE Timeout")
+                        if self.masterState == hbusMasterState.hbusMasterScanning:
+                            self.hbusDeviceScanningTimeout = True
+                        
+                        #self.expectedResponseQueue.popleft()
+                        self.removeQueue.append(r)
+                        
+        else:
+            
+            if busOp.instruction.command == HBUSCOMMAND_BUSLOCK:
+                
+                self.hbusBusState = hbusBusStatus.hbusBusLockedOther
+                
+            elif busOp.instruction.command == HBUSCOMMAND_BUSUNLOCK:
+                
+                self.hbusBusState = hbusBusStatus.hbusBusFree
+                self.hbusBusLockedWith = None
+
+    def sendCommand(self,command, dest, params=()):
+        
+        while self.hbusRxState != 0:
+            pass
+        
+        #self.commandDelay = datetime.now()
+        
+        #while getMillis(datetime.now() - self.commandDelay) < 60:
+        #    pass
+        
+        busOp = hbusOperation(hbusInstruction(command, len(params), params),dest,self.hbusMasterAddr)
+        
+        self.logger.debug(busOp)
+        
+        #s = busOp.getString()
+        #for c in s:
+        #    
+        #    print hex(ord(c))
+        
+        self.logger.debug('dump saida: %s' % [hex(ord(x)) for x in list(busOp.getString())])
+        
+        if command == HBUSCOMMAND_BUSLOCK:
+            
+            self.hbusBusState = hbusBusStatus.hbusBusLockedThis
+            self.hbusBusLockedWith = dest
+            
+        elif command == HBUSCOMMAND_BUSUNLOCK:
+            
+            if self.hbusBusState == hbusBusStatus.hbusBusLockedThis and self.hbusBusLockedWith == dest:
+                
+                self.hbusBusState = hbusBusStatus.hbusBusFree
+                self.hbusBusLockedWith = None
+                
+            else:
+                
+                self.logger.debug("erro de BUSUNLOCK: travado com %s, tentativa de destravamento com %s" % (self.hbusBusLockedWith,dest))
+        #if self.masterState == hbusMasterState.hbusMasterScanning:
+            #reactor.callFromThread(self.serialWrite,busOp.getString())
+        #else:
+        self.serialWrite(busOp.getString())
+        
+    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=3000, timeoutAction=None):
+        
+        self.expectedResponseQueue.append((command,source,timeout,datetime.now(),action,actionParameters,timeoutAction))
+        
+        self.logger.debug("Registrando resposta esperada")
+        
+    def registerNewSlave(self, address):
+        
+        self.detectedSlaveList[address.getGlobalID()] = hbusSlaveInfo(address)
+        
+        self.logger.info("Novo escravo registrado em "+str(address))
+        self.logger.debug("Novo escravo tem ID interno "+str(address.getGlobalID()))
+        
+        #self.readBasicSlaveInformation(address)
+        
+    def unRegisterSlave(self, address):
+        
+        del self.detectedSlaveList[address.getGlobalID()]
+        
+        self.logger.info("Escravo em "+str(address)+" removido")
+        
+    def readBasicSlaveInformation(self, address):
+        
+        self.logger.debug("Iniciando análise do escravo "+str(address.getGlobalID()))
+        
+        #executa BUSLOCK
+        self.sendCommand(HBUSCOMMAND_BUSLOCK,address)
+        
+        self.expectResponse(HBUSCOMMAND_QUERY_RESP,address,self.receiveSlaveInformation,actionParameters=("Q",address))
+        self.sendCommand(HBUSCOMMAND_QUERY, address,params=[0])
+    
+    def receiveSlaveInformation(self, data):
+        
+        if data[0][0] == "Q":
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveDescription = ''.join(data[1][3::]) #descrição do escravo
+            
+            
+            #lê informação sobre objetos do escravo
+            self.expectResponse(HBUSCOMMAND_RESPONSE,data[0][1],self.receiveSlaveInformation,actionParameters=("V",data[0][1]))
+            self.sendCommand(HBUSCOMMAND_GETCH,data[0][1],params=[0])
+            
+        elif data[0][0] == "V":
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjectCount = ord(data[1][0])
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpointCount = ord(data[1][1])
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterruptCount = ord(data[1][2])
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveCapabilities = ord(data[1][3])
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveUniqueDeviceInfo, = struct.unpack('I',''.join(data[1][4:8]))
+            
+            #self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
+            
+            self.logger.info("Escravo em "+str(data[0][1])+" identificado como "+str(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveDescription)+"("+str(ord(data[1][0]))+","+str(ord(data[1][1]))+","+str(ord(data[1][2]))+") <"+str(
+                hex(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveUniqueDeviceInfo))+">")
+            
+            self.logger.debug("Recuperando informações dos objetos do escravo "+str(data[0][1].getGlobalID()))
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects = {}
+            
+            self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("O",data[0][1]))
+            self.sendCommand(HBUSCOMMAND_QUERY,data[0][1],params=[1])
+            
+        elif data[0][0] == "O":
+            
+            currentObject = len(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects)+1
+            
+            self.logger.debug("Analisando objeto "+str(currentObject)+", escravo ID "+str(data[0][1].getGlobalID()))
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject] = hbusSlaveObjectInfo()
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectPermissions = ord(data[1][0])
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectSize = ord(data[1][1])
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDescription = ''.join(data[1][3::])
+            
+            #print currentObject
+            #print str(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject])
+            
+            if currentObject+1 < self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjectCount:
+                
+                self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("O",data[0][1]))
+                self.sendCommand(HBUSCOMMAND_QUERY,data[0][1],params=[currentObject+1])
+            else:
+                
+                #RECEBE ENDPOINT INFO
+                if self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpointCount > 0:
+                    
+                    self.logger.debug("Recuperando informações dos endpoints do escravo "+str(data[0][1].getGlobalID()))
+                    
+                    self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("E",data[0][1]))
+                    self.sendCommand(HBUSCOMMAND_QUERY_EP,data[0][1],params=[0])
+                    
+                elif self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterruptCount > 0:
+                    
+                    self.logger.debug("Recuperando informações das interrupções do escravo "+str(data[0][1].getGlobalID()))
+                    
+                    self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("I",data[0][1]))
+                    self.sendCommand(HBUSCOMMAND_QUERY_INT,data[0][1],params=[0])
+                
+                else:
+                    self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
+                    self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
+                    self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
+        
+        elif data[0][0] == "E":
+            
+            #ENDPOINTS
+            
+            currentEndpoint = len(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpoints)+1
+            
+            self.logger.debug("Analisando endpoint "+str(currentEndpoint)+", escravo ID "+str(data[0][1].getGlobalID()))
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpoints[currentEndpoint] = hbusSlaveEndpointInfo()
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpoints[currentEndpoint].endpointDirection = ord(data[1][0])
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpoints[currentEndpoint].endpointBlockSize = ord(data[1][1])
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpoints[currentEndpoint].endpointDescription = ''.join(data[1][3::])
+            
+            if currentEndpoint+1 < self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpointCount:
+                
+                self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("E",data[0][1]))
+                self.sendCommand(HBUSCOMMAND_QUERY_EP,data[0][1],params=[currentEndpoint+1])
+                
+            else:
+                
+                #INTERRUPT INFO
+                if self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterruptCount > 0:
+                    
+                    self.logger.debug("Recuperando informações das interrupções do escravo "+str(data[0][1].getGlobalID()))
+                    
+                    self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("I",data[0][1]))
+                    self.sendCommand(HBUSCOMMAND_QUERY_INT,data[0][1],params=[0])
+                
+                else:
+                    self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
+                    self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
+                    self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
+                    
+        elif data[0][0] == "I":
+            
+            #INTERRUPTS
+            
+            currentInterrupt = len(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterrupts)+1
+            
+            self.logger.debug("Analisando interrupção "+str(currentInterrupt)+", escravo ID "+str(data[0][1].getGlobalID()))
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterrupts[currentInterrupt] = hbusSlaveInterruptInfo()
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterrupts[currentInterrupt].interruptFlags = ord(data[1][0])
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterrupts[currentInterrupt].interruptDescription = ''.join(data[1][2::])
+            
+            if currentInterrupt+1 < self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterruptCount:
+                
+                self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("I",data[0][1]))
+                self.sendCommand(HBUSCOMMAND_QUERY_INT,data[0][1],params=[currentInterrupt+1])
+                
+            else:
+                self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
+                self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
+                self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
+    
+    def readSlaveObject(self,address,number,callBack=None):
+        
+        if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectWrite:
+        
+            self.expectResponse(HBUSCOMMAND_RESPONSE,address,self.receiveSlaveObjectData,actionParameters=(address,number,callBack))
+            self.sendCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)])
+            
+        else:
+            
+            self.logger.warning("tentativa de leitura de objeto somente para escrita")
+            
+            if callBack != None:
+                
+                callBack(None)
+            
+    def receiveSlaveObjectData(self, data):
+        
+        self.detectedSlaveList[data[0][0].getGlobalID()].hbusSlaveObjects[data[0][1]].objectLastValue = [ord(d) for d in data[1]]
+        
+        #print data[1]
+        
+        if data[0][2] != None:
+            
+            data[0][2](data[1])
+            
+    def writeSlaveObject(self,address,number,value):
+        
+        if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectRead:
+            
+            self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectValue = value
+            size = self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectSize
+            
+            myParamList = [number,size]
+            myParamList.extend(value)
+            
+            if (self.detectedSlaveList[address.getGlobalID()].hbusSlaveCapabilities & hbusSlaveCapabilities.hbusSlaveAuthSupport):
+                
+                myParamList[1] += HBUS_SIGNATURE_SIZE+1
+                
+                msg = struct.pack('ccccccc',chr(self.hbusMasterAddr.hbusAddressBusNumber),chr(self.hbusMasterAddr.hbusAddressDevNumber),chr(address.hbusAddressBusNumber),
+                                  chr(address.hbusAddressDevNumber),chr(HBUSCOMMAND_SETCH.commandByte),chr(number),chr(myParamList[1]))
+                
+                i = 0
+                while (size > 0):
+                    struct.pack_into('c',msg,7+i,value[i])
+                    
+                    size -= 1
+                    i += 1
+                    
+                sig = hbus_crypto.hbusCrypto_RabinWilliamsSign(msg, HBUS_ASYMMETRIC_KEYS.privatep, HBUS_ASYMMETRIC_KEYS.privateq)
+                
+                myParamList.extend(sig.getByteString())
+            
+            self.sendCommand(HBUSCOMMAND_SETCH,address,params=myParamList)
+            
+        else:
+            
+            self.logger.warning("tentativa de escrita em objeto somente leitura")
+        
+    def detectSlaves(self, callBack = None, allBusses = False):
+        
+        if len(self.detectedSlaveList) > 0:
+            
+            #verifica presença de escravos já detectados anteriormente
+            
+            for s in self.detectedSlaveList.values():
+                
+                self.expectResponse(HBUSCOMMAND_ACK, s.hbusSlaveAddress, None, None, 3000, self.unRegisterSlave)
+                self.sendCommand(HBUSCOMMAND_SEARCH, s.hbusSlaveAddress)
+            
+        
+        self.sendCommand(HBUSCOMMAND_SEARCH, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,255))
+        
+        self.masterState = hbusMasterState.hbusMasterSearching
+        
+        self.logger.info("Iniciando busca por escravos")
+        
+        signal.alarm(10)
+        
+        self.detectSlavesEnded = callBack
+             
+        
+    def handleAlarm(self,signum,frame):
+        
+        if self.masterState == hbusMasterState.hbusMasterSearching:
+            
+            self.masterState = hbusMasterState.hbusMasterIdle
+            
+            self.logger.info("Fim da busca por escravos, "+str(self.registeredSlaveCount)+" encontrado(s)")
+            
+            if self.detectSlavesEnded != None:
+                
+                self.detectSlavesEnded()
+            
+            self.logger.debug("Recuperando informações dos escravos...")
+            
+            #tarefa de leitura dos escravos em threading separada para poder aguardar recepção individual de dados sem congelar as outras rotinas
+            
+            def startReadingSlaves():
+            
+                for slave in self.detectedSlaveList:
+                
+                #aguarda barramento livre
+                    while (self.hbusBusState != hbusBusStatus.hbusBusFree):
+                        pass
+                
+                    if self.detectedSlaveList[slave].basicInformationRetrieved == False:
+                        self.hbusDeviceScanningTimeout = False #reinicia flags
+                        self.readBasicSlaveInformation(self.detectedSlaveList[slave].hbusSlaveAddress)
+                        timeoutcounter = datetime.now()
+                        retry = 0
+                    
+                    #se a recepção falhar, causa travamento da thread
+                    while (self.detectedSlaveList[slave].basicInformationRetrieved == False):
+                        #pass
+                        if (getMillis(datetime.now() - timeoutcounter) > 30000) or (self.hbusDeviceScanningTimeout == True):
+                            if retry < 2:
+                                retry += 1
+                                
+                                #espera alguns segundos
+                                delay = datetime.now()
+                                
+                                while (getMillis(datetime.now() - delay)) < 2000:
+                                    pass
+                                
+                                self.hbusDeviceScanningTimeout = False
+                                self.readBasicSlaveInformation(self.detectedSlaveList[slave].hbusSlaveAddress)
+                                self.logger.debug("Falha na leitura. Realizando Nova tentativa")
+                                timeoutcounter = datetime.now()
+                            else:
+                                self.logger.warning("Erro na obtenção de informações do escravo")
+                                break
+                            
+                    #delay
+                    
+                #while (self.masterState != hbusMasterState.hbusMasterOperational):
+                #    pass
+                
+                self.masterState = hbusMasterState.hbusMasterOperational
+                self.logger.info("Fim da leitura de informações dos escravos")
+                #self.logger.debug(str(self.detectedSlaveList))
+                
+                #for s in self.detectedSlaveList.values():
+                    
+                #    self.logger.debug(s.hbusSlaveObjects)
+            
+            self.logger.debug("Nova thread iniciada, 'startReadingSlaves'")
+            #t = threading.Thread(target=startReadingSlaves)
+            #t.start()
+            self.masterState = hbusMasterState.hbusMasterScanning
+            reactor.callInThread(startReadingSlaves)
+            
+        elif self.masterState == hbusMasterState.hbusMasterStarting:
+            
+            self.masterState = hbusMasterState.hbusMasterIdle
+            
+            self.detectSlaves()
+            
+    def findDeviceByUID(self, uid):
+        
+        for dev in self.detectedSlaveList:
+            
+            if self.detectedSlaveList[dev].hbusSlaveUniqueDeviceInfo == int(uid):
+                
+                return self.detectedSlaveList[dev].hbusSlaveAddress
+            
+        self.logger.debug("dispositivo com UID <"+str(int(uid))+"> não encontrado")
+        return None
+    
+    def periodicCall(self):
+        
+        #expectedResponseQueue cleanup
+        
+        #remove elementos desnecessários
+        for r in self.removeQueue:
+            
+            if r in self.expectedResponseQueue:
+                
+                self.expectedResponseQueue.remove(r)
+                
+                self.logger.debug("Limpeza da fila de respostas...")
+        
+        #procura timeouts
+        for r in self.expectedResponseQueue:
+            
+            if r[2] < getMillis((datetime.now() - r[3])):
+                self.removeQueue.append(r)
+                
+                self.logger.warning('Timeout de resposta')
+                self.logger.debug("Timeout de resposta: %s",r)
+                
+                if self.hbusBusState == hbusBusStatus.hbusBusLockedThis:
+                    self.sendCommand(HBUSCOMMAND_BUSUNLOCK, self.hbusBusLockedWith)
+                
+                if self.masterState == hbusMasterState.hbusMasterScanning:
+                    self.hbusDeviceScanningTimeout = True
+                    #pass
+                
+                if r[6] != None:
+                    r[6](r[1])
+                
+        #remove elementos restantes
+        for r in self.removeQueue:
+            
+            if r in self.expectedResponseQueue:
+                
+                self.expectedResponseQueue.remove(r)
+                
+                self.logger.debug("Limpeza da fila de respostas...")
+                
+        del self.removeQueue[:]
+        
+        #procura por novos dispositivos
+        
+        if self.autoSearch:
+            
+            if getMillis(self.hbusDeviceSearchTimer - datetime.now()) > self.hbusDeviceSearchInterval:
+                
+                self.detectSlaves()
+                
+                self.hbusDeviceSearchTimer = datetime.now()
+        
+        
+            
+        #if allBusses:
+        #    
+        #    for b in range(0,32):
+        #        
+        #        for d in range(0,32):
+        #            
+        #            self.sendCommand(HBUSCOMMAND_SEARCH, hbusDeviceAddress(b,d))
+        #            self.expectResponse(HBUSCOMMAND_ACK, hbusDeviceAddress(b,d))
+        #            
+        #else:
+        #    
+        #    for d in range(1,32):
+        #        
+        #        self.sendCommand(HBUSCOMMAND_SEARCH,hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,d))
+        #        self.expectResponse(HBUSCOMMAND_ACK,hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,d),action=self.registerNewSlave,actionParameters=hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,d),timeout=10000000)
+                
