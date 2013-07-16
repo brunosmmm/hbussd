@@ -1,5 +1,6 @@
 eclipse.preferences.version=1
 encoding/hbus.py=utf-8
 encoding/hbus_crypto.py=utf-8
+encoding/hbus_web.py=utf-8
 encoding/hbusmaster.py=utf-8
 encoding/hbustcpserver.py=utf-8
