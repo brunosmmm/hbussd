@@ -2,6 +2,7 @@
 import logging
 from hbusmaster import *
 from hbustcpserver import *
+from hbus_web import *
 
 from twisted.internet import reactor
 from twisted.internet.serialport import SerialPort
@@ -10,6 +11,7 @@ from twisted.protocols.basic import LineReceiver
 from twisted.internet.task import LoopingCall
 
 import signal
+#import threading
 
 BUSID = 0
 
@@ -69,6 +71,10 @@ def main():
     
     hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
     hbusMasterPeriodicTask.start(1)
+    
+    #lança pagina web
+    hbusWeb = HBUSWEB(8000,hbusMaster)
+    reactor.callInThread(hbusWeb.run)
     
     reactor.listenTCP(8123, HBUSTCPFactory(hbusMaster))
     
