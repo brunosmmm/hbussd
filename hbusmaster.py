@@ -10,6 +10,8 @@ import threading
 import hbus_crypto
 
 from twisted.internet import reactor
+from array import array
+from math import log
 
 def getMillis(td):
     
@@ -229,12 +231,168 @@ class hbusSlaveObjectPermissions:
     hbusSlaveObjectWrite = 2
     hbusSlaveObjectReadWrite = 3
 
+class hbusSlaveObjectDataType:
+    
+    dataTypeByte = 0x80
+    dataTypeInt = 0x10
+    dataTypeUnsignedInt = 0x20
+    dataTypeFixedPoint = 0x40
+    
+    dataTypeByteHex = 0x01
+    dataTypeByteDec = 0x02
+    dataTypeByteOct = 0x03
+    dataTypeByteBin = 0x07
+    
+    dataTypeUintPercent     = 0x04
+    dataTypeUintLinPercent  = 0x05
+    dataTypeUintLogPercent  = 0x06
+    dataTypeUintTime        = 0x09
+    dataTypeUintDate        = 0x0A
+    
+    dataTypeUintNone        = 0x00
+    
+    def formatHexBytes(self,data):
+        
+        return ['%X' % x for x in data]
+    
+    def formatDecBytes(self,data):
+        
+        return ['%d' % x for x in data]
+    
+    def formatOctBytes(self,data):
+        
+        return ['%o' % x for x in data]
+    
+    def formatBinBytes(self,data):
+        
+        return ['{0:b}'.format(x) for x in data]
+    
+    def formatUint(self,data):
+        
+        x = [0]
+        while (len(data) < 4):
+            x.extend(data)
+            data = x
+            x = [0]
+        
+        byteList = array('B',data)
+        
+        return struct.unpack('>I',byteList)[0]
+    
+    def formatPercent(self,data):
+        
+        if len(data) > 1:
+            
+            data = int(data[::-1])
+            
+        if data > 100:
+            data = 100
+            
+        return "%d%%" % data
+    
+    def formatRelLinPercent(self,data):
+        
+        if data == None:
+            return "?"
+        
+        maximumValue = 2**(8*len(data)) - 1
+        
+        x = [0]
+        while (len(data) < 4):
+            x.extend(data)
+            data = x
+            x = [0]
+        
+        byteList = array('B',data)
+        value = struct.unpack('>I',byteList)[0]
+        
+        return "%.2f%%" % ((float(value)/float(maximumValue))*100)
+    
+    def formatRelLogPercent(self,data):
+        
+        if data == None:
+            return "?"
+        
+        maximumValue = 2**(8*len(data)) - 1
+        
+        x = [0]
+        while len(data) < 4:
+            x.extend(data)
+            data = x
+            x = [0]
+        
+        byteList = array('B',data)
+        value = struct.unpack('>I',byteList)[0]
+        
+        return "%.2f%%" % ((log(float(value))/log(float(maximumValue)))*100)
+    
+    def formatTime(self,data):
+        
+        tenthSeconds = (data[3] & 0xF0)>>4
+        milliSeconds = data[3] & 0x0F
+        
+        segundos = data[2] & 0x0F
+        dezenaSegundos = data[2] & 0xF0
+        
+        minutes = data[1] & 0x0F
+        dezena = (data[1] & 0xF0) >> 4
+        
+        horas24 = data[0] & 0x0F
+        
+        return "%2d:%2d:%2d,%2d" % (horas24,minutes+dezena*10,segundos+dezenaSegundos*10,milliSeconds+tenthSeconds*10)
+    
+    def formatDate(self,data):
+        
+        return "?"
+    
+    dataTypeNames = {dataTypeByte : 'Byte', dataTypeInt : 'Int', dataTypeUnsignedInt : 'Unsigned Int', dataTypeFixedPoint : 'Ponto fixo'}
+    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes  ,dataTypeByteDec : formatDecBytes  ,dataTypeByteOct : formatOctBytes ,dataTypeByteBin : formatBinBytes},
+                       dataTypeUnsignedInt : {dataTypeUintNone : formatUint, dataTypeUintPercent : formatPercent, dataTypeUintLinPercent : formatRelLinPercent, dataTypeUintLogPercent : formatRelLogPercent, 
+                                              dataTypeUintTime : formatTime, dataTypeUintDate : formatDate}}
+
+class hbusSlaveObjectExtendedInfo:
+    
+    objectMaximumValue = None
+    objectMinimumValue = None
+    
+    objectExtendedString = None
+
 class hbusSlaveObjectInfo:
     
     objectPermissions = 0
+    objectCrypto = False
+    objectHidden = False
     objectDescription = None
     objectSize = 0
     objectLastValue = None
+    
+    objectDataType = 0
+    objectDataTypeInfo = None
+    
+    objectExtendedInfo = None
+    
+    def getFormattedValue(self):
+        
+        if self.objectLastValue == None:
+            return None
+        
+        if self.objectDataType == 0 or self.objectDataType not in hbusSlaveObjectDataType.dataTypeOptions.keys():
+            
+            print self.objectDataType
+            print hbusSlaveObjectDataType.dataTypeOptions.keys()
+            
+            return self.objectLastValue #sem formato
+        
+        #analisa informação extra
+        if self.objectDataTypeInfo not in hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys():
+            
+            print self.objectDataTypeInfo
+            print hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys()
+            
+            return self.objectLastValue #sem formato
+                
+        return hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](self.objectLastValue,self.objectLastValue)
+        
     
     def __repr__(self):
         
@@ -276,6 +434,10 @@ class hbusSlaveInfo:
     hbusSlaveObjects = {}
     hbusSlaveEndpoints = {}
     hbusSlaveInterrupts = {}
+    
+    hbusSlaveHiddenObjects = {}
+    
+    waitFlag = False
     
     def __init__(self,explicitSlaveAddress):
         self.hbusSlaveAddress = explicitSlaveAddress
@@ -338,6 +500,38 @@ class hbusMaster:
         #self.hbusSerial = hbusSerialConnection(port,baudrate,self.hbusSerialRxTimeout)
     
         self.serialCreate()
+        
+    def processHiddenObjects(self):
+        
+        self.waitFlag = False
+        def waitForResult(dummy):
+            
+            self.waitFlag = False
+        
+        for slave in self.detectedSlaveList.values():
+        
+            i = 1
+            for obj in slave.hbusSlaveObjects.values():
+                
+                if obj.objectHidden == False:
+                    i += 1
+                    continue
+                
+                self.waitFlag = True
+                self.readSlaveObject(slave.hbusSlaveAddress, i, callBack=waitForResult)
+                
+                while (self.waitFlag):
+                    pass
+                
+                objFunction = obj.objectDescription.split(':')
+                
+                if slave.hbusSlaveObjects[int(objFunction[0])].objectExtendedInfo == None:
+                    slave.hbusSlaveObjects[int(objFunction[0])].objectExtendedInfo = {}
+                
+                slave.hbusSlaveObjects[int(objFunction[0])].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
+                
+                i += 1
+            
     
     def serialCreate(self):
         
@@ -681,7 +875,7 @@ class hbusMaster:
         #else:
         self.serialWrite(busOp.getString())
         
-    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=3000, timeoutAction=None):
+    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=5000, timeoutAction=None):
         
         self.expectedResponseQueue.append((command,source,timeout,datetime.now(),action,actionParameters,timeoutAction))
         
@@ -716,7 +910,7 @@ class hbusMaster:
         
         if data[0][0] == "Q":
             
-            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveDescription = ''.join(data[1][3::]) #descrição do escravo
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveDescription = ''.join(data[1][4::]) #descrição do escravo
             
             
             #lê informação sobre objetos do escravo
@@ -754,10 +948,22 @@ class hbusMaster:
             self.logger.debug("Analisando objeto "+str(currentObject)+", escravo ID "+str(data[0][1].getGlobalID()))
             
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject] = hbusSlaveObjectInfo()
-            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectPermissions = ord(data[1][0])
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectPermissions = ord(data[1][0]) & 0x03
+            
+            if ord(data[1][0]) & 0x04:
+                self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectCrypto = True
+                
+            if ord(data[1][0]) & 0x08:
+                self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectHidden = True
+                
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataType = ord(data[1][0]) & 0xF0
+            
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectSize = ord(data[1][1])
             
-            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDescription = ''.join(data[1][3::])
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataTypeInfo = ord(data[1][2])
+            
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDescription = ''.join(data[1][4::])
             
             #print currentObject
             #print str(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject])
@@ -786,6 +992,7 @@ class hbusMaster:
                 else:
                     self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                     self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
+                    #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
         
         elif data[0][0] == "E":
@@ -820,6 +1027,7 @@ class hbusMaster:
                 else:
                     self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                     self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
+                    #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                     
         elif data[0][0] == "I":
@@ -843,6 +1051,7 @@ class hbusMaster:
             else:
                 self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                 self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
+                #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                 self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
     
     def readSlaveObject(self,address,number,callBack=None):
@@ -854,7 +1063,8 @@ class hbusMaster:
             
         else:
             
-            self.logger.warning("tentativa de leitura de objeto somente para escrita")
+            self.logger.warning("Tentativa de leitura de objeto somente para escrita")
+            self.logger.debug("Tentativa de leitura do objeto %d, escravo com endereço %s",number,address)
             
             if callBack != None:
                 
@@ -984,6 +1194,7 @@ class hbusMaster:
                 #    pass
                 
                 self.masterState = hbusMasterState.hbusMasterOperational
+                reactor.callInThread(self.processHiddenObjects)
                 self.logger.info("Fim da leitura de informações dos escravos")
                 #self.logger.debug(str(self.detectedSlaveList))
                 

@@ -208,6 +208,9 @@ class HBUSTCP(LineReceiver):
             
             i = 1
             for slaveObject in self.hbusMaster.detectedSlaveList[device.getGlobalID()].hbusSlaveObjects.values():
+                
+                if slaveObject.objectHidden:
+                    continue
             
                 self.sendLine(param[0]+":"+str(i)+", "+str(slaveObject.objectDescription)+", "+str(slaveObject.objectSize)+", "+
                                         ("R" if slaveObject.objectPermissions == 1 else ("W" if slaveObject.objectPermissions == 2 else "RW")))

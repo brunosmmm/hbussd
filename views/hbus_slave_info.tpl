@@ -37,13 +37,19 @@
                 <th scope="col">Descrição</th>
                 <th scope="col">Permissões</th>
                 <th scope="col">Tamanho em bytes</th>
+                <th scope="col">Tipo de dados</th>
                 <th scope="col">Último valor conhecido</th>
+                <th scope="col">Campos extras</th>
             </tr>
         </thead>
         <tbody>
         
         %i = 1
         %for object in slave.hbusSlaveObjects.values():
+        
+            %if object.objectHidden:
+                %continue
+            %end
             
             <tr>
                 <td style="text-align: center">{{i}}</td>
@@ -58,6 +64,7 @@
                 %end
                 </td>
                 <td style="text-align: center">{{object.objectSize}}</td>
+                <td>{{hbusSlaveObjectDataType.dataTypeNames[object.objectDataType]}}</td>
                 
                 %if object.objectLastValue == None:
                 <td style="text-align: center">
@@ -68,8 +75,17 @@
                     %end
                 </td>
                 %else:
-                    <td style="text-align: center"><a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}">{{object.objectLastValue}}</a></td>
+                    <td style="text-align: center"><a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}">{{object.getFormattedValue()}}</a></td>
                 %end
+                
+                <td>
+                    %if object.objectExtendedInfo != None:
+                        {{object.objectExtendedInfo.keys()}}
+                    %else:
+                        &mdash;
+                    %end
+                </td>
+                
             </tr>
             
             %i += 1

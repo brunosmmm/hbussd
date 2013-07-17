@@ -36,7 +36,10 @@ class HBUSWEB:
             
             addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
             
-            s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+            if addr == None:
+                s = None
+            else:
+                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
             
             if obj != None:
                 
@@ -49,7 +52,7 @@ class HBUSWEB:
                 except:
                     pass
         
-        return template('hbus_slave_info',slave=s)
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType)
     
     def staticFiles(self,filename):
         
