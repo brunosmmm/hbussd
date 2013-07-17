@@ -2,9 +2,11 @@
 
 from hbusmaster import *
 import string
-from bottle import route, run, template
+from bottle import route, run, template, static_file
 
 class HBUSWEB:
+
+    wait = False
 
     def __init__(self,port,hbusMaster):
         
@@ -12,10 +14,15 @@ class HBUSWEB:
         self.hbusMaster = hbusMaster
 
     def index(self):
+        
+        return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values())
     
-        return template('hbus_index',list=None)
-    
-    def slaveInfo(self,addr=None,uid=None):
+    def slaveInfo(self,addr=None,uid=None,obj=None):
+        
+        self.wait = False
+        def waitForSlaveRead(dummy):
+            
+            self.wait = False
         
         if addr != None:
             
@@ -27,9 +34,26 @@ class HBUSWEB:
             
             devUID = string.split(uid,"0x")
             
-            s = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+            addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+            
+            s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+            
+            if obj != None:
+                
+                try:
+                    self.wait = True
+                    self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead)
+                    
+                    while (self.wait == True):
+                        pass
+                except:
+                    pass
         
         return template('hbus_slave_info',slave=s)
+    
+    def staticFiles(self,filename):
+        
+        return static_file(filename,root='web_static')
     
     #roda
     def run(self):
@@ -40,6 +64,9 @@ class HBUSWEB:
         
         route("/slave-addr/<addr>")(self.slaveInfo)
         route("/slave-uid/<uid>")(self.slaveInfo)
+        route("/slave-uid/<uid>/<obj>")(self.slaveInfo)
+        
+        route ("/static/<filename>")(self.staticFiles)
         
         run(host='localhost',port=self.port)
 

@@ -47,6 +47,10 @@ class TwistedhbusMaster(hbusMaster):
         #self.hbusSerial.transport.flushInput()
         
         pass
+    
+    def initWebServer(self):
+        
+        pass
 
 def SignalHandler(signum, frame):
     
