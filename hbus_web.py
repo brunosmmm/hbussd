@@ -2,7 +2,7 @@
 
 from hbusmaster import *
 import string
-from bottle import route, run, template, static_file
+from bottle import route, run, template, static_file, request
 
 class HBUSWEB:
 
@@ -54,6 +54,32 @@ class HBUSWEB:
         
         return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType)
     
+    def slaveInfoSet(self,uid=None,obj=None):
+        
+        newObjValue = request.forms.get('value')
+        
+        if uid != None:
+            
+            devUID = string.split(uid,"0x")
+            
+            addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+            
+            if addr == None:
+                s = None
+            else:
+                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+            
+            if obj != None:
+                
+                #try:
+                self.hbusMaster.writeFormattedSlaveObject(addr,int(obj),newObjValue)
+
+                #except:
+                #    pass
+        
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType)
+        
+    
     def staticFiles(self,filename):
         
         return static_file(filename,root='web_static')
@@ -68,10 +94,11 @@ class HBUSWEB:
         route("/slave-addr/<addr>")(self.slaveInfo)
         route("/slave-uid/<uid>")(self.slaveInfo)
         route("/slave-uid/<uid>/<obj>")(self.slaveInfo)
+        route("/slave-uid/<uid>/<obj>",method="POST")(self.slaveInfoSet)
         
         route ("/static/<filename>")(self.staticFiles)
         
-        run(host='localhost',port=self.port)
+        run(host='192.168.1.122',port=self.port)
 
 #test_server = HBUSWEB(8000,None)
 #test_server.run()

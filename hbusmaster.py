@@ -206,6 +206,7 @@ class hbusSlaveCapabilities:
     hbusSlaveUCODESupport = 16
     hbusSlaveIntSupport = 4
     hbusSlaveCryptoSupport = 1
+    hbusSlaveRevAuthSupport = 0x20
 
 class hbusBusStatus:
     
@@ -231,6 +232,55 @@ class hbusSlaveObjectPermissions:
     hbusSlaveObjectWrite = 2
     hbusSlaveObjectReadWrite = 3
 
+class hbusFixedPointHandler:
+    
+    pointLocation = None
+
+    def formatFixedPoint(self,dummy,data,extInfo,size,decode=False):
+        
+        x = [0]
+        while (len(data) < 4):
+            x.extend(data)
+            data = x
+            x = [0]
+        
+        byteList = array('B',data)
+        
+        value = float(struct.unpack('>i',byteList)[0])/(10**float(self.pointLocation))
+        
+        try:
+            unit = extInfo['UNIT']
+            value = str(value)+" "+''.join([chr(x) for x in unit])
+        except:
+            pass
+        
+        return  value
+    
+    def __getitem__(self,key):
+        
+        #ultra gambiarra
+        self.pointLocation = int(key)
+        
+        return self.formatFixedPoint
+    
+class hbusIntHandler:
+    
+    def formatInt(self,dummy,data,extInfo,size,decode=False):
+        
+        x = [0]
+        while (len(data) < 4):
+            x.extend(data)
+            data = x
+            x = [0]
+        
+        byteList = array('B',data)
+        
+        return struct.unpack('>i',byteList)[0]
+    
+    def __getitem__(self,key):
+        
+        return self.formatInt
+
 class hbusSlaveObjectDataType:
     
     dataTypeByte = 0x80
@@ -251,24 +301,9 @@ class hbusSlaveObjectDataType:
     
     dataTypeUintNone        = 0x00
     
-    def formatHexBytes(self,data):
-        
-        return ['%X' % x for x in data]
     
-    def formatDecBytes(self,data):
-        
-        return ['%d' % x for x in data]
-    
-    def formatOctBytes(self,data):
-        
-        return ['%o' % x for x in data]
-    
-    def formatBinBytes(self,data):
-        
-        return ['{0:b}'.format(x) for x in data]
-    
-    def formatUint(self,data):
-        
+    def unpackUINT(self,data):
+
         x = [0]
         while (len(data) < 4):
             x.extend(data)
@@ -279,7 +314,42 @@ class hbusSlaveObjectDataType:
         
         return struct.unpack('>I',byteList)[0]
     
-    def formatPercent(self,data):
+    def formatHexBytes(self,data,extInfo,size,decode=False):
+        
+        if decode:
+            return [0*x for x in range(0,size)]
+        
+        return ', '.join(['%X' % x for x in data])
+   
+    def formatDecBytes(self,data,extInfo,size,decode=False):
+        
+        if decode:
+            return [0*x for x in range(0,size)]
+        
+        return ', '.join(['%d' % x for x in data])
+   
+    def formatOctBytes(self,data,extInfo,size,decode=False):
+        
+        if decode:
+            return [0*x for x in range(0,size)]
+        
+        return ', '.join(['%o' % x for x in data])
+    
+    def formatBinBytes(self,data,extInfo,size,decode=False):
+        
+        if decode:
+            return [0*x for x in range(0,size)]
+        
+        return ', '.join(['0b{0:b}'.format(x) for x in data])
+
+    def formatUint(self,data,extInfo,size,decode=False):
+        
+        if decode:
+            return [ord(x) for x in struct.pack('>I',data)[size:]]
+        
+        return self.unpackUINT(data)
+
+    def formatPercent(self,data,extInfo,size,decode=False):
         
         if len(data) > 1:
             
@@ -288,45 +358,78 @@ class hbusSlaveObjectDataType:
         if data > 100:
             data = 100
             
+        if decode:
+            return [ord(x) for x in struct.pack('>I',data)[size:]]
+            
         return "%d%%" % data
-    
-    def formatRelLinPercent(self,data):
+
+    def formatRelLinPercent(self,data,extInfo,size,decode=False):
+        
+        try:
+            minimumValue = self.unpackUINT(extInfo['MIN'])
+        except:
+            minimumValue = 0
+        
+        if decode:
+            
+            try:
+                maximumValue = self.unpackUINT(extInfo['MAX'])
+            except:
+                maximumValue = 2**(8*size) - 1
+                
+            
+            value = int((float(data)/100.0)*(maximumValue-minimumValue) + minimumValue)
+            
+            return [ord(x) for x in struct.pack('>I',value)[size:]]
         
         if data == None:
             return "?"
         
-        maximumValue = 2**(8*len(data)) - 1
+        try:
+            maximumValue = self.unpackUINT(extInfo['MAX'])
+        except:
+            maximumValue = 2**(8*len(data)) - 1
         
-        x = [0]
-        while (len(data) < 4):
-            x.extend(data)
-            data = x
-            x = [0]
+        value = self.unpackUINT(data)
         
-        byteList = array('B',data)
-        value = struct.unpack('>I',byteList)[0]
+        return "%.2f%%" % ((float(value-minimumValue)/float(maximumValue-minimumValue))*100)
+
+    def formatRelLogPercent(self,data,extInfo,size,decode=False):
         
-        return "%.2f%%" % ((float(value)/float(maximumValue))*100)
-    
-    def formatRelLogPercent(self,data):
+        try:
+            minimumValue = self.unpackUINT(extInfo['MIN'])
+        except:
+            minimumValue = 0
+        
+        if decode:
+            
+            try:
+                maximumValue = self.unpackUINT(extInfo['MAX'])
+            except:
+                maximumValue = 2**(8*size) - 1
+                
+            
+            value = int(10**((float(data)/100.0)*log(maximumValue-minimumValue)) + minimumValue)
+            
+            return [ord(x) for x in struct.pack('>I',value)[size:]]
         
         if data == None:
             return "?"
         
-        maximumValue = 2**(8*len(data)) - 1
+        try:
+            maximumValue = self.unpackUINT(extInfo['MAX'])
+        except:
+            maximumValue = 2**(8*len(data)) - 1
+            
         
-        x = [0]
-        while len(data) < 4:
-            x.extend(data)
-            data = x
-            x = [0]
+        value = self.unpackUINT(data)
         
-        byteList = array('B',data)
-        value = struct.unpack('>I',byteList)[0]
-        
-        return "%.2f%%" % ((log(float(value))/log(float(maximumValue)))*100)
+        return "%.2f%%" % ((log(float(value-minimumValue))/log(float(maximumValue-minimumValue)))*100)
     
-    def formatTime(self,data):
+    def formatTime(self,data,extInfo,size,decode=False):
+        
+        if decode:
+            return [0*x for x in range(0,size)]
         
         tenthSeconds = (data[3] & 0xF0)>>4
         milliSeconds = data[3] & 0x0F
@@ -341,14 +444,20 @@ class hbusSlaveObjectDataType:
         
         return "%2d:%2d:%2d,%2d" % (horas24,minutes+dezena*10,segundos+dezenaSegundos*10,milliSeconds+tenthSeconds*10)
     
-    def formatDate(self,data):
+
+    def formatDate(self,data,extInfo,size,decode=False):
+        
+        if decode:
+            return [0*x for x in range(0,size)]
         
         return "?"
     
     dataTypeNames = {dataTypeByte : 'Byte', dataTypeInt : 'Int', dataTypeUnsignedInt : 'Unsigned Int', dataTypeFixedPoint : 'Ponto fixo'}
     dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes  ,dataTypeByteDec : formatDecBytes  ,dataTypeByteOct : formatOctBytes ,dataTypeByteBin : formatBinBytes},
                        dataTypeUnsignedInt : {dataTypeUintNone : formatUint, dataTypeUintPercent : formatPercent, dataTypeUintLinPercent : formatRelLinPercent, dataTypeUintLogPercent : formatRelLogPercent, 
-                                              dataTypeUintTime : formatTime, dataTypeUintDate : formatDate}}
+                                              dataTypeUintTime : formatTime, dataTypeUintDate : formatDate},
+                       dataTypeFixedPoint : hbusFixedPointHandler(),
+                       dataTypeInt : hbusIntHandler()}
 
 class hbusSlaveObjectExtendedInfo:
     
@@ -378,20 +487,22 @@ class hbusSlaveObjectInfo:
         
         if self.objectDataType == 0 or self.objectDataType not in hbusSlaveObjectDataType.dataTypeOptions.keys():
             
-            print self.objectDataType
-            print hbusSlaveObjectDataType.dataTypeOptions.keys()
+            #print self.objectDataType
+            #print hbusSlaveObjectDataType.dataTypeOptions.keys()
             
             return self.objectLastValue #sem formato
         
         #analisa informação extra
-        if self.objectDataTypeInfo not in hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys():
+        if type(hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType]) == dict: 
+        
+            if self.objectDataTypeInfo not in hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys():
             
-            print self.objectDataTypeInfo
-            print hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys()
+            #print self.objectDataTypeInfo
+            #print hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys()
             
-            return self.objectLastValue #sem formato
+                return self.objectLastValue #sem formato
                 
-        return hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](self.objectLastValue,self.objectLastValue)
+        return hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](hbusSlaveObjectDataType(),data=self.objectLastValue,size=self.objectSize,extInfo=self.objectExtendedInfo)
         
     
     def __repr__(self):
@@ -524,11 +635,14 @@ class hbusMaster:
                     pass
                 
                 objFunction = obj.objectDescription.split(':')
+                objList = objFunction[0].split(',')
                 
-                if slave.hbusSlaveObjects[int(objFunction[0])].objectExtendedInfo == None:
-                    slave.hbusSlaveObjects[int(objFunction[0])].objectExtendedInfo = {}
+                for objSel in objList:
                 
-                slave.hbusSlaveObjects[int(objFunction[0])].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
+                    if slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo == None:
+                        slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo = {}
+                
+                        slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
                 
                 i += 1
             
@@ -875,7 +989,7 @@ class hbusMaster:
         #else:
         self.serialWrite(busOp.getString())
         
-    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=5000, timeoutAction=None):
+    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=20000, timeoutAction=None):
         
         self.expectedResponseQueue.append((command,source,timeout,datetime.now(),action,actionParameters,timeoutAction))
         
@@ -927,6 +1041,14 @@ class hbusMaster:
             
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveCapabilities = ord(data[1][3])
             
+            #capabilities
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveHasAUTH = True if ord(data[1][3]) & hbusSlaveCapabilities.hbusSlaveAuthSupport else False
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveHasCRYPTO = True if ord(data[1][3]) & hbusSlaveCapabilities.hbusSlaveCryptoSupport else False
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveHasEP = True if ord(data[1][3]) & hbusSlaveCapabilities.hbusSlaveEndpointSupport else False
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveHasINT = True if ord(data[1][3]) & hbusSlaveCapabilities.hbusSlaveIntSupport else False
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveHasUCODE = True if ord(data[1][3]) & hbusSlaveCapabilities.hbusSlaveUCODESupport else False
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveHasREVAUTH = True if ord(data[1][3]) & hbusSlaveCapabilities.hbusSlaveRevAuthSupport else False
+            
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveUniqueDeviceInfo, = struct.unpack('I',''.join(data[1][4:8]))
             
             #self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
@@ -956,9 +1078,11 @@ class hbusMaster:
             if ord(data[1][0]) & 0x08:
                 self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectHidden = True
                 
-            
-            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataType = ord(data[1][0]) & 0xF0
-            
+            if (ord(data[1][0]) & 0xF0) == 0: 
+                self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataType = hbusSlaveObjectDataType.dataTypeByte
+            else:
+                self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataType = ord(data[1][0]) & 0xF0
+                            
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectSize = ord(data[1][1])
             
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataTypeInfo = ord(data[1][2])
@@ -1113,6 +1237,17 @@ class hbusMaster:
         else:
             
             self.logger.warning("tentativa de escrita em objeto somente leitura")
+            
+    def writeFormattedSlaveObject(self,address,number,value):
+        
+        #decodifica formatação e realiza escrita no objeto
+        
+        obj = self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number]
+        
+        data = hbusSlaveObjectDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](hbusSlaveObjectDataType(),data=value,extInfo=obj.objectExtendedInfo,decode=True,size=obj.objectSize)
+        
+        self.writeSlaveObject(address, number, data)
+    
         
     def detectSlaves(self, callBack = None, allBusses = False):
         

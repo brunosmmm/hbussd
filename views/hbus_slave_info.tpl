@@ -21,7 +21,29 @@
         <h4>Capacidades do dispositivo</h4>
         
         <ul>
-        
+            %if slave.hbusSlaveHasAUTH:
+                <li>Autenticação de Mestre</li>
+            %end
+            
+            %if slave.hbusSlaveHasREVAUTH:
+                <li>Autenticação reversa</li>
+            %end
+            
+            %if slave.hbusSlaveHasEP:
+                <li>Suporte a Endpoints</li>
+            %end
+            
+            %if slave.hbusSlaveHasCRYPTO:
+                <li>Criptografia para objetos</li>
+            %end
+            
+            %if slave.hbusSlaveHasUCODE:
+                <li>Microcódigo HBUS</li>
+            %end
+            
+            %if slave.hbusSlaveHasINT:
+                <li>Interrupções</li>
+            %end
         </ul>
         
     </div>
@@ -40,6 +62,7 @@
                 <th scope="col">Tipo de dados</th>
                 <th scope="col">Último valor conhecido</th>
                 <th scope="col">Campos extras</th>
+                <th scope="col">Controle</th>
             </tr>
         </thead>
         <tbody>
@@ -84,6 +107,41 @@
                     %else:
                         &mdash;
                     %end
+                </td>
+                
+                <td>
+                    
+                    %if object.objectPermissions != 1:
+                    
+                    %if object.objectDataType == hbusSlaveObjectDataType.dataTypeUnsignedInt:
+                        %if object.objectDataTypeInfo in (hbusSlaveObjectDataType.dataTypeUintPercent,hbusSlaveObjectDataType.dataTypeUintLinPercent,hbusSlaveObjectDataType.dataTypeUintLogPercent):
+                            <form action="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}" method="post">
+                            <input type="range" name="value" min="0" max="100">
+                                <button type="submit" class="positive" name="save">
+                                <!-- <img src="/static/apply2.png" alt=""/> -->
+                                Enviar
+                                </button>
+                            </form>
+                        %else:
+                            &mdash;
+                        %end
+                    %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeByte:
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBin:
+                            <form action="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}" method="post">
+                                
+                                
+                            </form>
+                        %else:
+                            &mdash;
+                        %end
+                    %else:
+                        &mdash;
+                    %end
+                    
+                    %else:
+                        &mdash;
+                    %end
+                    
                 </td>
                 
             </tr>
