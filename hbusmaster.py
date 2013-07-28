@@ -6,7 +6,7 @@ import logging
 import signal
 from collections import deque
 import threading
-
+import re
 import hbus_crypto
 
 from twisted.internet import reactor
@@ -70,6 +70,8 @@ HBUS_COMMANDLIST = (HBUSCOMMAND_SETCH,HBUSCOMMAND_SEARCH,HBUSCOMMAND_GETCH,HBUSC
 HBUS_COMMANDBYTELIST = (x.commandByte for x in HBUS_COMMANDLIST)
 
 HBUS_BROADCAST_ADDRESS = 255
+
+HBUS_UNITS = {'A' : 'A', 'V' : 'V', 'P' : 'Pa', 'C':'C'}
 
 
 
@@ -250,7 +252,7 @@ class hbusFixedPointHandler:
         
         try:
             unit = extInfo['UNIT']
-            value = str(value)+" "+''.join([chr(x) for x in unit])
+            value = str(value)+" "+HBUS_UNITS[chr(unit[0])]
         except:
             pass
         
@@ -275,7 +277,15 @@ class hbusIntHandler:
         
         byteList = array('B',data)
         
-        return struct.unpack('>i',byteList)[0]
+        value = struct.unpack('>i',byteList)[0]
+        
+        try:
+            unit = extInfo['UNIT']
+            value = str(value)+" "+HBUS_UNITS[chr(unit[0])]
+        except:
+            pass
+        
+        return value
     
     def __getitem__(self,key):
         
@@ -424,7 +434,13 @@ class hbusSlaveObjectDataType:
         
         value = self.unpackUINT(data)
         
-        return "%.2f%%" % ((log(float(value-minimumValue))/log(float(maximumValue-minimumValue)))*100)
+        try:
+            percent = (log(float(value-minimumValue))/log(float(maximumValue-minimumValue)))*100
+        except:
+            percent = 0
+            
+        
+        return "%.2f%%" % percent
     
     def formatTime(self,data,extInfo,size,decode=False):
         
@@ -581,6 +597,8 @@ class hbusMaster:
     
     detectedSlaveList = {}
     
+    staticSlaveList = []#[hbusDeviceAddress(0, 31),hbusDeviceAddress(0, 32)]
+    
     registeredSlaveCount = 0
     
     masterState = hbusMasterState.hbusMasterStarting
@@ -635,14 +653,27 @@ class hbusMaster:
                     pass
                 
                 objFunction = obj.objectDescription.split(':')
+                
                 objList = objFunction[0].split(',')
                 
                 for objSel in objList:
+                    
+                    x = re.match(r"([0-9]+)-([0-9]+)",objSel)
+                    
+                    if x != None:
+                        
+                        for rangeObj in range(int(x.group(1)),int(x.group(2))+1):
+                            
+                            if slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo == None:
+                                slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo = {}
                 
-                    if slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo == None:
-                        slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo = {}
+                                slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
+                            
+                    else:
+                        if slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo == None:
+                            slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo = {}
                 
-                        slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
+                            slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
                 
                 i += 1
             
@@ -1015,7 +1046,7 @@ class hbusMaster:
         self.logger.debug("Iniciando análise do escravo "+str(address.getGlobalID()))
         
         #executa BUSLOCK
-        self.sendCommand(HBUSCOMMAND_BUSLOCK,address)
+        #self.sendCommand(HBUSCOMMAND_BUSLOCK,address)
         
         self.expectResponse(HBUSCOMMAND_QUERY_RESP,address,self.receiveSlaveInformation,actionParameters=("Q",address))
         self.sendCommand(HBUSCOMMAND_QUERY, address,params=[0])
@@ -1114,7 +1145,7 @@ class hbusMaster:
                     self.sendCommand(HBUSCOMMAND_QUERY_INT,data[0][1],params=[0])
                 
                 else:
-                    self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
+                    #self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                     self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
                     #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
@@ -1149,7 +1180,7 @@ class hbusMaster:
                     self.sendCommand(HBUSCOMMAND_QUERY_INT,data[0][1],params=[0])
                 
                 else:
-                    self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
+                    #self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                     self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
                     #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
@@ -1173,7 +1204,7 @@ class hbusMaster:
                 self.sendCommand(HBUSCOMMAND_QUERY_INT,data[0][1],params=[currentInterrupt+1])
                 
             else:
-                self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
+                #self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                 self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
                 #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                 self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
@@ -1337,6 +1368,8 @@ class hbusMaster:
                     
                 #    self.logger.debug(s.hbusSlaveObjects)
             
+            self.processStaticSlaves()
+            
             self.logger.debug("Nova thread iniciada, 'startReadingSlaves'")
             #t = threading.Thread(target=startReadingSlaves)
             #t.start()
@@ -1413,8 +1446,6 @@ class hbusMaster:
                 
                 self.hbusDeviceSearchTimer = datetime.now()
         
-        
-            
         #if allBusses:
         #    
         #    for b in range(0,32):
@@ -1430,4 +1461,13 @@ class hbusMaster:
         #        
         #        self.sendCommand(HBUSCOMMAND_SEARCH,hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,d))
         #        self.expectResponse(HBUSCOMMAND_ACK,hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,d),action=self.registerNewSlave,actionParameters=hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,d),timeout=10000000)
-                
+    def processStaticSlaves(self):
+        
+        for addr in self.staticSlaveList:
+            
+            self.logger.info("Escravo com endereço estático em %s",str(addr))
+            
+            self.registerNewSlave(addr)
+            
+            pass
+            
