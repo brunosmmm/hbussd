@@ -778,8 +778,8 @@ class hbusMaster:
             elif self.hbusRxState == hbusMasterRxState.hbusRXPSZ:
                 
                 if ord(self.communicationBuffer[4]) != HBUSCOMMAND_STREAMW.commandByte and ord(self.communicationBuffer[4]) != HBUSCOMMAND_STREAMR.commandByte:
-                    if ord(d) > 24:
-                        d = chr(24)
+                    if ord(d) > 64:
+                        d = chr(64)
                 
                 self.communicationBuffer.append(d)
                 self.lastPacketParamSize = ord(d)
@@ -1015,10 +1015,10 @@ class hbusMaster:
             else:
                 
                 self.logger.debug("erro de BUSUNLOCK: travado com %s, tentativa de destravamento com %s" % (self.hbusBusLockedWith,dest))
-        #if self.masterState == hbusMasterState.hbusMasterScanning:
-            #reactor.callFromThread(self.serialWrite,busOp.getString())
-        #else:
-        self.serialWrite(busOp.getString())
+        if self.masterState == hbusMasterState.hbusMasterScanning:
+            reactor.callFromThread(self.serialWrite,busOp.getString())
+        else:
+            self.serialWrite(busOp.getString())
         
     def expectResponse(self, command, source, action=None, actionParameters=None, timeout=20000, timeoutAction=None):
         
