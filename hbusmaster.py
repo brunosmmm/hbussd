@@ -3,15 +3,18 @@
 import struct
 from datetime import datetime
 import logging
-import signal
+#import signal
 from collections import deque
-import threading
+#import threading
 import re
 import hbus_crypto
 
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from array import array
 from math import log
+
+
+from bitstring import BitArray 
 
 def getMillis(td):
     
@@ -269,15 +272,17 @@ class hbusIntHandler:
     
     def formatInt(self,dummy,data,extInfo,size,decode=False):
         
-        x = [0]
-        while (len(data) < 4):
-            x.extend(data)
-            data = x
-            x = [0]
+        #x = [0]
+        #while (len(data) < 4):
+        #    x.extend(data)
+        #    data = x
+        #    x = [0]
         
-        byteList = array('B',data)
+        #byteList = array('B',data)
         
-        value = struct.unpack('>i',byteList)[0]
+        #value = struct.unpack('>i',byteList)[0]
+        
+        value = BitArray(bytes=''.join([chr(x) for x in data])).int
         
         try:
             unit = extInfo['UNIT']
@@ -302,6 +307,7 @@ class hbusSlaveObjectDataType:
     dataTypeByteDec = 0x02
     dataTypeByteOct = 0x03
     dataTypeByteBin = 0x07
+    dataTypeByteBool = 0x08
     
     dataTypeUintPercent     = 0x04
     dataTypeUintLinPercent  = 0x05
@@ -323,6 +329,19 @@ class hbusSlaveObjectDataType:
         byteList = array('B',data)
         
         return struct.unpack('>I',byteList)[0]
+    
+    def formatBoolBytes(self,data,extInfo,size,decode=False):
+        
+        if decode:
+            if data == "ON":
+                return [1];
+            
+            return [0];
+        
+        if (data[0] > 0):
+            return 'ON'
+        else:
+            return 'OFF'
     
     def formatHexBytes(self,data,extInfo,size,decode=False):
         
@@ -361,7 +380,7 @@ class hbusSlaveObjectDataType:
 
     def formatPercent(self,data,extInfo,size,decode=False):
         
-        if len(data) > 1:
+        if len(data) > 0:
             
             data = int(data[::-1])
             
@@ -469,7 +488,8 @@ class hbusSlaveObjectDataType:
         return "?"
     
     dataTypeNames = {dataTypeByte : 'Byte', dataTypeInt : 'Int', dataTypeUnsignedInt : 'Unsigned Int', dataTypeFixedPoint : 'Ponto fixo'}
-    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes  ,dataTypeByteDec : formatDecBytes  ,dataTypeByteOct : formatOctBytes ,dataTypeByteBin : formatBinBytes},
+    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes  ,dataTypeByteDec : formatDecBytes  ,dataTypeByteOct : formatOctBytes ,dataTypeByteBin : formatBinBytes,
+                                       dataTypeByteBool : formatBoolBytes},
                        dataTypeUnsignedInt : {dataTypeUintNone : formatUint, dataTypeUintPercent : formatPercent, dataTypeUintLinPercent : formatRelLinPercent, dataTypeUintLogPercent : formatRelLogPercent, 
                                               dataTypeUintTime : formatTime, dataTypeUintDate : formatDate},
                        dataTypeFixedPoint : hbusFixedPointHandler(),
@@ -577,6 +597,33 @@ class hbusMasterState:
     hbusMasterAddressing = 3
     hbusMasterScanning = 4
     hbusMasterOperational = 5
+    
+class hbusPendingAnswer:
+    
+    def __init__(self,command,source,timeout,action=None,actionParameters=None,timeoutAction=None):
+        
+        self.command = command
+        self.source = source
+        self.timeout = timeout
+        self.now = datetime.now()
+        
+        self.dCallback = defer.Deferred()
+        
+        if action != None:
+            self.dCallback.addCallback(action)
+        
+        #self.action= action
+        self.actionParameters = actionParameters
+        
+        self.tCallback = defer.Deferred()
+        if timeoutAction != None:
+            self.tCallback.addCallback(timeoutAction)
+        
+        #self.timeoutAction = timeoutAction
+        
+    def addTimeoutHandler(self,timeoutHandler):
+        
+        self.timeoutHandler = timeoutHandler
 
 class hbusMaster:
     
@@ -597,7 +644,7 @@ class hbusMaster:
     
     detectedSlaveList = {}
     
-    staticSlaveList = []#[hbusDeviceAddress(0, 31),hbusDeviceAddress(0, 32)]
+    staticSlaveList = [hbusDeviceAddress(0, 31),hbusDeviceAddress(1,30)]
     
     registeredSlaveCount = 0
     
@@ -624,7 +671,7 @@ class hbusMaster:
         
         self.logger = logging.getLogger('hbus_skeleton.hbusmaster')
         
-        signal.signal(signal.SIGALRM, self.handleAlarm)
+        #signal.signal(signal.SIGALRM, self.handleAlarm)
         
         #self.hbusSerial = hbusSerialConnection(port,baudrate,self.hbusSerialRxTimeout)
     
@@ -703,7 +750,8 @@ class hbusMaster:
         
         self.logger.debug("Aguardando RESET dos escravos...")
         
-        signal.alarm(1)
+        #signal.alarm(1)
+        reactor.callLater(1,self.handleAlarm)
         
         #self.detectSlaves()
         
@@ -714,6 +762,13 @@ class hbusMaster:
     def serialRead(self,size):
         
         pass #overload
+    
+    def serialRXMachineTimeout(self):
+        
+        self.communicationBuffer = []
+        self.hbusRXState = hbusMasterRxState.hbusRXSBID
+        
+        self.logger.warning("Timeout na formação de pacote")
     
     def serialNewData(self,data):
         
@@ -726,7 +781,7 @@ class hbusMaster:
             self.communicationBuffer = []
             
             self.logger.warning("HBUSOP Timeout")
-            self.logger.debug("COM BUF = "+self.communicationBuffer)
+            #self.logger.debug("COM BUF = "+self.communicationBuffer)
         
         for d in data:
             
@@ -738,25 +793,41 @@ class hbusMaster:
                 
                 self.hbusRxState = hbusMasterRxState.hbusRXSDID
                 
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                
             elif self.hbusRxState == hbusMasterRxState.hbusRXSDID:
+                
+                self.RXTimeout.cancel()
                 
                 self.communicationBuffer.append(d)
                 
                 self.hbusRxState = hbusMasterRxState.hbusRXTBID
                 
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                
             elif self.hbusRxState == hbusMasterRxState.hbusRXTBID:
+                
+                self.RXTimeout.cancel()
                 
                 self.communicationBuffer.append(d)
                 
                 self.hbusRxState = hbusMasterRxState.hbusRXTDID
                 
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                
             elif self.hbusRxState == hbusMasterRxState.hbusRXTDID:
+                
+                self.RXTimeout.cancel()
                 
                 self.communicationBuffer.append(d)
                 
                 self.hbusRxState = hbusMasterRxState.hbusRXCMD
                 
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                
             elif self.hbusRxState == hbusMasterRxState.hbusRXCMD:
+                
+                self.RXTimeout.cancel()
                 
                 self.communicationBuffer.append(d)
             
@@ -764,8 +835,12 @@ class hbusMaster:
                     self.hbusRxState = hbusMasterRxState.hbusRXSTP
                 else:
                     self.hbusRxState = hbusMasterRxState.hbusRXADDR
-                self.commandDelay
+                
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                    
             elif self.hbusRxState == hbusMasterRxState.hbusRXADDR:
+                
+                self.RXTimeout.cancel()
                 
                 self.communicationBuffer.append(d)
                 
@@ -774,8 +849,12 @@ class hbusMaster:
                     self.hbusRxState = hbusMasterRxState.hbusRXSTP
                 else:
                     self.hbusRxState = hbusMasterRxState.hbusRXPSZ
+                    
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
                 
             elif self.hbusRxState == hbusMasterRxState.hbusRXPSZ:
+                
+                self.RXTimeout.cancel()
                 
                 if ord(self.communicationBuffer[4]) != HBUSCOMMAND_STREAMW.commandByte and ord(self.communicationBuffer[4]) != HBUSCOMMAND_STREAMR.commandByte:
                     if ord(d) > 64:
@@ -791,8 +870,12 @@ class hbusMaster:
                         self.hbusRxState = hbusMasterRxState.hbusRXPRM
                     else:
                         self.hbusRxState = hbusMasterRxState.hbusRXSTP #faltava
+                        
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
                 
             elif self.hbusRxState == hbusMasterRxState.hbusRXPRM:
+                
+                self.RXTimeout.cancel()
                 
                 if len(self.communicationBuffer) <= (6 + self.lastPacketParamSize):
                     self.communicationBuffer.append(d)
@@ -807,16 +890,23 @@ class hbusMaster:
                         
                         self.hbusRxState = hbusMasterRxState.hbusRXSBID
                         
-                        t = threading.Thread(target=self.parseReceivedData(self.communicationBuffer))
-                        t.start()
+                        #t = threading.Thread(target=self.parseReceivedData(self.communicationBuffer))
+                        #t.start()
+                        #reactor.callInThread(self.parseReceivedData,self.communicationBuffer)
+                        self.parseReceivedData(self.communicationBuffer)
+                        
+                        return
                         
                     else:
                         self.logger.debug("pacote mal-formado, erro no fechamento")
                         self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
                         
                         #print self.communicationBuffer
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
             
             elif self.hbusRxState == hbusMasterRxState.hbusRXSTP:
+                
+                self.RXTimeout.cancel()
                 
                 self.communicationBuffer.append(d)
                 
@@ -826,8 +916,10 @@ class hbusMaster:
                 self.hbusRxState = hbusMasterRxState.hbusRXSBID
                 
                 if ord(d) == 0xFF:
-                        t = threading.Thread(target=self.parseReceivedData(self.communicationBuffer))
-                        t.start()
+                        #t = threading.Thread(target=self.parseReceivedData(self.communicationBuffer))
+                        #t.start()
+                        #reactor.callInThread(self.parseReceivedData,self.communicationBuffer)
+                        self.parseReceivedData(self.communicationBuffer)
                 else:
                     self.logger.debug("pacote mal-formado, erro no fechamento")
                     self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
@@ -893,9 +985,13 @@ class hbusMaster:
         #    self.logger.warning("Comando inválido recebido: "+str(ord(data[4])))
         #    return None
         #self.logger.debug('psize %d' % pSize)
-        
-        busOp = hbusOperation(hbusInstruction(self.getCommand(ord(data[4])), pSize, params), hbusDeviceAddress(ord(data[2]), ord(data[3])), hbusDeviceAddress(ord(data[0]),ord(data[1])))
-        
+        try:
+            busOp = hbusOperation(hbusInstruction(self.getCommand(ord(data[4])), pSize, params), hbusDeviceAddress(ord(data[2]), ord(data[3])), hbusDeviceAddress(ord(data[0]),ord(data[1])))
+        except:
+            
+            self.logger.warning("Pacote inválido recebido")
+            return
+            
         self.logger.debug(busOp)
         #print busOp
         
@@ -926,48 +1022,65 @@ class hbusMaster:
                 
                 #removeQueue = []
                 
+                selectedR = None
                 for r in self.expectedResponseQueue:
                     
                     if r in self.removeQueue:
                         continue
                 
                 #r = self.expectedResponseQueue[0]
-                    if r[1] == busOp.hbusOperationSource and r[0] == busOp.instruction.command:
-                        if r[2] > getMillis((datetime.now() - r[3])):
+                    if r.source == busOp.hbusOperationSource and r.command == busOp.instruction.command:
+                        #if r.timeout > getMillis((datetime.now() - r.now)):
                             #ok
-                            if r[4] != None:
-                                if r[5] != None:
-                                    r[4]((r[5],busOp.instruction.params))
-                                    
-                                    #self.logger.debug("HBUSOP RESPONSE OK")
-                                    self.removeQueue.append(r)
-                                    break
-                                    
-                                else:
-                                    r[4](busOp.instruction.params)
-                                    self.removeQueue.append(r)
-                                    break
-                                    
-                                    #self.logger.debug("HBUSOP RESPONSE OK")
-                        else:
+                            #if r.action != None:
+                            #    if r.actionParameters != None:
+                            #        r.action((r.actionParameters,busOp.instruction.params)) #callback
+                            #        
+                            #        #self.logger.debug("HBUSOP RESPONSE OK")
+                            #        self.removeQueue.append(r)
+                            #        
+                            #        r.timeoutHandler.cancel()
+                            #        
+                            #        break
+                            #        
+                            #    else:
+                            #        r.action(busOp.instruction.params) #callback
+                            #        self.removeQueue.append(r)
+                            #        
+                            #        r.timeoutHandler.cancel()
+                            #        break
+                            #        
+                            #        #self.logger.debug("HBUSOP RESPONSE OK")
+                        selectedR = r
+                        r.timeoutHandler.cancel()
+                        self.removeQueue.append(r)
+                        break
+                            
+                            
+                        #else:
                             #timeout
                             
-                            self.logger.warning("HBUSOP RESPONSE Timeout")
-                            if self.masterState == hbusMasterState.hbusMasterScanning:
-                                self.hbusDeviceScanningTimeout = True
+                        #    self.logger.warning("HBUSOP RESPONSE Timeout")
+                        #    if self.masterState == hbusMasterState.hbusMasterScanning:
+                        #        self.hbusDeviceScanningTimeout = True
                             
                         #self.expectedResponseQueue.popleft()
-                        self.removeQueue.append(r)
+                        #self.removeQueue.append(r)
                     
-                    elif r[2] < getMillis((datetime.now() - r[3])):
-                        
-                        self.logger.warning("HBUSOP RESPONSE Timeout")
-                        if self.masterState == hbusMasterState.hbusMasterScanning:
-                            self.hbusDeviceScanningTimeout = True
-                        
-                        #self.expectedResponseQueue.popleft()
-                        self.removeQueue.append(r)
-                        
+                    #elif r.timeout < getMillis((datetime.now() - r.now)):
+                    #    
+                    #    self.logger.warning("HBUSOP RESPONSE Timeout")
+                    #    if self.masterState == hbusMasterState.hbusMasterScanning:
+                    #        self.hbusDeviceScanningTimeout = True
+                    #    
+                    #    #self.expectedResponseQueue.popleft()
+                    #    self.removeQueue.append(r)
+                    #       
+            if selectedR != None:
+                if selectedR.actionParameters != None:
+                    selectedR.dCallback.callback((selectedR.actionParameters,busOp.instruction.params))
+                else:
+                    selectedR.dCallback.callback(busOp.instruction.params)
         else:
             
             if busOp.instruction.command == HBUSCOMMAND_BUSLOCK:
@@ -981,6 +1094,7 @@ class hbusMaster:
 
     def sendCommand(self,command, dest, params=()):
         
+        #blocante!!
         while self.hbusRxState != 0:
             pass
         
@@ -1020,9 +1134,15 @@ class hbusMaster:
         else:
             self.serialWrite(busOp.getString())
         
-    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=20000, timeoutAction=None):
+    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=3000, timeoutAction=None):
         
-        self.expectedResponseQueue.append((command,source,timeout,datetime.now(),action,actionParameters,timeoutAction))
+        pending = hbusPendingAnswer(command,source,timeout,action,actionParameters,timeoutAction)
+        
+        #timeout handler
+        timeoutHandler = reactor.callLater(timeout/1000,self.responseTimeoutCallback,pending)
+        pending.addTimeoutHandler(timeoutHandler)
+        
+        self.expectedResponseQueue.append(pending)
         
         self.logger.debug("Registrando resposta esperada")
         
@@ -1209,11 +1329,11 @@ class hbusMaster:
                 #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                 self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
     
-    def readSlaveObject(self,address,number,callBack=None):
+    def readSlaveObject(self,address,number,callBack=None,timeoutCallback=None):
         
         if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectWrite:
         
-            self.expectResponse(HBUSCOMMAND_RESPONSE,address,self.receiveSlaveObjectData,actionParameters=(address,number,callBack))
+            self.expectResponse(HBUSCOMMAND_RESPONSE,address,self.receiveSlaveObjectData,actionParameters=(address,number,callBack),timeoutAction=timeoutCallback)
             self.sendCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)])
             
         else:
@@ -1298,12 +1418,14 @@ class hbusMaster:
         
         self.logger.info("Iniciando busca por escravos")
         
-        signal.alarm(10)
+        #signal.alarm(10)
+        
+        reactor.callLater(10,self.handleAlarm)
         
         self.detectSlavesEnded = callBack
              
         
-    def handleAlarm(self,signum,frame):
+    def handleAlarm(self):
         
         if self.masterState == hbusMasterState.hbusMasterSearching:
             
@@ -1337,7 +1459,7 @@ class hbusMaster:
                     while (self.detectedSlaveList[slave].basicInformationRetrieved == False):
                         #pass
                         if (getMillis(datetime.now() - timeoutcounter) > 30000) or (self.hbusDeviceScanningTimeout == True):
-                            if retry < 2:
+                            if retry < 5:
                                 retry += 1
                                 
                                 #espera alguns segundos
@@ -1393,6 +1515,24 @@ class hbusMaster:
         self.logger.debug("dispositivo com UID <"+str(int(uid))+"> não encontrado")
         return None
     
+    def responseTimeoutCallback(self,response):
+        
+        
+        self.logger.warning('Timeout de resposta')
+        self.logger.debug("Timeout de resposta: %s",response)
+        
+        if self.hbusBusState == hbusBusStatus.hbusBusLockedThis:
+            self.sendCommand(HBUSCOMMAND_BUSUNLOCK, self.hbusBusLockedWith)
+
+        if self.masterState == hbusMasterState.hbusMasterScanning:
+            self.hbusDeviceScanningTimeout = True
+        
+        self.expectedResponseQueue.remove(response)
+        
+        #if response.timeoutAction != None:
+        #    response.timeoutAction(response.source)
+        response.tCallback.callback(response.source)
+    
     def periodicCall(self):
         
         #expectedResponseQueue cleanup
@@ -1407,32 +1547,32 @@ class hbusMaster:
                 self.logger.debug("Limpeza da fila de respostas...")
         
         #procura timeouts
-        for r in self.expectedResponseQueue:
-            
-            if r[2] < getMillis((datetime.now() - r[3])):
-                self.removeQueue.append(r)
-                
-                self.logger.warning('Timeout de resposta')
-                self.logger.debug("Timeout de resposta: %s",r)
-                
-                if self.hbusBusState == hbusBusStatus.hbusBusLockedThis:
-                    self.sendCommand(HBUSCOMMAND_BUSUNLOCK, self.hbusBusLockedWith)
-                
-                if self.masterState == hbusMasterState.hbusMasterScanning:
-                    self.hbusDeviceScanningTimeout = True
-                    #pass
-                
-                if r[6] != None:
-                    r[6](r[1])
+        #for r in self.expectedResponseQueue:
+        #    
+        #    if r.timeout < getMillis((datetime.now() - r.now)):
+        #        self.removeQueue.append(r)
+        #        
+        #        self.logger.warning('Timeout de resposta')
+        #        self.logger.debug("Timeout de resposta: %s",r)
+        #        
+        #        if self.hbusBusState == hbusBusStatus.hbusBusLockedThis:
+        #            self.sendCommand(HBUSCOMMAND_BUSUNLOCK, self.hbusBusLockedWith)
+        #        
+        #        if self.masterState == hbusMasterState.hbusMasterScanning:
+        #            self.hbusDeviceScanningTimeout = True
+        #            #pass
+        #        
+        #        if r.timeoutAction != None:
+        #            r.timeoutAction(r.source)
                 
         #remove elementos restantes
-        for r in self.removeQueue:
-            
-            if r in self.expectedResponseQueue:
-                
-                self.expectedResponseQueue.remove(r)
-                
-                self.logger.debug("Limpeza da fila de respostas...")
+        #for r in self.removeQueue:
+        #    
+        #    if r in self.expectedResponseQueue:
+        #        
+        #        self.expectedResponseQueue.remove(r)
+        #        
+        #        self.logger.debug("Limpeza da fila de respostas...")
                 
         del self.removeQueue[:]
         

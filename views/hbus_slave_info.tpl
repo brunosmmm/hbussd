@@ -131,6 +131,14 @@
                                 
                                 
                             </form>
+                        %elif object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
+                            <form action="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}" method="post">
+                            <input type="radio" name="value" value="ON">ON<br>
+                            <input type="radio" name="value" value="OFF">OFF
+                                <button type="submit" class="positive" name="save">
+                                Enviar
+                                </button>
+                            </form>
                         %else:
                             &mdash;
                         %end

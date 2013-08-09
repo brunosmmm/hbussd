@@ -45,7 +45,7 @@ class HBUSWEB:
                 
                 try:
                     self.wait = True
-                    self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead)
+                    self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead,timeoutCallback=waitForSlaveRead)
                     
                     while (self.wait == True):
                         pass
