@@ -17,6 +17,10 @@ class HBUSWEB:
         
         return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values())
     
+    def favicon(self):
+        
+        return static_file('favicon.ico',root='web_static') 
+        
     def slaveInfo(self,addr=None,uid=None,obj=None):
         
         self.wait = False
@@ -97,6 +101,7 @@ class HBUSWEB:
         route("/slave-uid/<uid>/<obj>",method="POST")(self.slaveInfoSet)
         
         route ("/static/<filename>")(self.staticFiles)
+        route ("/favicon.ico")(self.favicon)
         
         run(host='192.168.1.122',port=self.port)
 
