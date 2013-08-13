@@ -74,6 +74,10 @@
                 %continue
             %end
             
+            %if object.objectLevel < objectLevel:
+                %continue
+            %end
+            
             <tr>
                 <td style="text-align: center">{{i}}</td>
                 <td>{{object.objectDescription}}</td>
@@ -118,7 +122,7 @@
                             <form action="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}" method="post">
                             <input type="range" name="value" min="0" max="100">
                                 <button type="submit" class="positive" name="save">
-                                <!-- <img src="/static/apply2.png" alt=""/> -->
+                                <!-- <img src="/static/apply2.png" alt=""/> -->  
                                 Enviar
                                 </button>
                             </form>

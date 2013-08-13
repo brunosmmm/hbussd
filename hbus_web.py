@@ -23,6 +23,8 @@ class HBUSWEB:
         
     def slaveInfo(self,addr=None,uid=None,obj=None):
         
+        objectLevel = 0
+        
         self.wait = False
         def waitForSlaveRead(dummy):
             
@@ -56,9 +58,11 @@ class HBUSWEB:
                 except:
                     pass
         
-        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType)
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=objectLevel)
     
     def slaveInfoSet(self,uid=None,obj=None):
+        
+        objectLevel = 0
         
         newObjValue = request.forms.get('value')
         
@@ -81,7 +85,7 @@ class HBUSWEB:
                 #except:
                 #    pass
         
-        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType)
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=objectLevel)
         
     
     def staticFiles(self,filename):

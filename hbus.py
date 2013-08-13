@@ -76,6 +76,9 @@ def main():
     hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
     hbusMasterPeriodicTask.start(1)
     
+    hbusSlaveChecker = LoopingCall(hbusMaster.checkSlaves)
+    hbusSlaveChecker.start(300, False)
+    
     #lança pagina web
     hbusWeb = HBUSWEB(8000,hbusMaster)
     reactor.callInThread(hbusWeb.run)
