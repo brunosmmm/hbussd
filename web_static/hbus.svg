@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg2" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="300.09" width="411.89" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata7">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g id="layer1" transform="translate(-163.98 -341.68)">
+  <g id="g4095" transform="matrix(5 0 0 -5 -191.08 1001.7)" stroke="#1a14b6" fill="#1a14b6">
+   <g id="g4097" transform="scale(.1)" stroke="#1a14b6" fill="#1a14b6">
+    <path id="path4099" d="m810 1215c-18.75 37.5-18.75 48.75-30 105-11.25-56.25-11.25-67.5-30-105 22.5 7.5 37.5 7.5 60 0" fill-rule="evenodd"/>
+    <path id="path4101" d="m780 780v480" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5"/>
+    <path id="path4103" d="m750 825c18.75-37.5 18.75-48.75 30-105 11.25 56.25 11.25 67.5 30 105-22.5-7.5-37.5-7.5-60 0" fill-rule="evenodd"/>
+    <path id="path4105" d="m1050 1215c-18.75 37.5-18.75 48.75-30 105-11.25-56.25-11.25-67.5-30-105 22.5 7.5 37.5 7.5 60 0" fill-rule="evenodd"/>
+    <path id="path4107" d="m1020 780v480" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5"/>
+    <path id="path4109" d="m990 825c18.75-37.5 18.75-48.75 30-105 11.25 56.25 11.25 67.5 30 105-22.5-7.5-37.5-7.5-60 0" fill-rule="evenodd"/>
+    <path id="path4111" d="m840 1080-120-120" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5"/>
+    <path id="path4113" d="m1080 1080-120-120" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5"/>
+    <path id="path4115" d="m780 1020h240" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5"/>
+    <g id="g4117" transform="scale(10)">
+     <text id="text4119" transform="matrix(1 0 0 -1 106.16 96)" stroke="#1a14b6" fill="#1a14b6">
+      <tspan id="tspan4121" font-weight="bold" font-size="22.5px" stroke="#1a14b6" y="0" x="0 16.245001 32.490002" font-family="Helvetica" fill="#1a14b6">BUS</tspan>
+     </text>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

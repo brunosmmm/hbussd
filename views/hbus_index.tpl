@@ -8,15 +8,45 @@
         -->
         </style>
 	</head>
+	
+<div class="hbusContainer">
 
-	<div>
-		<h1><a href="/">HBUS Server</a></h1>
-	</div>
+    <header class="hbusMHeader">
+        <section>
+            <a href="/" class="hbusLogo">HBUS</a>
+        </section>
+        <aside>
+            <div class="hbusStatus">
+                
+                <div class = "activeSlaveCount">{{masterStatus.activeSlaveCount}}</div>
+                <div class = "statusText">Dispositivos <br /> ativos</div>
+                
+            </div>
+            
+            <div class="hbusStatus">
+                
+            </div>
+        </aside>
+    </header>
 	
-	<div>
-	   <h3>Dispositivos Ativos ({{len(slaves)}})</h3>
-	</div>
+	<section class="hbusActiveDevices">
+	   Dispositivos ativos
+	</section>
 	
+	<div class=hbusMMain>
+	
+	       
+	   <ul class="busGrid">
+	       
+	       %for activeBus in masterStatus.activeBusses:
+	           <li><a href="bus/{{activeBus}}">BUS {{activeBus}}</a></li>
+	       %end
+	       
+	           <li><a href="bus/255">Todos</a></li>
+	       
+	   </ul>
+	
+	<!--
     <table id="hor-minimalist-a" summary="Lista de dispositivos ativos" style="margin-left: auto;margin-right: auto">
         <thead>
             <tr>
@@ -47,5 +77,10 @@
         
         </tbody>
         </table>
+    -->
+        
+    </div>
+    
+</div>
         
 </html>

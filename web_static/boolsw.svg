@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg4486" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="413.86" width="286.62" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata4491">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g id="layer1" stroke="#999" transform="translate(-212.36 -326.24)">
+  <path id="path4527" d="m242.86 585.22v150h240v-150h-240" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4529" d="m422.86 585.22v-30h-120v30" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4531" d="m392.86 555.22c0-16.566-13.434-30-30-30s-30 13.434-30 30" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4533" d="m482.86 465.22-90 90" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4535" d="m422.86 405.22-60 120" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4537" d="m482.03 464.39c7.73-7.74 12.08-18.23 12.08-29.17 0-22.78-18.47-41.25-41.25-41.25-10.94 0-21.43 4.35-29.17 12.08" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4539" d="m445.58 362.2c-26.13-11.2-54.282-16.98-82.72-16.98s-56.586 5.78-82.723 16.98" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4541" d="m288.79 326.74c-23.102 34.99-32.844 40.61-75.934 78.48 54.34-18.38 64.082-24.01 105.93-26.52-17.746-15.73-25.246-28.73-30-51.96" fill-rule="evenodd" fill="#999"/>
+  <path id="path4543" d="m329.58 610.3c-16.692 11.125-26.719 29.863-26.719 49.922 0 33.137 26.863 60 60 60s60-26.863 60-60c0-20.059-10.03-38.797-26.719-49.922" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4545" d="m362.86 675.22v-75" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+ </g>
+</svg>

@@ -4,7 +4,7 @@ import struct
 from datetime import datetime
 import logging
 #import signal
-from collections import deque
+from collections import deque, OrderedDict
 #import threading
 import re
 import hbus_crypto
@@ -134,7 +134,7 @@ class hbusDeviceAddress:
         
     def __repr__(self):
         
-        return "(BUS ID = "+str(self.hbusAddressBusNumber)+", DEV ID = "+str(self.hbusAddressDevNumber)+")"
+        return "("+str(self.hbusAddressBusNumber)+":"+str(self.hbusAddressDevNumber)+")"
     
     def __eq__(self, other):
         if isinstance(other, hbusDeviceAddress):
@@ -649,6 +649,13 @@ class hbusPendingAnswer:
         
         self.timeoutHandler = timeoutHandler
 
+class hbusMasterInformationData:
+    
+    def __init__(self,slaveCount,activeBusses):
+        
+        self.activeSlaveCount = slaveCount
+        self.activeBusses = activeBusses
+
 class hbusMaster:
     
     hbusSerialRxTimeout = 100
@@ -704,6 +711,12 @@ class hbusMaster:
     
         self.serialCreate()
         
+    def getInformationData(self):
+        
+        busses = list(set([slave.hbusSlaveAddress.hbusAddressBusNumber for slave in self.detectedSlaveList.values()]))
+        
+        return hbusMasterInformationData(len(self.detectedSlaveList),busses)
+        
     def processHiddenObjects(self):
         
         self.logger.debug("Iniciando processamento de objetos invisíveis...")
@@ -746,6 +759,7 @@ class hbusMaster:
                                 slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
                             
                     else:
+                        ##TODO: verificar problema aqui
                         if slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo == None:
                             slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo = {}
                 
@@ -1026,6 +1040,8 @@ class hbusMaster:
         
     def parseReceivedData(self,data):
         
+        selectedR = None
+        
         if len(data) < 7:
             pSize = 0
             params = ()
@@ -1209,7 +1225,7 @@ class hbusMaster:
         
         self.logger.debug("Fim da recuperação de informações de escravos.")
         
-        self.slaveReadDeferred = None
+        #self.slaveReadDeferred = None
         
         self.masterState = hbusMasterState.hbusMasterOperational
         reactor.callInThread(self.processHiddenObjects)

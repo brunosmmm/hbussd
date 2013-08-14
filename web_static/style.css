@@ -105,14 +105,14 @@ body
     line-height: 1.6em;
 }
 
-h1
+/*h1
 {
     font-family: "Lucida Sans Unicode","Lucida Grande", Sans-Serif;
     font-size: 72px;
     text-align: center;
     font-weight: bold;
     color: #039;
-}
+}*/
 
 h3
 {
@@ -122,6 +122,7 @@ h3
    color: #039;
    background: #EFF2FF;
    border: 1px solid #039;
+   border-radius: 5px;
 
 }
 
@@ -210,504 +211,428 @@ li
     color: #009;
 }
 
+/*HBUS MOBILE STYLES*/
 
-#ver-minimalist
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-}
-#ver-minimalist th
-{
-    padding: 8px 2px;
-    font-weight: normal;
-    font-size: 14px;
-    border-bottom: 2px solid #6678b1;
-    border-right: 30px solid #fff;
-    border-left: 30px solid #fff;
-    color: #039;
-}
-#ver-minimalist td
-{
-    padding: 12px 2px 0px 2px;
-    border-right: 30px solid #fff;
-    border-left: 30px solid #fff;
-    color: #669;
+.hbusContainer {
+    
+    max-width: 960px;
+    max-height: 480px;
+
+    margin: auto;
+    
 }
 
-
-#box-table-a
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-}
-#box-table-a th
-{
-    font-size: 13px;
-    font-weight: normal;
-    padding: 8px;
-    background: #b9c9fe;
-    border-top: 4px solid #aabcfe;
-    border-bottom: 1px solid #fff;
-    color: #039;
-}
-#box-table-a td
-{
-    padding: 8px;
-    background: #e8edff; 
-    border-bottom: 1px solid #fff;
-    color: #669;
-    border-top: 1px solid transparent;
-}
-#box-table-a tr:hover td
-{
-    background: #d0dafd;
-    color: #339;
+.hbusMHeader {
+    
+    width: 100%;
+    margin-bottom: 20px;
+    /*display: box;*/
+    height: 100px;
+    
 }
 
+.hbusMHeader section{
+ 
+    float: left;
+    width: 420px;
+    margin: 10px;
+    
+    height: inherit;
+    
+}
 
-#box-table-b
+.hbusMHeader aside{
+    
+    float: right;
+    margin: 10px;
+    /*margin-left: 100px;*/
+    width: auto;
+    height: 90%;
+    
+    /*position: absolute;
+    left:500px;*/
+    
+}
+
+/*LOGO NO CABEÇALHO*/
+.hbusMHeader a.hbusLogo {
+  display: block;
+  text-indent: -9999px;
+  
+  width:  100%;
+  height: 100%;
+  
+  background: url(hbus.svg);
+  background-repeat: no-repeat;
+  background-size: contain;
+  /*background-size: 75%;*/
+  
+}
+
+.hbusMHeader div.hbusStatus {
+
+    float: left;
+    height: 100%;
+    width: 200px;
+    margin: 10px;
+        
+    border: 2px solid #6299C5;
+    border-radius: 5px;
+    
+    background-color: #EFF2FF;
+    
+}
+
+.hbusDeviceDescription {
+    
+   font-family: "Lucida Sans Unicode","Lucida Grande", Sans-Serif;
+   font-weight: bold;
+   font-size: 3em;
+   color: #039;
+   background: #EFF2FF;
+   border: 1px solid #039;
+   border-radius: 5px;
+   
+   padding: 12px;
+   
+   /*display: box;*/
+   /*vertical-align: middle;*/
+}
+
+.hbusDeviceDescription a.left
 {
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
+    float: left;  
+    text-align:left;
+    text-decoration: none;
+}
+
+.hbusDeviceDescription div.right
+{
+    font-size: 0.5em;
+    text-align: right;
+}
+
+.hbusActiveDevices {
+    
+   font-family: "Lucida Sans Unicode","Lucida Grande", Sans-Serif;
+   font-weight: bold;
+   font-size: 3em;
+   color: #039;
+   background: #EFF2FF;
+   border: 1px solid #039;
+   border-radius: 5px;
+   
+   padding: 12px;
+   
+   /*display: box;*/
+   /*vertical-align: middle;*/
+}
+
+.hbusMMain {
+    
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-bottom: auto;
+    margin-top: 20px;
+    
+    height: 280px;
+    
+    border: 4px dashed #6299C5;
+    border-radius: 20px;
+    
+    background-color: #EFF2FF;
+}
+
+.hbusMMain div.objectHeader h1
+{
+    
     text-align: center;
-    border-collapse: collapse;
-    border-top: 7px solid #9baff1;
-    border-bottom: 7px solid #9baff1;
-}
-#box-table-b th
-{
-    font-size: 13px;
-    font-weight: normal;
-    padding: 8px;
-    background: #e8edff;
-    border-right: 1px solid #9baff1;
-    border-left: 1px solid #9baff1;
-    color: #039;
-}
-#box-table-b td
-{
-    padding: 8px;
-    background: #e8edff; 
-    border-right: 1px solid #aabcfe;
-    border-left: 1px solid #aabcfe;
-    color: #669;
+    padding-left: 10px;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-size: 3em;
+    text-decoration:underline;
+
+    
+    color: #0644b5;
+    
 }
 
-
-#hor-zebra
+.hbusMHeader div.hbusStatus div.activeSlaveCount
 {
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-}
-#hor-zebra th
-{
-    font-size: 14px;
-    font-weight: normal;
-    padding: 10px 8px;
-    color: #039;
-}
-#hor-zebra td
-{
-    padding: 8px;
-    color: #669;
-}
-#hor-zebra .odd
-{
-    background: #e8edff; 
-}
-
-
-#ver-zebra
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-}
-#ver-zebra th
-{
-    font-size: 14px;
-    font-weight: normal;
-    padding: 12px 15px;
-    border-right: 1px solid #fff;
-    border-left: 1px solid #fff;
-    color: #039;
-}
-#ver-zebra td
-{
-    padding: 8px 15px;
-    border-right: 1px solid #fff;
-    border-left: 1px solid #fff;
-    color: #669;
-}
-.vzebra-odd
-{
-    background: #eff2ff;
-}
-.vzebra-even
-{
-    background: #e8edff;
-}
-#ver-zebra #vzebra-adventure, #ver-zebra #vzebra-children
-{
-    background: #d0dafd;
-    border-bottom: 1px solid #c8d4fd;
-}
-#ver-zebra #vzebra-comedy, #ver-zebra #vzebra-action
-{
-    background: #dce4ff;
-    border-bottom: 1px solid #d6dfff;
-}
-
-
-#one-column-emphasis
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-}
-#one-column-emphasis th
-{
-    font-size: 14px;
-    font-weight: normal;
-    padding: 12px 15px;
-    color: #039;
-}
-#one-column-emphasis td
-{
-    padding: 10px 15px;
-    color: #669;
-    border-top: 1px solid #e8edff;
-}
-.oce-first
-{
-    background: #d0dafd;
-    border-right: 10px solid transparent;
-    border-left: 10px solid transparent;
-}
-#one-column-emphasis tr:hover td
-{
-    color: #339;
-    background: #eff2ff;
-}
-
-
-#newspaper-a
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-    border: 1px solid #69c;
-}
-#newspaper-a th
-{
-    padding: 12px 17px 12px 17px;
-    font-weight: normal;
-    font-size: 14px;
-    color: #039;
-    border-bottom: 1px dashed #69c;
-}
-#newspaper-a td
-{
-    padding: 7px 17px 7px 17px;
-    color: #669;
-}
-#newspaper-a tbody tr:hover td
-{
-    color: #339;
-    background: #d0dafd;
-}
-
-
-#newspaper-b
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-    border: 1px solid #69c;
-}
-#newspaper-b th
-{
-    padding: 15px 10px 10px 10px;
-    font-weight: normal;
-    font-size: 14px;
-    color: #039;
-}
-#newspaper-b tbody
-{
-    background: #e8edff;
-}
-#newspaper-b td
-{
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    text-align: center;
+    font-size: 3em;
     padding: 10px;
-    color: #669;
-    border-top: 1px dashed #fff;
-}
-#newspaper-b tbody tr:hover td
-{
-    color: #339;
-    background: #d0dafd;
+    
+    color: #008000;
+    
 }
 
-
-#newspaper-c
+.hbusMHeader div.hbusStatus div.statusText
 {
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-    border: 1px solid #6cf;
-}
-#newspaper-c th
-{
-    padding: 20px;
-    font-weight: normal;
-    font-size: 13px;
-    color: #039;
-    text-transform: uppercase;
-    border-right: 1px solid #0865c2;
-    border-top: 1px solid #0865c2;
-    border-left: 1px solid #0865c2;
-    border-bottom: 1px solid #fff;
-}
-#newspaper-c td
-{
-    padding: 10px 20px;
-    color: #669;
-    border-right: 1px dashed #6cf;
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.25em;
+    
+    color: #336699;
+    
 }
 
+/*LISTAGEM DE BARRAMENTOS*/
 
-#rounded-corner
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-}
-#rounded-corner thead th.rounded-company
-{
-    background: #b9c9fe url('table-images/left.png') left -1px no-repeat;
-}
-#rounded-corner thead th.rounded-q4
-{
-    background: #b9c9fe url('table-images/right.png') right -1px no-repeat;
-}
-#rounded-corner th
-{
-    padding: 8px;
-    font-weight: normal;
-    font-size: 13px;
-    color: #039;
-    background: #b9c9fe;
-}
-#rounded-corner td
-{
-    padding: 8px;
-    background: #e8edff;
-    border-top: 1px solid #fff;
-    color: #669;
-}
-#rounded-corner tfoot td.rounded-foot-left
-{
-    background: #e8edff url('table-images/botleft.png') left bottom no-repeat;
-}
-#rounded-corner tfoot td.rounded-foot-right
-{
-    background: #e8edff url('table-images/botright.png') right bottom no-repeat;
-}
-#rounded-corner tbody tr:hover td
-{
-    background: #d0dafd;
+.hbusMMain ul.busGrid {
+    
+    /*position:relative;*/
+    
+    padding: 0;
+    list-style: none;
+    /*margin: 20%;
+    width: 50%;*/
+    height: 50%;
+   
+   text-align: center;
+   
 }
 
-
-#background-image
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-    background: url('table-images/blurry.jpg') 330px 59px no-repeat;
-}
-#background-image th
-{
-    padding: 12px;
-    font-weight: normal;
-    font-size: 14px;
-    color: #339;
-}
-#background-image td
-{
-    padding: 9px 12px;
-    color: #669;
-    border-top: 1px solid #fff;
-}
-#background-image tfoot td
-{
-    font-size: 11px;
-}
-#background-image tbody td
-{
-    background: url('table-images/back.png');
-}
-* html #background-image tbody td
-{
-    /* 
-       ----------------------------
-        PUT THIS ON IE6 ONLY STYLE 
-        AS THE RULE INVALIDATES
-        YOUR STYLESHEET
-       ----------------------------
-    */
-    filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='table-images/back.png',sizingMethod='crop');
-    background: none;
-}   
-#background-image tbody tr:hover td
-{
-    color: #339;
-    background: none;
+.busGrid li {
+    
+    /*float: left;*/
+    /*padding: 1px;*/
+    border: 5px solid #000000;
+    
+    border-radius: 20px;
+    margin-right: 20px;
+    margin-left: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    
+    width: 100px;
+    height:100px;
+    
+    background-color: #F5F5F5;
+    
+    display: inline-block;
+    
 }
 
-
-#gradient-style
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-}
-#gradient-style th
-{
-    font-size: 13px;
-    font-weight: normal;
-    padding: 8px;
-    background: #b9c9fe url('table-images/gradhead.png') repeat-x;
-    border-top: 2px solid #d3ddff;
-    border-bottom: 1px solid #fff;
-    color: #039;
-}
-#gradient-style td
-{
-    padding: 8px; 
-    border-bottom: 1px solid #fff;
-    color: #669;
-    border-top: 1px solid #fff;
-    background: #e8edff url('table-images/gradback.png') repeat-x;
-}
-#gradient-style tfoot tr td
-{
-    background: #e8edff;
-    font-size: 12px;
-    color: #99c;
-}
-#gradient-style tbody tr:hover td
-{
-    background: #d0dafd url('table-images/gradhover.png') repeat-x;
-    color: #339;
+.busGrid a {
+    
+    background: url(busicon.svg) no-repeat;
+    background-size: contain;
+    
+    background-position:center;
+    
+    width: 100%;
+    height: 100%;
+    
+    display: block;
+    
+    text-align: center;
+    font-weight: bold;
+    
 }
 
-
-#pattern-style-a
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-    background: url('table-images/pattern.png');
-}
-#pattern-style-a thead tr
-{
-    background: url('table-images/pattern-head.png');
-}
-#pattern-style-a th
-{
-    font-size: 13px;
-    font-weight: normal;
-    padding: 8px;
-    border-bottom: 1px solid #fff;
-    color: #039;
-}
-#pattern-style-a td
-{
-    padding: 8px; 
-    border-bottom: 1px solid #fff;
-    color: #669;
-    border-top: 1px solid transparent;
-}
-#pattern-style-a tbody tr:hover td
-{
-    color: #339;
-    background: #fff;
+/*LISTAGEM DE DISPOSITIVOS*/
+.hbusMMain ul.devGrid {
+    
+    /*position:relative;*/
+    
+    padding: 0;
+    list-style: none;
+    /*margin: 20%;
+    width: 50%;*/
+    height: 80%;
+   
+   text-align: center;
+   
 }
 
+.devGrid li {
+    
+    float: left;
+    /*padding: 1px;*/
+    border: 5px solid #000000;
+    
+    border-radius: 20px;
+    margin-right: 20px;
+    margin-left: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    
+    width: 100px;
+    height:100px;
+    
+    background-color: #F5F5F5;
+    
+    display: inline-block;
+    
+}
 
-#pattern-style-b
-{
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    font-size: 12px;
-    margin: 45px;
-    width: 480px;
-    text-align: left;
-    border-collapse: collapse;
-    background: url('table-images/patternb.png');
+.devGrid a {
+    
+    background: url(devicon.svg) no-repeat;
+    background-size: contain;
+    
+    background-position:center;
+    
+    width: 100%;
+    height: 100%;
+    
+    display: block;
+    
+    text-align: center;
+    font-weight: bold;
+    
+    color : #000099;
 }
-#pattern-style-b thead tr
-{
-    background: url('table-images/patternb-head.png');
+
+/*LISTAGEM DE OBJETOS*/
+.hbusMMain ul.objGrid {
+    
+    position:relative;
+    top: -10px;
+    
+    padding: 0;
+    list-style: none;
+    /*margin: 20%;
+    width: 50%;*/
+    height: 90%;
+   
+   text-align: center;
+   
 }
-#pattern-style-b th
-{
-    font-size: 13px;
-    font-weight: normal;
-    padding: 8px;
-    border-bottom: 1px solid #fff;
-    color: #039;
+
+.objGrid li {
+    
+    float: left;
+    /*padding: 1px;*/
+    border: 4px solid #000000;
+    
+    border-radius: 20px;
+    margin-right: 8px;
+    margin-left: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    
+    width: 90px;
+    height:90px;
+    
+    background-color: #F5F5F5;
+    
+    display: inline-block;
+    
 }
-#pattern-style-b td
-{
-    padding: 8px; 
-    border-bottom: 1px solid #fff;
-    color: #669;
-    border-top: 1px solid transparent;
+
+.objGrid a {
+    
+    width: auto;
+    height: auto;
+    
+    display: block;
+    
+    text-align: center;
+    font-weight: bold;
+    
+    position: relative;
+    top: 10px;
+    
+    color : #000099;
+    
+    background-color: rgb(255,255,255);
+    background-color: rgba(255,255,255,0.6);
 }
-#pattern-style-b tbody tr:hover td
-{
-    color: #339;
-    background: #cdcdee;
+
+.objGrid li.percent {
+    
+    background: url(percent.svg) no-repeat;
+    background-size: contain;
+    background-position:center;
+    background-color: #F5F5F5;
+}
+
+.objGrid li.boolsw {
+    
+    background: url(boolsw.svg) no-repeat;
+    background-size:contain;
+    background-position: center;
+    background-color: #F5F5F5;
+}
+
+.objGrid li.byte {
+    
+    background: url(byte.svg) no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-color: #F5F5F5;
+}
+
+.objGrid li.empty {
+    
+}
+
+.hbusMMain section.readObjects {
+    
+    float: left;
+    
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    
+    overflow: hidden;
+    
+    height: 262px;
+    width: auto;
+    
+    /*-moz-transition: width 0.2s ease-out;   
+    -webkit-transition:width 0.2s ease-out;  
+    -o-transition:width 0.2s ease-out;  
+    transition:width 0.2s ease-out;*/
+    
+    border: 4px dashed #008000;
+    border-radius: 20px;
+    
+    background-color: #C6D880;
+}
+
+.hbusMMain section.writeObjects{
+    
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    
+    height: 262px;
+    width: auto;
+    
+    overflow: hidden;
+    
+    /*height: 200px;*/
+    
+    border: 4px dashed #D12F19;
+    border-radius: 20px;
+    
+    background-color: #FBC2C4;
+}
+
+.hbusObjectValue {
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    
+    text-align: center;
+    
+    /*position: relative;
+    top: 10px;
+    left: 0px;*/
+    
+    display: block;
+    
+    color: #565656;
+    /*background-color: rgba(255,255,255,0.6);*/
+    
 }

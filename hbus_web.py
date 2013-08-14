@@ -15,7 +15,7 @@ class HBUSWEB:
 
     def index(self):
         
-        return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values())
+        return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values(),masterStatus=self.hbusMaster.getInformationData())
     
     def favicon(self):
         
@@ -57,8 +57,12 @@ class HBUSWEB:
                         pass
                 except:
                     pass
+                
+            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02])
+            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01])
         
-        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=objectLevel)
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+                        readObjCount=readObjectCount,writeObjCount=writeObjectCount)
     
     def slaveInfoSet(self,uid=None,obj=None):
         
@@ -85,8 +89,24 @@ class HBUSWEB:
                 #except:
                 #    pass
         
-        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=objectLevel)
+            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02])
+            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01])
         
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+                        readObjCount=readObjectCount,writeObjCount=writeObjectCount)
+    
+    def slavesByBus(self,busNumber=None):
+        
+        if int(busNumber) == 255:
+            slaveList = self.hbusMaster.detectedSlaveList.values()
+        else:
+            slaveList = []
+            for slave in self.hbusMaster.detectedSlaveList.values():
+                if slave.hbusSlaveAddress.hbusAddressBusNumber == int(busNumber):
+                    slaveList.append(slave)
+        
+        return template('hbus_slave_by_bus',slaveList=slaveList,masterStatus=self.hbusMaster.getInformationData(),busNumber=busNumber)
+    
     
     def staticFiles(self,filename):
         
@@ -103,6 +123,9 @@ class HBUSWEB:
         route("/slave-uid/<uid>")(self.slaveInfo)
         route("/slave-uid/<uid>/<obj>")(self.slaveInfo)
         route("/slave-uid/<uid>/<obj>",method="POST")(self.slaveInfoSet)
+        
+        #escravos por barramento
+        route("/bus/<busNumber>")(self.slavesByBus)
         
         route ("/static/<filename>")(self.staticFiles)
         route ("/favicon.ico")(self.favicon)

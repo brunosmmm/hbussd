@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg4602" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="449.25" width="369.99" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata4607">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g id="layer1" stroke="#999" transform="translate(-141.19 -318.33)">
+  <path id="path4643" d="m360.68 752.95v-420" stroke-linecap="round" stroke-miterlimit="6" stroke-width="29.25" fill="none"/>
+  <path id="path4645" d="m300.68 617.95h120v-150h-120v150z" fill-rule="evenodd" fill="#fff"/>
+  <path id="path4647" d="m300.68 617.95h120v-150h-120v150z" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4649" d="m300.68 617.95h120v-150h-120v150z" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="#f2f2f2"/>
+  <path id="path4651" d="m315.68 602.95h90v-120h-90v120z" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="#f2f2f2"/>
+  <path id="path4653" d="m405.68 542.95h-90" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4655" d="m480.68 677.95v-270" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4657" d="m510.68 437.95c-18.75-37.5-18.75-48.75-30-105-11.25 56.25-11.25 67.5-30 105 22.5-7.5 37.5-7.5 60 0" fill-rule="evenodd" fill="#999"/>
+  <path id="path4659" d="m450.68 647.95c18.75 37.5 18.75 48.75 30 105 11.25-56.25 11.25-67.5 30-105-22.5 7.5-37.5 7.5-60 0" fill-rule="evenodd" fill="#999"/>
+  <path id="path4661" d="m420.68 677.95h-120" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4663" d="m390.68 707.95h-60" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4665" d="m420.68 737.95h-120" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4667" d="m330.68 647.95h60" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4669" d="m330.68 437.95h60" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4671" d="m300.68 407.95h120" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4673" d="m330.68 377.95h60" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4675" d="m300.68 347.95h120" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4677" d="m375.68 527.95h-30" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4679" d="m375.68 557.95h-30" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4681" d="m390.68 572.95h-60" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <path id="path4683" d="m390.68 512.95h-60" stroke-linecap="round" stroke-miterlimit="6" stroke-width="9.75" fill="none"/>
+  <g id="g4685" fill="#999" transform="matrix(10 0 0 -10 -648.81 1505)">
+   <text id="text4687" fill="#999999" stroke="#999999" transform="matrix(1 0 0 -1 79.066 91.5)">
+    <tspan id="tspan4689" font-size="15px" stroke="#999999" y="0" x="0" font-family="Helvetica" fill="#999999">%</tspan>
+   </text>
+  </g>
+ </g>
+</svg>

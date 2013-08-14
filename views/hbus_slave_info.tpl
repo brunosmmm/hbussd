@@ -9,49 +9,156 @@
         </style>
     </head>
 
-    <div>
-        <h1><a href="/">HBUS Server</a></h1>
-    </div>
+<div class="hbusContainer">
+
+    <header class="hbusMHeader">
+        <section>
+            <a href="/" class="hbusLogo">HBUS</a>
+        </section>
+        <aside>
+            <div class="hbusStatus">
+                
+                <div class = "activeSlaveCount">{{masterStatus.activeSlaveCount}}</div>
+                <div class = "statusText">Dispositivos <br /> ativos</div>
+                
+            </div>
+            
+            <div class="hbusStatus">
+                
+            </div>
+        </aside>
+    </header>
     
-    <div>
-        <h3>{{slave.hbusSlaveDescription}} &lt;{{hex(slave.hbusSlaveUniqueDeviceInfo)}}&gt; @ {{slave.hbusSlaveAddress.hbusAddressBusNumber}}:{{slave.hbusSlaveAddress.hbusAddressDevNumber}}</h3>
-    </div>
+    <section class="hbusDeviceDescription">
+        <a class="left" href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}">{{slave.hbusSlaveDescription}}</a>
+        <div class="right">&lt;{{hex(slave.hbusSlaveUniqueDeviceInfo)}}&gt; @ {{slave.hbusSlaveAddress.hbusAddressBusNumber}}:{{slave.hbusSlaveAddress.hbusAddressDevNumber}}</div>
+    </section>
     
-    <div>
-        <h4>Capacidades do dispositivo</h4>
+    <div class="hbusMMain">
         
-        <ul>
-            %if slave.hbusSlaveHasAUTH:
-                <li>Autenticação de Mestre</li>
-            %end
-            
-            %if slave.hbusSlaveHasREVAUTH:
-                <li>Autenticação reversa</li>
-            %end
-            
-            %if slave.hbusSlaveHasEP:
-                <li>Suporte a Endpoints</li>
-            %end
-            
-            %if slave.hbusSlaveHasCRYPTO:
-                <li>Criptografia para objetos</li>
-            %end
-            
-            %if slave.hbusSlaveHasUCODE:
-                <li>Microcódigo HBUS</li>
-            %end
-            
-            %if slave.hbusSlaveHasINT:
-                <li>Interrupções</li>
-            %end
-        </ul>
+        %if readObjCount > 0:
         
-    </div>
-    
-    <div>
-        <h4>Objetos do dispositivo</h4>
-    </div>
-    
+        <section class="readObjects">
+        
+            <ul class="objGrid">
+                
+                %i = 1
+                %for object in slave.hbusSlaveObjects.values():
+                
+                    %if object.objectHidden:
+                        %continue
+                    %end
+                    
+                    %if object.objectLevel < objectLevel:
+                        %continue
+                    %end
+                    
+                    %if object.objectPermissions == 2:
+                        %continue
+                    %end
+                    
+                    
+                    %if object.objectDataType == hbusSlaveObjectDataType.dataTypeByte:
+                    
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
+                        
+                            <li class="boolsw">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}">{{object.objectDescription}}</a>
+                                <div class="hbusObjectValue">
+                                    %if object.objectLastValue == None:
+                                        ?
+                                    %else:
+                                        {{object.getFormattedValue()}}
+                                    %end
+                                </div>
+                            </li>
+                            
+                        %else:
+                        
+                            <li class="byte"><a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}">{{object.objectDescription}}</a></li>
+                        
+                        %end
+                    
+                    %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeUnsignedInt:
+                    
+                        %if object.objectDataTypeInfo in [hbusSlaveObjectDataType.dataTypeUintPercent,hbusSlaveObjectDataType.dataTypeUintLogPercent,hbusSlaveObjectDataType.dataTypeUintLinPercent]:
+                        
+                            <li class="percent"><a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}">{{object.objectDescription}}</a></li>
+                        
+                        %else:
+                        
+                            %pass
+                        
+                        %end
+                    
+                    %end
+                    %i += 1
+                    
+               %end
+                
+            </ul>
+        
+        </section>
+        
+        %end
+        
+        %if writeObjCount > 0:
+        
+        <section class="writeObjects">
+        
+            <ul class="objGrid">
+                
+                %i = 1
+                %for object in slave.hbusSlaveObjects.values():
+                
+                    %if object.objectHidden:
+                        %continue
+                    %end
+                    
+                    %if object.objectLevel < objectLevel:
+                        %continue
+                    %end
+                    
+                    %if object.objectPermissions == 1:
+                        %continue
+                    %end
+                    
+                    
+                    %if object.objectDataType == hbusSlaveObjectDataType.dataTypeByte:
+                    
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
+                        
+                            <li class="boolsw"><a href="#">{{object.objectDescription}}</a></li>
+                            
+                        %else:
+                        
+                            <li class="byte"><a href="#">{{object.objectDescription}}</a></li>
+                        
+                        %end
+                    
+                    %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeUnsignedInt:
+                    
+                        %if object.objectDataTypeInfo in [hbusSlaveObjectDataType.dataTypeUintPercent,hbusSlaveObjectDataType.dataTypeUintLogPercent,hbusSlaveObjectDataType.dataTypeUintLinPercent]:
+                        
+                            <li class="percent"><a href="#">{{object.objectDescription}}</a></li>
+                        
+                        %else:
+                        
+                            %pass
+                        
+                        %end
+                    
+                    %end
+                    %i += 1
+                    
+               %end
+                
+            </ul>
+        
+        </section>
+        
+        %end
+    <!--
     <table id="hor-minimalist-a" summary="Lista de dispositivos ativos" style="margin-left: auto;margin-right: auto">
         <thead>
             <tr>
@@ -122,7 +229,6 @@
                             <form action="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}" method="post">
                             <input type="range" name="value" min="0" max="100">
                                 <button type="submit" class="positive" name="save">
-                                <!-- <img src="/static/apply2.png" alt=""/> -->  
                                 Enviar
                                 </button>
                             </form>
@@ -164,5 +270,10 @@
         
         </tbody>
         </table>
+    -->
+        
+    </div>
+    
+</div>
         
 </html>
