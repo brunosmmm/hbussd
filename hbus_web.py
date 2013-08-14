@@ -12,6 +12,7 @@ class HBUSWEB:
         
         self.port = port
         self.hbusMaster = hbusMaster
+        self.objectLevel = 0
 
     def index(self):
         
@@ -22,8 +23,6 @@ class HBUSWEB:
         return static_file('favicon.ico',root='web_static') 
         
     def slaveInfo(self,addr=None,uid=None,obj=None):
-        
-        objectLevel = 0
         
         self.wait = False
         def waitForSlaveRead(dummy):
@@ -58,15 +57,42 @@ class HBUSWEB:
                 except:
                     pass
                 
+            if s == None:
+                
+                ##TODO: retornar template de erro, escravo indisponível
+                
+                pass
+                
             writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02])
             readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01])
         
-        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         readObjCount=readObjectCount,writeObjCount=writeObjectCount)
     
-    def slaveInfoSet(self,uid=None,obj=None):
+    def slaveWriteObject(self,uid=None,obj=None):
         
-        objectLevel = 0
+
+        if uid != None:
+            
+            devUID = string.split(uid,"0x")
+            
+            addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+            
+            if addr == None:
+                s = None
+            else:
+                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                
+            if s == None:
+                
+                ##TODO: retornar template de erro, escravo indisponível
+                
+                pass
+        
+        return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+                        objectNumber = int(obj))
+    
+    def slaveInfoSet(self,uid=None,obj=None):
         
         newObjValue = request.forms.get('value')
         
@@ -92,7 +118,7 @@ class HBUSWEB:
             writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02])
             readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01])
         
-        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         readObjCount=readObjectCount,writeObjCount=writeObjectCount)
     
     def slavesByBus(self,busNumber=None):
@@ -107,6 +133,15 @@ class HBUSWEB:
         
         return template('hbus_slave_by_bus',slaveList=slaveList,masterStatus=self.hbusMaster.getInformationData(),busNumber=busNumber)
     
+    def setLevel(self,level=None):
+        
+        if level == None:
+            return
+        
+        try:
+            self.objectLevel = int(level)
+        finally:
+            return
     
     def staticFiles(self,filename):
         
@@ -121,14 +156,18 @@ class HBUSWEB:
         
         route("/slave-addr/<addr>")(self.slaveInfo)
         route("/slave-uid/<uid>")(self.slaveInfo)
-        route("/slave-uid/<uid>/<obj>")(self.slaveInfo)
-        route("/slave-uid/<uid>/<obj>",method="POST")(self.slaveInfoSet)
+        route("/slave-uid/<uid>/get-<obj>")(self.slaveInfo)
+        route("/slave-uid/<uid>/set-<obj>")(self.slaveWriteObject)
+        route("/slave-uid/<uid>/set-<obj>",method="POST")(self.slaveInfoSet)
         
         #escravos por barramento
         route("/bus/<busNumber>")(self.slavesByBus)
         
         route ("/static/<filename>")(self.staticFiles)
         route ("/favicon.ico")(self.favicon)
+        
+        #opções escondidas
+        route ("/set-level/<level>")(self.setLevel)
         
         run(host='192.168.1.122',port=self.port)
 

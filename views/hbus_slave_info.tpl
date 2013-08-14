@@ -63,19 +63,33 @@
                         %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
                         
                             <li class="boolsw">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}">{{object.objectDescription}}</a>
-                                <div class="hbusObjectValue">
-                                    %if object.objectLastValue == None:
-                                        ?
-                                    %else:
-                                        {{object.getFormattedValue()}}
-                                    %end
-                                </div>
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                                    <p>{{object.objectDescription}}</p>                               
+                                    <span class="hbusObjectValue">
+                                        %if object.objectLastValue == None:
+                                            ?
+                                        %else:
+                                            {{object.getFormattedValue()}}
+                                        %end
+                                    </span>
+                                    
+                                </a>
                             </li>
                             
                         %else:
                         
-                            <li class="byte"><a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}">{{object.objectDescription}}</a></li>
+                            <li class="byte">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                                    <p>{{object.objectDescription}}</p>
+                                    <span class="hbusObjectValue">
+                                        %if object.objectLastValue == None:
+                                            ?
+                                        %else:
+                                            {{object.getFormattedValue()}}
+                                        %end
+                                    </span>
+                                </a>
+                            </li>
                         
                         %end
                     
@@ -83,13 +97,65 @@
                     
                         %if object.objectDataTypeInfo in [hbusSlaveObjectDataType.dataTypeUintPercent,hbusSlaveObjectDataType.dataTypeUintLogPercent,hbusSlaveObjectDataType.dataTypeUintLinPercent]:
                         
-                            <li class="percent"><a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/{{i}}">{{object.objectDescription}}</a></li>
+                            <li class="percent">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                                    <p>{{object.objectDescription}}</p>
+                                    <span class="hbusObjectValue">
+                                        %if object.objectLastValue == None:
+                                            ?
+                                        %else:
+                                            {{object.getFormattedValue()}}
+                                        %end
+                                    </span>
+                                </a>
+                            </li>
                         
                         %else:
                         
-                            %pass
+                            <li class="empty">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                                    <p>{{object.objectDescription}}</p>
+                                    <span class="hbusObjectValue">
+                                        %if object.objectLastValue == None:
+                                            ?
+                                        %else:
+                                            {{object.getFormattedValue()}}
+                                        %end
+                                    </span>
+                                </a>
+                            </li>
                         
                         %end
+                        
+                    %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeInt:
+                    
+                            <li class="empty">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                                    <p>{{object.objectDescription}}</p>
+                                    <span class="hbusObjectValue">
+                                        %if object.objectLastValue == None:
+                                            ?
+                                        %else:
+                                            {{object.getFormattedValue()}}
+                                        %end
+                                    </span>
+                                </a>
+                            </li>
+                    
+                    %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeFixedPoint:
+                    
+                            <li class="empty">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                                    <p>{{object.objectDescription}}</p>
+                                    <span class="hbusObjectValue">
+                                        %if object.objectLastValue == None:
+                                            ?
+                                        %else:
+                                            {{object.getFormattedValue()}}
+                                        %end
+                                    </span>
+                                </a>
+                            </li>
                     
                     %end
                     %i += 1
@@ -128,11 +194,19 @@
                     
                         %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
                         
-                            <li class="boolsw"><a href="#">{{object.objectDescription}}</a></li>
+                            <li class="boolsw">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
+                                    <p>{{object.objectDescription}}</p>
+                                </a>
+                            </li>
                             
                         %else:
                         
-                            <li class="byte"><a href="#">{{object.objectDescription}}</a></li>
+                            <li class="byte">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
+                                    <p>{{object.objectDescription}}</p>
+                                </a>
+                            </li>
                         
                         %end
                     
@@ -140,7 +214,11 @@
                     
                         %if object.objectDataTypeInfo in [hbusSlaveObjectDataType.dataTypeUintPercent,hbusSlaveObjectDataType.dataTypeUintLogPercent,hbusSlaveObjectDataType.dataTypeUintLinPercent]:
                         
-                            <li class="percent"><a href="#">{{object.objectDescription}}</a></li>
+                            <li class="percent">
+                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
+                                    <p>{{object.objectDescription}}</p>
+                                </a>
+                            </li>
                         
                         %else:
                         
