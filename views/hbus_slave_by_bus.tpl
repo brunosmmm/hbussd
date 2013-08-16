@@ -12,6 +12,8 @@
         <link rel="apple-touch-icon" href="/static/apple-touch-icon.png"/>
         <link rel="apple-touch-icon-precomposed" href="/static/apple-touch-icon-precomposed.png"/>
         
+        <link rel="stylesheet" href="/static/normalize.css">
+        
 	</head>
 	
 <div class="hbusContainer">

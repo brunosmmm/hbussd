@@ -12,7 +12,139 @@
         <link rel="apple-touch-icon" href="/static/apple-touch-icon.png"/>
         <link rel="apple-touch-icon-precomposed" href="/static/apple-touch-icon-precomposed.png"/>
         
-    </head>
+        <link rel="stylesheet" href="/static/normalize.css">
+        <script type="text/javascript" src="/static/jquery-2.0.3.min.js" ></script>
+        <script type="text/javascript" src="/static/jquery.als-1.1.min.js" ></script>
+        
+        <script type="text/javascript">
+            //ALS INIT
+            $(document).ready(function(){
+                
+                var $w = $(window).width();
+                var $h = $(window).height();
+                
+                if ($w>$h)
+                {
+                    $("#readObjectsList").als({
+                        %if readObjCount < 5:
+                            visible_items: {{readObjCount}},
+                        %else:
+                            visible_items: 5,
+                        %end
+                        orientation: "horizontal"
+                    });
+                    
+                    $("#writeObjectsList").als({
+                        %if writeObjCount < 5:
+                            visible_items: {{writeObjCount}},
+                        %else:
+                            visible_items: 5,
+                        %end
+                        orientation: "horizontal"
+                    }); 
+                 }
+                 else
+                 {
+                    $("#readObjectsList").als({
+                        %if readObjCount < 3:
+                            visible_items: {{readObjCount}},
+                        %else:
+                            visible_items: 3,
+                        %end
+                        orientation: "vertical"
+                    }); 
+                    
+                    $("#writeObjectsList").als({
+                        %if writeObjCount < 3:
+                            visible_items: {{writeObjCount}},
+                        %else:
+                            visible_items: 3,
+                        %end
+                        orientation: "vertical"
+                    }); 
+                 }
+
+            }); 
+        </script>
+        
+        <script type="text/javascript">
+            //ALS RECONFIGURE
+            $(window).resize(function(){
+                
+                var $w = $(window).width();
+                var $h = $(window).height();
+                
+                if ($w>$h)
+                {
+                    $("#readObjectsList").als({
+                        %if readObjCount < 5:
+                            visible_items: {{readObjCount}},
+                        %else:
+                            visible_items: 5,
+                        %end
+                        orientation: "horizontal"
+                    });
+                    
+                     $("#writeObjectsList").als({
+                        %if writeObjCount < 5:
+                            visible_items: {{writeObjCount}},
+                        %else:
+                            visible_items: 5,
+                        %end
+                        orientation: "horizontal"
+                    });
+                 }
+                 else
+                 {
+                    $("#readObjectsList").als({
+                        %if readObjCount < 3:
+                            visible_items: {{readObjCount}},
+                        %else:
+                            visible_items: 3,
+                        %end
+                        orientation: "vertical"
+                    }); 
+                    $("#writeObjectsList").als({
+                        %if writeObjCount < 3:
+                            visible_items: {{writeObjCount}},
+                        %else:
+                            visible_items: 3,
+                        %end
+                        orientation: "vertical"
+                    }); 
+                 }
+
+            }); 
+        </script>
+        
+        <script type="text/javascript">
+        //LÊ DADOS DE OBJETO ATRAVÉS DE AJAX
+            function loadObject(objectNumber)
+            {
+            var xmlhttp;
+            var ID = objectNumber;
+            
+            if (window.XMLHttpRequest)
+              {// code for IE7+, Firefox, Chrome, Opera, Safari
+              xmlhttp=new XMLHttpRequest();
+              }
+            else
+              {// code for IE6, IE5
+              xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+              }
+            xmlhttp.onreadystatechange=function()
+              {
+              if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                document.getElementById("OVAL-"+ID).innerHTML=xmlhttp.responseText;
+                }
+              }
+            xmlhttp.open("GET","/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/objdata-"+objectNumber,true);
+            xmlhttp.send();
+            }
+        </script> 
+        
+</head>
 
 <div class="hbusContainer">
 
@@ -47,9 +179,13 @@
         
         %if readObjCount > 0:
         
-        <section class="readObjects">
+        <div class="als-container readObjects" id="readObjectsList">
+            
+            <span class="als-prev"><img src="/static/prev.png" alt="prev" title="previous" /></span>
+            
+            <div class="als-viewport">
         
-            <ul class="objGrid">
+            <ul class="als-wrapper objGrid">
                 
                 %i = 0
                 %for object in slave.hbusSlaveObjects.values():
@@ -72,10 +208,10 @@
                     
                         %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
                         
-                            <li class="boolsw">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                            <li class="als-item boolsw">
+                                <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>                               
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{i}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -88,10 +224,10 @@
                             
                         %else:
                         
-                            <li class="byte">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                            <li class="als-item byte">
+                                <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{i}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -107,10 +243,10 @@
                     
                         %if object.objectDataTypeInfo in [hbusSlaveObjectDataType.dataTypeUintPercent,hbusSlaveObjectDataType.dataTypeUintLogPercent,hbusSlaveObjectDataType.dataTypeUintLinPercent]:
                         
-                            <li class="percent">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                            <li class="als-item percent">
+                                <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{i}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -122,10 +258,10 @@
                         
                         %else:
                         
-                            <li class="empty">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                            <li class="als-item empty">
+                                <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{i}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -139,10 +275,10 @@
                         
                     %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeInt:
                     
-                            <li class="empty">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                            <li class="als-item empty">
+                                <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{i}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -154,10 +290,10 @@
                     
                     %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeFixedPoint:
                     
-                            <li class="empty">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/get-{{i}}">
+                            <li class="als-item empty">
+                                <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{i}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -172,16 +308,24 @@
                %end
                 
             </ul>
+            
+            </div>
+            
+            <span class="als-next"><img src="/static/next.png" alt="next" title="next" /></span> <!-- "next" button -->
         
-        </section>
+        </div>
         
         %end
         
         %if writeObjCount > 0:
         
-        <section class="writeObjects">
+        <div class="als-container writeObjects" id="writeObjectsList">
+            
+            <span class="als-prev"><img src="/static/prev.png" alt="prev" title="previous" /></span>
+            
+            <div class="als-viewport">
         
-            <ul class="objGrid">
+            <ul class="als-wrapper objGrid">
                 
                 %i = 0
                 %for object in slave.hbusSlaveObjects.values():
@@ -205,7 +349,7 @@
                     
                         %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
                         
-                            <li class="boolsw">
+                            <li class="als-item boolsw">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
                                     <p>{{object.objectDescription}}</p>
                                 </a>
@@ -213,7 +357,7 @@
                             
                         %else:
                         
-                            <li class="byte">
+                            <li class="als-item byte">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
                                     <p>{{object.objectDescription}}</p>
                                 </a>
@@ -225,7 +369,7 @@
                     
                         %if object.objectDataTypeInfo in [hbusSlaveObjectDataType.dataTypeUintPercent,hbusSlaveObjectDataType.dataTypeUintLogPercent,hbusSlaveObjectDataType.dataTypeUintLinPercent]:
                         
-                            <li class="percent">
+                            <li class="als-item percent">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
                                     <p>{{object.objectDescription}}</p>
                                 </a>
@@ -242,8 +386,12 @@
                %end
                 
             </ul>
+            
+            </div>
+            
+             <span class="als-next"><img src="/static/next.png" alt="next" title="next" /></span> <!-- "next" button -->
         
-        </section>
+        </div>
         
         %end
     <!--

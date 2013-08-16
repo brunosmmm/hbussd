@@ -22,8 +22,47 @@ class HBUSWEB:
     def favicon(self):
         
         return static_file('favicon.ico',root='web_static') 
+    
+    def readSlaveObject(self,uid=None,obj=None):
+        
+        #@summary: retorna um valor formatado do objeto para utilização com AJAX.
+        
+        self.wait = False
+        def waitForSlaveRead(dummy):
+            
+            self.wait = False
+        
+        devUID = string.split(uid,"0x")
+            
+        addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+        
+        if addr == None:
+            s = None
+        else:
+            s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+        
+        if obj != None:
+            
+            try:
+                self.wait = True
+                self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead,timeoutCallback=waitForSlaveRead)
+                
+                while (self.wait == True):
+                    pass
+            except:
+                pass
+            
+        if s != None:
+            data = s.hbusSlaveObjects[int(obj)].getFormattedValue()
+        else:
+            data = "?"
+            
+        ##todo: verificar problema aqui. só deve retornar strings, sendo que estão chegando outros tipos de dados
+        return (data)
         
     def slaveInfo(self,addr=None,uid=None,obj=None):
+        
+        getN = 0
         
         self.wait = False
         def waitForSlaveRead(dummy):
@@ -53,6 +92,8 @@ class HBUSWEB:
                     self.wait = True
                     self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead,timeoutCallback=waitForSlaveRead)
                     
+                    getN = int(obj)
+                    
                     while (self.wait == True):
                         pass
                 except:
@@ -64,11 +105,11 @@ class HBUSWEB:
                 
                 pass
                 
-            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02 and x.objectLevel > self.objectLevel])
-            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01 and x.objectLevel > self.objectLevel])
+            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
+            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
         
         return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
-                        readObjCount=readObjectCount,writeObjCount=writeObjectCount,re=re)
+                        readObjCount=readObjectCount,writeObjCount=writeObjectCount,re=re,getNumber=getN)
     
     def slaveWriteObject(self,uid=None,obj=None):
         
@@ -209,6 +250,7 @@ class HBUSWEB:
         route("/slave-uid/<uid>/set-<obj>")(self.slaveWriteObject)
         route("/slave-uid/<uid>/set-<obj>",method="POST")(self.slaveInfoSet)
         route("/slave-uid/<uid>/setget-<obj>")(self.slaveWriteObjectRefresh)
+        route("/slave-uid/<uid>/objdata-<obj>")(self.readSlaveObject)
         
         #escravos por barramento
         route("/bus/<busNumber>")(self.slavesByBus)

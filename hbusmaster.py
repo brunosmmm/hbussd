@@ -300,7 +300,7 @@ class hbusIntHandler:
         except:
             pass
         
-        return value
+        return str(value)
     
     def __getitem__(self,key):
         
@@ -398,8 +398,10 @@ class hbusSlaveObjectDataType:
     def formatPercent(self,data,extInfo,size,decode=False):
         
         if len(data) > 0:
-            
-            data = int(data[::-1])
+            try:
+                data = int(data[::-1])
+            except:
+                data = 0
             
         if data > 100:
             data = 100
@@ -543,7 +545,7 @@ class hbusSlaveObjectInfo:
             #print self.objectDataType
             #print hbusSlaveObjectDataType.dataTypeOptions.keys()
             
-            return self.objectLastValue #sem formato
+            return str(self.objectLastValue) #sem formato
         
         #analisa informação extra
         if type(hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType]) == dict: 
@@ -553,7 +555,7 @@ class hbusSlaveObjectInfo:
             #print self.objectDataTypeInfo
             #print hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys()
             
-                return self.objectLastValue #sem formato
+                return str(self.objectLastValue) #sem formato
                 
         return hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](hbusSlaveObjectDataType(),data=self.objectLastValue,size=self.objectSize,extInfo=self.objectExtendedInfo)
         
@@ -714,6 +716,11 @@ class hbusMaster:
     
         self.serialCreate()
         
+    def enterOperational(self):
+        
+        #overload
+        pass
+        
     def getInformationData(self):
         
         busses = list(set([slave.hbusSlaveAddress.hbusAddressBusNumber for slave in self.detectedSlaveList.values()]))
@@ -721,7 +728,7 @@ class hbusMaster:
         return hbusMasterInformationData(len(self.detectedSlaveList),busses)
         
     def processHiddenObjects(self):
-        
+        ##TODO: eliminar uso de threading
         self.logger.debug("Iniciando processamento de objetos invisíveis...")
         
         self.waitFlag = False
@@ -1237,6 +1244,8 @@ class hbusMaster:
         
         self.masterState = hbusMasterState.hbusMasterOperational
         reactor.callInThread(self.processHiddenObjects)
+        
+        self.enterOperational()
         
     def readBasicSlaveInformationEnded(self,*params):
         

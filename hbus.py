@@ -15,6 +15,11 @@ import signal
 
 BUSID = 0
 
+##TODO: Estudar a realização de dump automático de todos os valores de objetos no sistema ao completar enumeração
+
+##TODO: Estudar arquitetura do template engine (django) para interface de controle web mais robusta; observar possibilidades de "renomeação" dos dispositivos, barramentos e objetos; persistência;
+##        possibilidade de plug-ins específicos ao objeto; etc 
+
 class TwistedSerialPort(Protocol):
     
     def connectionMade(self):
@@ -57,6 +62,10 @@ def SignalHandler(signum, frame):
     if signal == signal.SIGTERM:
         exit(0)
 
+def hbusMasterOperational():
+    
+    reactor.callInThread(hbusWeb.run)
+
 def main():
     
     logging.basicConfig(level=logging.DEBUG,filename='hbus_skeleton.log',filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -72,6 +81,7 @@ def main():
     signal.signal(signal.SIGTERM, SignalHandler)
     
     hbusMaster = TwistedhbusMaster('/dev/ttyUSB0',baudrate=100000)
+    #hbusMaster.enterOperational = hbusMasterOperational
     
     hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
     hbusMasterPeriodicTask.start(1)

@@ -820,12 +820,77 @@ li
 
 @media all and (orientation:landscape) {
 
+.hbusMMain .readObjects {
+    
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    
+    overflow: hidden;
+    
+    height: auto;
+    width: auto;
+    
+    /*-moz-transition: width 0.2s ease-out;   
+    -webkit-transition:width 0.2s ease-out;  
+    -o-transition:width 0.2s ease-out;  
+    transition:width 0.2s ease-out;*/
+    
+    border: 4px dashed #008000;
+    border-radius: 20px;
+    
+    background-color: #C6D880;
+    
+    display: block;
+    vertical-align: middle;
+}
+
+.hbusMMain .writeObjects{
+    
+    
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    
+    height: auto;
+    width: auto;
+    
+    overflow: hidden;
+    
+    /*height: 200px;*/
+    
+    border: 4px dashed #D12F19;
+    border-radius: 20px;
+    
+    background-color: #FBC2C4;
+    
+    display: block;
+    /*vertical-align: middle;*/
+}
+
+.hbusMMain .als-next {
+    
+    top: 50px;
+    right: 5px;
+    
+}
+
+.hbusMMain .als-prev {
+    
+    top: 50px;
+    left: 5px;
+}
+
 .hbusMMain ul.objGrid {
     
     /*position:relative;
     top: -10px;*/
+    margin: 0;
     padding: 0;
     list-style: none;
+        
     /*margin: 20%;
     width: 50%;*/
     /*height: 90%;*/
@@ -845,8 +910,8 @@ li
     margin-top: 2px;
     margin-bottom: 2px;
     
-    width: 90px;
-    height:90px;
+    width: 120px;
+    height:120px;
     
     background-color: #F5F5F5;
     
@@ -932,6 +997,88 @@ li
 
 @media all and (orientation:portrait) {
 
+.hbusMMain .readObjects {
+    
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    
+    overflow: hidden;
+    
+    height: 97.5%;
+    width: 47.5%;
+    
+    /*-moz-transition: width 0.2s ease-out;   
+    -webkit-transition:width 0.2s ease-out;  
+    -o-transition:width 0.2s ease-out;  
+    transition:width 0.2s ease-out;*/
+    
+    border: 4px dashed #008000;
+    border-radius: 20px;
+    
+    background-color: #C6D880;
+    
+    display: block;
+    vertical-align: middle;
+}
+
+.hbusMMain .writeObjects{
+    
+    position: absolute;
+    right: 5px;
+    top:5px;
+    
+    /*margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    margin-top: 5px;*/
+    
+    height: 97.5%;
+    width: 47.5%;
+    
+    overflow: hidden;
+    
+    /*height: 200px;*/
+    
+    border: 4px dashed #D12F19;
+    border-radius: 20px;
+    
+    background-color: #FBC2C4;
+    
+    display: block;
+    /*vertical-align: middle;*/
+}
+
+.hbusMMain .als-next {
+    
+    bottom: 20px;
+    right: 50%;
+    
+    -moz-transform: rotate(90deg) scale(2,2);
+    -webkit-transform: rotate(90deg) scale(2,2);
+    -ms-transform: rotate(90deg) scale(2,2);
+}
+
+.hbusMMain .als-prev {
+    
+    top: 20px;
+    right: 50%;
+    
+    -moz-transform: scale(2,2);
+    -webkit-transform: scale(2,2);
+    -ms-transform: scale(2,2);
+    
+    -moz-transform: rotate(90deg) scale(2,2);
+    -webkit-transform: rotate(90deg) scale(2,2);
+    -ms-transform: rotate(90deg) scale(2,2);
+}
+
+.hbusMMain .als-viewport {
+    
+    top: 85px;
+}
+
 .hbusMMain ul.objGrid {
     
     /*position:relative;
@@ -954,11 +1101,11 @@ li
     border-radius: 50px;
     margin-right: 8px;
     margin-left: 8px;
-    margin-top: 2px;
-    margin-bottom: 2px;
+    margin-top: 10px;
+    margin-bottom:10px;
     
-    width: 200px;
-    height:200px;
+    width: 225px;
+    height:225px;
     
     background-color: #F5F5F5;
     
@@ -1077,57 +1224,6 @@ li.empty {
     
 }
 
-.hbusMMain section.readObjects {
-    
-    margin-left: 5px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    margin-top: 5px;
-    
-    overflow: hidden;
-    
-    height: auto;
-    max-height: 582px;
-    width: auto;
-    
-    /*-moz-transition: width 0.2s ease-out;   
-    -webkit-transition:width 0.2s ease-out;  
-    -o-transition:width 0.2s ease-out;  
-    transition:width 0.2s ease-out;*/
-    
-    border: 4px dashed #008000;
-    border-radius: 20px;
-    
-    background-color: #C6D880;
-    
-    display: block;
-    vertical-align: middle;
-}
-
-.hbusMMain section.writeObjects{
-    
-    
-    margin-left: 5px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    margin-top: 5px;
-    
-    height: auto;
-    max-height: 582px;
-    width: auto;
-    
-    overflow: hidden;
-    
-    /*height: 200px;*/
-    
-    border: 4px dashed #D12F19;
-    border-radius: 20px;
-    
-    background-color: #FBC2C4;
-    
-    display: block;
-    /*vertical-align: middle;*/
-}
 
 /*OBJECT SET*/
 
@@ -1618,4 +1714,58 @@ input[type="range"].slider100::-moz-range-thumb {
     
     
     
+}
+
+/*ALS STYLES*/
+/*****************************************************
+ * generic styling for ALS elements: outer container
+ ******************************************************/
+
+.als-container {
+    position: relative;
+    width: 100%;
+    margin: 0px auto;
+    z-index: 0;
+}
+
+/****************************************
+ * viewport styling
+ ***************************************/
+
+.als-viewport {
+    position: relative;
+    overflow: hidden;
+    margin: 0px auto;
+}
+
+/***************************************************
+ * wrapper styling
+ **************************************************/
+
+.als-wrapper {
+    position: relative;
+    /* if you are using a list with <ul> <li> */
+    list-style: none;
+}
+
+/*************************************
+ * item: single list element
+ ************************************/
+
+.als-item {
+    position: relative;
+    display: block;
+    text-align: center;
+    cursor: pointer;
+    float: left;
+}
+
+/***********************************************
+ * prev, next: buttons styling
+ **********************************************/
+ 
+.als-prev, .als-next {
+    position: absolute;
+    cursor: pointer;
+    clear: both;
 }
