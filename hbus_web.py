@@ -3,6 +3,7 @@
 from hbusmaster import *
 import string
 from bottle import route, run, template, static_file, request
+import re
 
 class HBUSWEB:
 
@@ -16,7 +17,7 @@ class HBUSWEB:
 
     def index(self):
         
-        return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values(),masterStatus=self.hbusMaster.getInformationData())
+        return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values(),masterStatus=self.hbusMaster.getInformationData(),re=re)
     
     def favicon(self):
         
@@ -63,11 +64,11 @@ class HBUSWEB:
                 
                 pass
                 
-            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02])
-            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01])
+            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02 and x.objectLevel > self.objectLevel])
+            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01 and x.objectLevel > self.objectLevel])
         
         return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
-                        readObjCount=readObjectCount,writeObjCount=writeObjectCount)
+                        readObjCount=readObjectCount,writeObjCount=writeObjectCount,re=re)
     
     def slaveWriteObject(self,uid=None,obj=None):
         
@@ -90,7 +91,45 @@ class HBUSWEB:
                 pass
         
         return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
-                        objectNumber = int(obj))
+                        objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
+        
+    def slaveWriteObjectRefresh(self,uid=None,obj=None):
+        
+        self.wait = False
+        def waitForSlaveRead(dummy):
+            
+            self.wait = False
+
+        if uid != None:
+            
+            devUID = string.split(uid,"0x")
+            
+            addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+            
+            if addr == None:
+                s = None
+            else:
+                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                
+            if s == None:
+                
+                ##TODO: retornar template de erro, escravo indisponível
+                
+                pass
+            
+            if obj != None:
+                
+                try:
+                    self.wait = True
+                    self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead,timeoutCallback=waitForSlaveRead)
+                    
+                    while (self.wait == True):
+                        pass
+                except:
+                    pass
+        
+        return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+                        objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
     
     def slaveInfoSet(self,uid=None,obj=None):
         
@@ -115,11 +154,12 @@ class HBUSWEB:
                 #except:
                 #    pass
         
-            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02])
-            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01])
+            #writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02 and x.objectLevel > self.objectLevel])
+            #readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01 and x.objectLevel > self.objectLevel])
         
-        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
-                        readObjCount=readObjectCount,writeObjCount=writeObjectCount)
+        return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+                        objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
+                        #readObjCount=readObjectCount,writeObjCount=writeObjectCount)
     
     def slavesByBus(self,busNumber=None):
         
@@ -131,7 +171,7 @@ class HBUSWEB:
                 if slave.hbusSlaveAddress.hbusAddressBusNumber == int(busNumber):
                     slaveList.append(slave)
         
-        return template('hbus_slave_by_bus',slaveList=slaveList,masterStatus=self.hbusMaster.getInformationData(),busNumber=busNumber)
+        return template('hbus_slave_by_bus',slaveList=slaveList,masterStatus=self.hbusMaster.getInformationData(),busNumber=busNumber,re=re)
     
     def setLevel(self,level=None):
         
@@ -147,6 +187,15 @@ class HBUSWEB:
         
         return static_file(filename,root='web_static')
     
+    def percentToRange(self,percentStr):
+        
+        if percentStr == "?" or percentStr == None:
+            return "0"
+        
+        s = re.sub(r'\.[0-9]+%$','',percentStr)
+        
+        return s
+    
     #roda
     def run(self):
         
@@ -159,6 +208,7 @@ class HBUSWEB:
         route("/slave-uid/<uid>/get-<obj>")(self.slaveInfo)
         route("/slave-uid/<uid>/set-<obj>")(self.slaveWriteObject)
         route("/slave-uid/<uid>/set-<obj>",method="POST")(self.slaveInfoSet)
+        route("/slave-uid/<uid>/setget-<obj>")(self.slaveWriteObjectRefresh)
         
         #escravos por barramento
         route("/bus/<busNumber>")(self.slavesByBus)

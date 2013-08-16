@@ -7,9 +7,16 @@
         @import url("/static/style.css");
         -->
         </style>
+        
+        <meta name="viewport" content="user-scalable=no" />
+        <link rel="apple-touch-icon" href="/static/apple-touch-icon.png"/>
+        <link rel="apple-touch-icon-precomposed" href="/static/apple-touch-icon-precomposed.png"/>
+        
 	</head>
 	
 <div class="hbusContainer">
+
+<div class="hbusTopContainer">
 
     <header class="hbusMHeader">
         <section>
@@ -30,27 +37,38 @@
     </header>
 	
     <section class="hbusDeviceDescription">
-        <a class="left" href="/bus/{{busNumber}}">Dispositivos ativos</a>
+        <a class ="left">Dispositivos ativos</a>
         <div class="right">
             %if busNumber != "255":
                 BUS {{busNumber}}
             %else:
-                Todos
+                Todos dispositivos
             %end
         </div>
     </section>
+    
+</div>
 	
-	<div class=hbusMMain>
-	
+	<div class="hbusMMain">
 	       
-	   <ul class="devGrid">
-	       
-	       %for slave in slaveList:
-	           <li><a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}">{{slave.hbusSlaveDescription}}</a></li>
-	       %end
-	       
-	   </ul>
+	  <span class="center">
+	      <span class="centerWrap">
+	      
+        	   <ul class="devGrid">
+        	       
+        	       %for slave in slaveList:
+        	           <li>
+        	               <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}">
+        	                   <div class="fill"> </div>
+        	                   <p>{{slave.hbusSlaveDescription}}</p>
+        	               </a>
+        	           </li>
         
+        	       %end
+        	       
+        	   </ul>
+        </span>
+      </span>
     </div>
     
 </div>

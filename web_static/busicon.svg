@@ -11,13 +11,13 @@
   </rdf:RDF>
  </metadata>
  <g id="layer1" transform="translate(-134.24 -382.99)">
-  <path id="path4195" d="m248.99 572.74c-37.5 18.75-48.75 18.75-105 30 56.25 11.25 67.5 11.25 105 30-7.5-22.5-7.5-37.5 0-60" fill-rule="evenodd"/>
-  <path id="path4197" d="m383.99 392.74v210h-180" stroke="#000" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5" fill="none"/>
-  <path id="path4199" d="m323.99 392.74v150h-180" stroke="#000" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5" fill="none"/>
-  <path id="path4201" d="m458.99 572.74c37.5-18.75 48.75-18.75 105-30-56.25-11.25-67.5-11.25-105-30 7.5 22.5 7.5 37.5 0 60" fill-rule="evenodd"/>
-  <path id="path4203" d="m503.99 542.74h-180" stroke="#000" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5" fill="none"/>
-  <path id="path4205" d="m563.99 602.74h-180" stroke="#000" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5" fill="none"/>
-  <path id="path4207" d="m406.49 602.74c0-12.426-10.07-22.5-22.5-22.5-12.426 0-22.5 10.074-22.5 22.5s10.074 22.5 22.5 22.5c12.43 0 22.5-10.074 22.5-22.5" fill-rule="evenodd"/>
-  <path id="path4209" d="m346.49 542.74c0-12.426-10.074-22.5-22.5-22.5s-22.5 10.074-22.5 22.5 10.074 22.5 22.5 22.5 22.5-10.074 22.5-22.5" fill-rule="evenodd"/>
+  <path id="path4195" d="m248.99 572.74c-37.5 18.75-48.75 18.75-105 30 56.25 11.25 67.5 11.25 105 30-7.5-22.5-7.5-37.5 0-60" fill-rule="evenodd" fill="#b3b3b3"/>
+  <path id="path4197" d="m383.99 392.74v210h-180" stroke="#b3b3b3" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5" fill="none"/>
+  <path id="path4199" d="m323.99 392.74v150h-180" stroke="#b3b3b3" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5" fill="none"/>
+  <path id="path4201" d="m458.99 572.74c37.5-18.75 48.75-18.75 105-30-56.25-11.25-67.5-11.25-105-30 7.5 22.5 7.5 37.5 0 60" fill-rule="evenodd" fill="#b3b3b3"/>
+  <path id="path4203" d="m503.99 542.74h-180" stroke="#b3b3b3" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5" fill="none"/>
+  <path id="path4205" d="m563.99 602.74h-180" stroke="#b3b3b3" stroke-linecap="round" stroke-miterlimit="6" stroke-width="19.5" fill="none"/>
+  <path id="path4207" d="m406.49 602.74c0-12.426-10.07-22.5-22.5-22.5-12.426 0-22.5 10.074-22.5 22.5s10.074 22.5 22.5 22.5c12.43 0 22.5-10.074 22.5-22.5" fill-rule="evenodd" fill="#b3b3b3"/>
+  <path id="path4209" d="m346.49 542.74c0-12.426-10.074-22.5-22.5-22.5s-22.5 10.074-22.5 22.5 10.074 22.5 22.5 22.5 22.5-10.074 22.5-22.5" fill-rule="evenodd" fill="#b3b3b3"/>
  </g>
 </svg>

@@ -1,104 +1,6 @@
 /* ------------------
  styling for the tables 
    ------------------   */
-.buttons a, .buttons button{
-    display:block;
-    float:left;
-    margin:0 7px 0 0;
-    background-color:#f5f5f5;
-    border:1px solid #dedede;
-    border-top:1px solid #eee;
-    border-left:1px solid #eee;
-
-    font-family:"Lucida Grande", Tahoma, Arial, Verdana, sans-serif;
-    font-size:12px;
-    line-height:130%;
-    text-decoration:none;
-    font-weight:bold;
-    color:#565656;
-    cursor:pointer;
-    padding:5px 10px 6px 7px; /* Links */
-}
-.buttons button{
-    width:auto;
-    overflow:visible;
-    padding:4px 10px 3px 7px; /* IE6 */
-}
-.buttons button[type]{
-    padding:5px 10px 5px 7px; /* Firefox */
-    line-height:17px; /* Safari */
-}
-*:first-child+html button[type]{
-    padding:4px 10px 3px 7px; /* IE7 */
-}
-.buttons button img, .buttons a img{
-    margin:0 3px -3px 0 !important;
-    padding:0;
-    border:none;
-    width:16px;
-    height:16px;
-}
-
-/* STANDARD */
-
-button:hover, .buttons a:hover{
-    background-color:#dff4ff;
-    border:1px solid #c2e1ef;
-    color:#336699;
-}
-.buttons a:active{
-    background-color:#6299c5;
-    border:1px solid #6299c5;
-    color:#fff;
-}
-
-/* POSITIVE */
-
-button.positive, .buttons a.positive{
-    color:#529214;
-}
-.buttons a.positive:hover, button.positive:hover{
-    background-color:#E6EFC2;
-    border:1px solid #C6D880;
-    color:#529214;
-}
-.buttons a.positive:active{
-    background-color:#529214;
-    border:1px solid #529214;
-    color:#fff;
-}
-
-/* NEGATIVE */
-
-.buttons a.negative, button.negative{
-    color:#d12f19;
-}
-.buttons a.negative:hover, button.negative:hover{
-    background:#fbe3e4;
-    border:1px solid #fbc2c4;
-    color:#d12f19;
-}
-.buttons a.negative:active{
-    background-color:#d12f19;
-    border:1px solid #d12f19;
-    color:#fff;
-}
-
-/* REGULAR */
-
-button.regular, .buttons a.regular{
-    color:#336699;
-}
-.buttons a.regular:hover, button.regular:hover{
-    background-color:#dff4ff;
-    border:1px solid #c2e1ef;
-    color:#336699;
-}
-.buttons a.regular:active{
-    background-color:#6299c5;
-    border:1px solid #6299c5;
-    color:#fff;
-}
 
 body
 {
@@ -213,21 +115,149 @@ li
 
 /*HBUS MOBILE STYLES*/
 
+@media all and (orientation: landscape) {
+
 .hbusContainer {
     
     max-width: 960px;
-    max-height: 480px;
+    max-height: 540px;
 
     margin: auto;
     
 }
 
+}
+
+@media all and (orientation: portrait) {
+    
+.hbusContainer {
+    
+    max-width: 960px;
+    max-height: 1700px;
+
+    margin: auto;
+    
+}
+}
+
+.hbusTopContainer {
+   
+    
+}
+
+@media all and (orientation: landscape) {
 .hbusMHeader {
     
     width: 100%;
     margin-bottom: 20px;
     /*display: box;*/
     height: 100px;
+    
+}
+
+.hbusMHeader section{
+ 
+    float: left;
+    width: 420px;
+    margin: 10px;
+    
+    height: inherit;
+    
+}
+
+.hbusMHeader aside{
+    
+    float: right;
+    margin: 10px;
+    /*margin-left: 100px;*/
+    width: auto;
+    height: 90%;
+    
+    /*position: absolute;
+    left:500px;*/
+    
+}
+
+/*LOGO NO CABEÇALHO*/
+.hbusMHeader a.hbusLogo {
+  display: block;
+  text-indent: -9999px;
+  
+  width:  100%;
+  height: 100%;
+  
+  background: url(hbus.svg);
+  background-repeat: no-repeat;
+  background-size: contain;
+  /*background-size: 75%;*/
+  
+}
+
+.hbusMHeader div.hbusStatus {
+
+    float: left;
+    height: 100%;
+    width: 150px;
+    margin: 10px;
+        
+    border: 2px solid #6299C5;
+    border-radius: 5px;
+    
+    background-color: #EFF2FF;
+    
+}
+
+.hbusActiveDevices {
+    
+   font-family: "Lucida Sans Unicode","Lucida Grande", Sans-Serif;
+   font-weight: bold;
+   font-size: 3em;
+   color: #039;
+   background: #EFF2FF;
+   border: 1px solid #039;
+   border-radius: 5px;
+   
+   padding: 12px;
+   
+   /*display: box;*/
+   /*vertical-align: middle;*/
+}
+
+.hbusMHeader div.hbusStatus div.activeSlaveCount
+{
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    text-align: center;
+    font-size: 3em;
+    padding: 10px;
+    
+    color: #008000;
+    
+}
+
+.hbusMHeader div.hbusStatus div.statusText
+{
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.25em;
+    
+    color: #336699;
+    
+}
+
+}
+
+@media all and (orientation:portrait) {
+    
+.hbusMHeader {
+    
+    width: 100%;
+    margin-bottom: 20px;
+    /*display: box;*/
+    height: 200px;
     
 }
 
@@ -283,6 +313,51 @@ li
     
 }
 
+.hbusActiveDevices {
+    
+   font-family: "Lucida Sans Unicode","Lucida Grande", Sans-Serif;
+   font-weight: bold;
+   font-size: 4.5em;
+   color: #039;
+   background: #EFF2FF;
+   border: 2.5px solid #039;
+   border-radius: 12.5px;
+   
+   padding: 30px;
+   
+   /*display: box;*/
+   /*vertical-align: middle;*/
+}
+
+.hbusMHeader div.hbusStatus div.activeSlaveCount
+{
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    text-align: center;
+    font-size: 6em;
+    padding: 25px;
+    margin-top:25px;
+    
+    color: #008000;
+    
+}
+
+.hbusMHeader div.hbusStatus div.statusText
+{
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    text-align: center;
+    font-size: 2em;
+    
+    color: #336699;
+    
+}
+}
+
+@media all and (orientation:landscape) {
+
 .hbusDeviceDescription {
     
    font-family: "Lucida Sans Unicode","Lucida Grande", Sans-Serif;
@@ -304,6 +379,8 @@ li
     float: left;  
     text-align:left;
     text-decoration: none;
+    
+    cursor:default;
 }
 
 .hbusDeviceDescription div.right
@@ -312,35 +389,112 @@ li
     text-align: right;
 }
 
-.hbusActiveDevices {
+}
+
+@media all and (orientation:portrait) {
+
+.hbusDeviceDescription {
     
    font-family: "Lucida Sans Unicode","Lucida Grande", Sans-Serif;
    font-weight: bold;
-   font-size: 3em;
+   font-size: 4.5em;
    color: #039;
    background: #EFF2FF;
-   border: 1px solid #039;
-   border-radius: 5px;
+   border: 2.5px solid #039;
+   border-radius: 12.5px;
    
-   padding: 12px;
+   padding: 30px;
+   margin-bottom: 20px;
    
    /*display: box;*/
    /*vertical-align: middle;*/
 }
 
+.hbusDeviceDescription a.left
+{
+    float: left;  
+    text-align:left;
+    text-decoration: none;
+    
+    cursor:default;
+}
+
+.hbusDeviceDescription div.right
+{
+
+    /*INVISÍVEL*/
+    font-size: 0em;
+    text-align: right;
+}
+
+}
+
+@media all and (orientation: portrait) {
+
 .hbusMMain {
+    
+    position: relative;
     
     margin-left: 5%;
     margin-right: 5%;
     margin-bottom: auto;
-    margin-top: 20px;
+    margin-top: 10px;
     
-    height: 280px;
+    height: 1000px;
+    max-height: 1400px;
     
     border: 4px dashed #6299C5;
     border-radius: 20px;
     
     background-color: #EFF2FF;
+    
+    overflow: hidden;
+}
+
+}
+
+@media all and (orientation: landscape) {
+
+.hbusMMain {
+    
+    position: relative;
+    
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-bottom: auto;
+    margin-top: 10px;
+    
+    height: 300px;
+    max-height: 600px;
+    
+    border: 4px dashed #6299C5;
+    border-radius: 20px;
+    
+    background-color: #EFF2FF;
+    
+    overflow: hidden;
+    
+}
+
+}
+
+.center {
+    
+    position: relative;
+    display: block;
+    top: 50%;
+    margin-top: -1000px;
+    height: 2000px;
+    text-align: center;
+    line-height: 2000px;
+    
+    /*background-color: #FF0000;*/
+    overflow: hidden;
+}
+
+.centerWrap {
+    
+    line-height: 0;
 }
 
 .hbusMMain div.objectHeader h1
@@ -357,46 +511,25 @@ li
     
 }
 
-.hbusMHeader div.hbusStatus div.activeSlaveCount
-{
-    
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
-    font-weight: bold;
-    text-align: center;
-    font-size: 3em;
-    padding: 10px;
-    
-    color: #008000;
-    
-}
-
-.hbusMHeader div.hbusStatus div.statusText
-{
-    
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
-    font-weight: bold;
-    text-align: center;
-    font-size: 1.25em;
-    
-    color: #336699;
-    
-}
-
 /*LISTAGEM DE BARRAMENTOS*/
 
 .hbusMMain ul.busGrid {
     
     /*position:relative;*/
-    
-    padding: 0;
+   line-height:normal;
+
     list-style: none;
     /*margin: 20%;
     width: 50%;*/
-    height: 50%;
-   
+    /*height: 50%;*/
    text-align: center;
    
+   display: inline-block;
+   vertical-align: middle;
+   
 }
+
+@media all and (orientation: landscape) {
 
 .busGrid li {
     
@@ -416,6 +549,7 @@ li
     background-color: #F5F5F5;
     
     display: inline-block;
+    vertical-align: middle;
     
 }
 
@@ -429,39 +563,123 @@ li
     width: 100%;
     height: 100%;
     
-    display: block;
+    display: inline-block;
+    vertical-align: middle;
     
     text-align: center;
     font-weight: bold;
     
+    color : #000099;
 }
 
-/*LISTAGEM DE DISPOSITIVOS*/
-.hbusMMain ul.devGrid {
-    
-    /*position:relative;*/
+.busGrid a p {
     
     padding: 0;
+    margin: 0;
+    
+    border: 1px solid #0865C2;
+    border-radius: 5px;
+    background-color: rgba(255,255,255,0.6);
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+}
+
+}
+
+@media all and (orientation: portrait) {
+
+.busGrid li {
+    
+    /*float: left;*/
+    /*padding: 1px;*/
+    border: 12.5px solid #000000;
+    
+    border-radius: 50px;
+    margin-right: 20px;
+    margin-left: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    
+    width: 250px;
+    height:250px;
+    
+    background-color: #F5F5F5;
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+}
+
+.busGrid a {
+    
+    background: url(busicon.svg) no-repeat;
+    background-size: contain;
+    
+    background-position:center;
+    
+    width: 100%;
+    height: 100%;
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+    text-align: center;
+    font-weight: bold;
+    
+    color : #000099;
+}
+
+.busGrid a p {
+    
+    padding: 0;
+    margin: 0;
+    
+    border: 2.5px solid #0865C2;
+    border-radius: 12.5px;
+    background-color: rgba(255,255,255,0.6);
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+    font-size: 2.5em;
+    
+}
+
+}
+
+
+/*LISTAGEM DE DISPOSITIVOS*/
+
+@media all and (orientation:landscape) {
+
+.hbusMMain ul.devGrid {
+    
+    line-height:normal;
+    
     list-style: none;
     /*margin: 20%;
     width: 50%;*/
-    height: 80%;
+    /*height: 80%;*/
    
    text-align: center;
+   
+   display: inline-block;
+   vertical-align: middle;
    
 }
 
 .devGrid li {
     
-    float: left;
     /*padding: 1px;*/
     border: 5px solid #000000;
     
     border-radius: 20px;
-    margin-right: 20px;
-    margin-left: 20px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-right: 10px;
+    margin-left: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
     
     width: 100px;
     height:100px;
@@ -469,10 +687,13 @@ li
     background-color: #F5F5F5;
     
     display: inline-block;
+    vertical-align: middle;
     
 }
 
 .devGrid a {
+    
+    /*position: relative;*/
     
     background: url(devicon.svg) no-repeat;
     background-size: contain;
@@ -482,7 +703,8 @@ li
     width: 100%;
     height: 100%;
     
-    display: block;
+    display: inline-block;
+    vertical-align: middle;
     
     text-align: center;
     font-weight: bold;
@@ -490,17 +712,123 @@ li
     color : #000099;
 }
 
+.devGrid a p {
+    
+    padding: 0;
+    margin: 0;
+    
+    border: 1px solid #0865C2;
+    border-radius: 5px;
+    background-color: rgba(255,255,255,0.6);
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+}
+
+}
+
+@media all and (orientation:portrait) {
+
+.hbusMMain ul.devGrid {
+    
+    line-height:normal;
+    
+    list-style: none;
+    /*margin: 20%;
+    width: 50%;*/
+    /*height: 80%;*/
+   
+   text-align: center;
+   
+   display: inline-block;
+   vertical-align: middle;
+   
+}
+
+.devGrid li {
+    
+    /*padding: 1px;*/
+    border: 12.5px solid #000000;
+    
+    border-radius: 50px;
+    margin-right: 10px;
+    margin-left: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    
+    width: 250px;
+    height:250px;
+    
+    background-color: #F5F5F5;
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+}
+
+.devGrid a {
+    
+    /*position: relative;*/
+    
+    background: url(devicon.svg) no-repeat;
+    background-size: contain;
+    
+    background-position:center;
+    
+    width: 100%;
+    height: 100%;
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+    text-align: center;
+    font-weight: bold;
+    
+    color : #000099;
+}
+
+.devGrid a p {
+    
+    padding: 0;
+    margin: 0;
+    
+    border: 2.5px solid #0865C2;
+    border-radius: 12.5px;
+    background-color: rgba(255,255,255,0.6);
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+    font-size: 2.5em;
+    
+}
+
+}
+
+.fill {
+    content: '';
+    
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    margin-right: -0.25em;
+}
+
+
 /*LISTAGEM DE OBJETOS*/
+
+@media all and (orientation:landscape) {
+
 .hbusMMain ul.objGrid {
     
-    position:relative;
-    top: -10px;
-    
+    /*position:relative;
+    top: -10px;*/
     padding: 0;
     list-style: none;
     /*margin: 20%;
     width: 50%;*/
-    height: 90%;
+    /*height: 90%;*/
    
    text-align: center;
    
@@ -508,15 +836,14 @@ li
 
 .objGrid li {
     
-    float: left;
     /*padding: 1px;*/
     border: 4px solid #000000;
     
     border-radius: 20px;
     margin-right: 8px;
     margin-left: 8px;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 2px;
+    margin-bottom: 2px;
     
     width: 90px;
     height:90px;
@@ -524,6 +851,7 @@ li
     background-color: #F5F5F5;
     
     display: inline-block;
+    vertical-align: middle;
     
 }
 
@@ -559,83 +887,11 @@ li
     width: auto;
     /*height: auto;*/
     
+    border: 1px solid #0865C2;
+    border-radius: 5px;
+    
     line-height: 85%;
     background-color: rgba(255,255,255,0.6);
-}
-
-.objGrid li.percent {
-    
-    background: url(percent.svg) no-repeat;
-    background-size: contain;
-    background-position:center;
-    background-color: #F5F5F5;
-}
-
-.objGrid li.boolsw {
-    
-    background: url(boolsw.svg) no-repeat;
-    background-size:contain;
-    background-position: center;
-    background-color: #F5F5F5;
-}
-
-.objGrid li.byte {
-    
-    background: url(byte.svg) no-repeat;
-    background-size: contain;
-    background-position: center;
-    background-color: #F5F5F5;
-}
-
-.objGrid li.empty {
-    
-}
-
-.hbusMMain section.readObjects {
-    
-    float: left;
-    
-    margin-left: 5px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    margin-top: 5px;
-    
-    overflow: hidden;
-    
-    height: 262px;
-    width: auto;
-    
-    /*-moz-transition: width 0.2s ease-out;   
-    -webkit-transition:width 0.2s ease-out;  
-    -o-transition:width 0.2s ease-out;  
-    transition:width 0.2s ease-out;*/
-    
-    border: 4px dashed #008000;
-    border-radius: 20px;
-    
-    background-color: #C6D880;
-}
-
-.hbusMMain section.writeObjects{
-    
-    float:right;
-    
-    margin-left: 5px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    margin-top: 5px;
-    
-    height: 262px;
-    width: auto;
-    
-    overflow: hidden;
-    
-    /*height: 200px;*/
-    
-    border: 4px dashed #D12F19;
-    border-radius: 20px;
-    
-    background-color: #FBC2C4;
 }
 
 .hbusObjectValue {
@@ -669,5 +925,697 @@ li
     bottom: 2px;
     
     text-align: center;
+    
+}
+
+}
+
+@media all and (orientation:portrait) {
+
+.hbusMMain ul.objGrid {
+    
+    /*position:relative;
+    top: -10px;*/
+    padding: 0;
+    list-style: none;
+    /*margin: 20%;
+    width: 50%;*/
+    /*height: 90%;*/
+   
+   text-align: center;
+   
+}
+
+.objGrid li {
+    
+    /*padding: 1px;*/
+    border: 8px solid #000000;
+    
+    border-radius: 50px;
+    margin-right: 8px;
+    margin-left: 8px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    
+    width: 200px;
+    height:200px;
+    
+    background-color: #F5F5F5;
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+}
+
+.objGrid a {
+    
+    width: 100%;
+    height: 100%;
+    
+    display: block;
+    
+    text-align: center;
+    font-weight: bold;
+    
+    /*position: relative;
+    top: 10px;*/
+   margin: 0px;
+   padding: 0px;
+   overflow: hidden;
+    
+    color : #000099;
+    
+    position: relative;
+    
+    /*background-color: rgb(255,255,255);
+    background-color: rgba(255,255,255,0.6);*/
+}
+
+.objGrid a p {
+    
+    position: relative;
+    top: -5px;
+    
+    width: auto;
+    /*height: auto;*/
+    
+    border: 2.5px solid #0865C2;
+    border-radius: 12.5px;
+    
+    line-height: 85%;
+    background-color: rgba(255,255,255,0.6);
+
+    font-size: 2em;
+    
+}
+
+.hbusObjectValue {
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    
+    text-align: center;
+    
+    /*position: relative;
+    top: 10px;
+    left: 0px;*/
+    width: 80%;
+    margin-left: 10%;
+    margin-right: 10%;
+    
+    display: block;
+    
+    color: #565656;
+    background-color: rgba(255,255,255,0.8);
+    
+    overflow: hidden;
+    
+    border: 2.5px solid #0644B5;
+    border-radius: 12.5px;
+    
+    padding: 0px;
+    margin-top: 0px;
+    
+    position: absolute;
+    bottom: 6px;
+    
+    text-align: center;
+    font-size: 2em;
+    
+    line-height: 1.2em;
+    
+}
+
+
+}
+
+li.percent {
+    
+    background: url(percent.svg) no-repeat;
+    background-size: contain;
+    background-position:center;
+    background-color: #F5F5F5;
+}
+
+li.boolsw {
+    
+    background: url(boolsw.svg) no-repeat;
+    background-size:contain;
+    background-position: center;
+    background-color: #F5F5F5;
+}
+
+li.byte {
+    
+    background: url(byte.svg) no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-color: #F5F5F5;
+}
+
+li.empty {
+    
+}
+
+.hbusMMain section.readObjects {
+    
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    
+    overflow: hidden;
+    
+    height: auto;
+    max-height: 582px;
+    width: auto;
+    
+    /*-moz-transition: width 0.2s ease-out;   
+    -webkit-transition:width 0.2s ease-out;  
+    -o-transition:width 0.2s ease-out;  
+    transition:width 0.2s ease-out;*/
+    
+    border: 4px dashed #008000;
+    border-radius: 20px;
+    
+    background-color: #C6D880;
+    
+    display: block;
+    vertical-align: middle;
+}
+
+.hbusMMain section.writeObjects{
+    
+    
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    
+    height: auto;
+    max-height: 582px;
+    width: auto;
+    
+    overflow: hidden;
+    
+    /*height: 200px;*/
+    
+    border: 4px dashed #D12F19;
+    border-radius: 20px;
+    
+    background-color: #FBC2C4;
+    
+    display: block;
+    /*vertical-align: middle;*/
+}
+
+/*OBJECT SET*/
+
+@media all and (orientation:landscape) {
+    
+.hbusObjectDescription {
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    
+    text-align: center;
+    
+}
+
+.hbusMMain ul.objSetGrid {
+    
+    position:relative;
+    top: -10px;
+    
+    padding: 0;
+    list-style: none;
+    /*margin: 20%;
+    width: 50%;*/
+    height: 90%;
+   
+   text-align: center;
+   
+}
+
+.objSetGrid li {
+    
+    /*float: left;*/
+    /*padding: 1px;*/
+    border: 4px solid #000000;
+    
+    border-radius: 20px;
+    margin-right: 8px;
+    margin-left: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    
+    width: 250px;
+    height:250px;
+    
+    background-color: #F5F5F5;
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+}
+
+.objSetGrid a {
+    
+    width: 100%;
+    height: 100%;
+    
+    display: block;
+    
+    text-align: center;
+    font-weight: bold;
+    
+    /*position: relative;
+    top: 10px;*/
+   margin: 0px;
+   padding: 0px;
+   overflow: hidden;
+    
+    color : #000099;
+    
+    position: relative;
+    
+    /*background-color: rgb(255,255,255);
+    background-color: rgba(255,255,255,0.6);*/
+}
+
+.objSetGrid a p {
+    
+    position: relative;
+    top: -5px;
+    
+    width: auto;
+    /*height: auto;*/
+   border: 1px solid #0644B5;
+   border-radius: 5px;
+   
+   font-size: 2em;
+    
+    line-height: 85%;
+    background-color: rgba(255,255,255,0.6);
+}
+
+.objSetGrid li.setPercent {
+    
+    display: inline-block;
+    
+    border: 4px dashed #D12F19;
+    background-color: #FBC2C4;
+    
+}
+
+.objSetGrid li.onoff {
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+    border: 4px dashed #D12F19;
+    background-color: #FBC2C4;
+    
+}
+
+.objSetGrid li.binByte {
+    
+    border: 4px dashed #D12F19;
+    background-color: #FBC2C4;
+    
+}
+
+.objSetButton {
+    
+    width: 100px;
+    height: 100px;
+    
+    border: 4px solid #565656;
+    border-radius: 20px;
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.objSetButton.onoff {
+    
+    position: relative;
+    top: 10px;
+    
+    
+    margin-top: auto;
+    margin-bottom: auto;
+    
+}
+
+.objControlText {
+    
+    position: relative;
+    top: -8px;
+    
+    margin-bottom: 0px;
+    
+    color: #D12F19;
+    text-align: center;
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    font-size: 2em;
+    
+}
+
+}
+
+@media all and (orientation:portrait) {
+    
+.hbusObjectDescription {
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    
+    text-align: center;
+    
+}
+
+.hbusMMain ul.objSetGrid {
+    
+    position:relative;
+    top: -10px;
+    
+    padding: 0;
+    list-style: none;
+    /*margin: 20%;
+    width: 50%;*/
+    height: 90%;
+   
+   text-align: center;
+   
+}
+
+.objSetGrid li {
+    
+    /*float: left;*/
+    /*padding: 1px;*/
+    border: 8px solid #000000;
+    
+    border-radius: 50px;
+    margin-right: 8px;
+    margin-left: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    
+    width: 450px;
+    height:450px;
+    
+    background-color: #F5F5F5;
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+}
+
+.objSetGrid a {
+    
+    width: 100%;
+    height: 100%;
+    
+    display: block;
+    
+    text-align: center;
+    font-weight: bold;
+    
+    /*position: relative;
+    top: 10px;*/
+   margin: 0px;
+   padding: 0px;
+   overflow: hidden;
+    
+    color : #000099;
+    
+    position: relative;
+    
+    /*background-color: rgb(255,255,255);
+    background-color: rgba(255,255,255,0.6);*/
+}
+
+.objSetGrid a p {
+    
+    position: relative;
+    top: -5px;
+    
+    width: auto;
+    /*height: auto;*/
+   border: 2.5px solid #0644B5;
+   border-radius: 12.5px;
+   
+   font-size: 4em;
+    
+    line-height: 85%;
+    background-color: rgba(255,255,255,0.6);
+}
+
+/*VALOR DO OBJETO - ICONE DO OBJETO*/
+.objSetGrid a span.hbusObjectValue {
+    
+    /*AJUSTA TAMANHO DE FONTE E OUTROS*/
+   font-size: 4em;
+    
+}
+
+.objSetGrid li.setPercent {
+    
+    display: inline-block;
+    
+    border: 8px dashed #D12F19;
+    background-color: #FBC2C4;
+    
+}
+
+.objSetGrid li.onoff {
+    
+    display: inline-block;
+    vertical-align: middle;
+    
+    border: 8px dashed #D12F19;
+    background-color: #FBC2C4;
+    
+}
+
+.objSetGrid li.binByte {
+    
+    border: 8px dashed #D12F19;
+    background-color: #FBC2C4;
+    
+}
+
+.objSetButton {
+    
+    width: 190px;
+    height: 190px;
+    
+    border: 8px solid #565656;
+    border-radius: 50px;
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    font-size: 3em;
+}
+
+.objSetButton.onoff {
+    
+    position: relative;
+    top: 50px;
+    
+    
+    margin-top: auto;
+    margin-bottom: auto;
+    
+}
+
+.objControlText {
+    
+    position: relative;
+    top: -8px;
+    
+    color: #D12F19;
+    text-align: center;
+    
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-serif;
+    font-weight: bold;
+    font-size: 3em;
+    
+}
+
+}
+
+button:hover, .buttons a:hover{
+    background-color:#dff4ff;
+    /*border:1px solid #c2e1ef;*/
+    color:#336699;
+}
+
+/*RANGE*/
+
+@media all and (orientation:landscape) {
+
+.slider100 {
+    
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+    margin-bottom: 25px;
+    margin-top: 10px;
+    
+}
+
+input[type="range"].slider100 {
+    
+    -webkit-appearance: none;
+    
+    background-color: #FBC2C4;
+    height: 10px;
+    width: 200px;
+    
+    border: 3px solid #871e10;
+    border-radius: 5px;
+}
+
+input[type="range"].slider100::-moz-range-track {
+    
+    -moz-appearance: none;
+    
+    background-color: #FBC2C4;
+    height: 10px;
+    width: 200px;
+    
+    border: 3px solid #D12F19;
+    border-radius: 5px;
+}
+
+input[type="range"].slider100::-webkit-slider-thumb {
+    
+    -webkit-appearance: none;
+    
+    /*background-image: -webkit-gradient(linear, left top, left bottom, from(#EEE), to(#AAA));*/
+    height: 30px;
+    width: 25px;
+    
+    background-color: #CCCCCC;
+    
+    border: 4px solid #565656;
+    border-radius: 5px;
+}
+
+input[type="range"].slider100::-moz-range-thumb {
+    
+    -moz-appearance: none;
+    
+    /*background-image: -webkit-gradient(linear, left top, left bottom, from(#EEE), to(#AAA));*/
+    height: 30px;
+    width: 25px;
+    
+    background-color: #CCCCCC;
+    
+    border: 4px solid #565656;
+    border-radius: 5px;
+}
+
+.objectControlData {
+    
+    color: #565656;
+    font-weight: bold;
+    
+    width: auto;
+    
+}
+
+}
+
+@media all and (orientation:portrait) {
+
+.slider100 {
+    
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+    margin-bottom: 25px;
+    margin-top: 10px;
+    
+}
+
+input[type="range"].slider100 {
+    
+    -webkit-appearance: none;
+    
+    background-color: #FBC2C4;
+    height: 15px;
+    width: 375px;
+    
+    border: 6px solid #871e10;
+    border-radius: 10px;
+    
+    margin-bottom: 50px;
+}
+
+input[type="range"].slider100::-moz-range-track {
+    
+    -moz-appearance: none;
+    
+    background-color: #FBC2C4;
+    height: 15px;
+    width: 375px;
+    
+    border: 6px solid #D12F19;
+    border-radius: 10px;
+}
+
+input[type="range"].slider100::-webkit-slider-thumb {
+    
+    -webkit-appearance: none;
+    
+    /*background-image: -webkit-gradient(linear, left top, left bottom, from(#EEE), to(#AAA));*/
+    height: 55px;
+    width: 45px;
+    
+    background-color: #CCCCCC;
+    
+    border: 8px solid #565656;
+    border-radius: 10px;
+}
+
+input[type="range"].slider100::-moz-range-thumb {
+    
+    -moz-appearance: none;
+    
+    /*background-image: -webkit-gradient(linear, left top, left bottom, from(#EEE), to(#AAA));*/
+    height: 55px;
+    width: 45px;
+    
+    background-color: #CCCCCC;
+    
+    border: 8px solid #565656;
+    border-radius: 10px;
+}
+
+.objectControlData {
+    
+    color: #565656;
+    font-weight: bold;
+    
+    font-size: 2em;
+    
+    width: auto;
+    
+}
+
+}
+
+
+#percentValue {
+    
+    
     
 }

@@ -83,7 +83,7 @@ HBUS_BROADCAST_ADDRESS = 255
 
 HBUS_UNITS = {'A' : 'A', 'V' : 'V', 'P' : 'Pa', 'C':'C', 'd' : 'dBm', 'D' : 'dB'}
 
-
+HBUS_SLAVE_QUERY_INTERVAL = 0.1
 
 class hbusInstruction:
     
@@ -697,6 +697,9 @@ class hbusMaster:
     
     hbusDeviceScanningTimeout = False
     
+    rxBytes = 0
+    txBytes = 0
+    
     def __init__(self, port, baudrate=100000, busno = 0):
         
         self.serialPort = port
@@ -768,6 +771,7 @@ class hbusMaster:
                 i += 1
                 
         self.logger.info("Fim da leitura de informações dos escravos")
+        self.logger.debug("tx: %d, rx %d bytes",self.txBytes,self.rxBytes)
             
     
     def serialCreate(self):
@@ -832,6 +836,8 @@ class hbusMaster:
     def serialNewData(self,data):
         
         for d in data:
+            
+            self.rxBytes += 1
             
             if self.hbusRxState == hbusMasterRxState.hbusRXSBID:
                 
@@ -1178,6 +1184,8 @@ class hbusMaster:
             else:
                 
                 self.logger.debug("erro de BUSUNLOCK: travado com %s, tentativa de destravamento com %s" % (self.hbusBusLockedWith,dest))
+                
+        self.txBytes += len(busOp.getString())
         if self.masterState == hbusMasterState.hbusMasterScanning:
             reactor.callFromThread(self.serialWrite,busOp.getString())
         else:
@@ -1352,7 +1360,7 @@ class hbusMaster:
             else:
                 self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataType = ord(data[1][0]) & 0x30
                 
-            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectLevel = ord(data[1][0]) & 0xC0
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectLevel = (ord(data[1][0]) & 0xC0)>>6;
                             
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectSize = ord(data[1][1])
             
@@ -1390,7 +1398,7 @@ class hbusMaster:
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                     
                     if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
-                        reactor.callLater(0.2,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
+                        reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
         
         elif data[0][0] == "E":
             
@@ -1430,7 +1438,7 @@ class hbusMaster:
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                     
                     if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
-                        reactor.callLater(0.2,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
+                        reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
                     
         elif data[0][0] == "I":
             
@@ -1458,7 +1466,7 @@ class hbusMaster:
                 self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                 
                 if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
-                    reactor.callLater(0.2,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
+                    reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
     
     def readSlaveObject(self,address,number,callBack=None,timeoutCallback=None):
         
@@ -1492,7 +1500,7 @@ class hbusMaster:
         
         if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectRead:
             
-            self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectValue = value
+            self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectLastValue = value
             size = self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectSize
             
             myParamList = [number,size]

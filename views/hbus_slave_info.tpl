@@ -7,9 +7,16 @@
         @import url("/static/style.css");
         -->
         </style>
+        
+        <meta name="viewport" content="user-scalable=no" />
+        <link rel="apple-touch-icon" href="/static/apple-touch-icon.png"/>
+        <link rel="apple-touch-icon-precomposed" href="/static/apple-touch-icon-precomposed.png"/>
+        
     </head>
 
 <div class="hbusContainer">
+
+<div class="hbusTopContainer">
 
     <header class="hbusMHeader">
         <section>
@@ -24,15 +31,17 @@
             </div>
             
             <div class="hbusStatus">
-                
+                <div class="statusText"><a href="/bus/{{slave.hbusSlaveAddress.hbusAddressBusNumber}}">BUS {{slave.hbusSlaveAddress.hbusAddressBusNumber}}</a></div>
             </div>
         </aside>
     </header>
     
     <section class="hbusDeviceDescription">
-        <a class="left" href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}">{{slave.hbusSlaveDescription}}</a>
+        <a class="left">{{slave.hbusSlaveDescription}}</a>
         <div class="right">&lt;{{hex(slave.hbusSlaveUniqueDeviceInfo)}}&gt; @ {{slave.hbusSlaveAddress.hbusAddressBusNumber}}:{{slave.hbusSlaveAddress.hbusAddressDevNumber}}</div>
     </section>
+
+</div>
     
     <div class="hbusMMain">
         
@@ -42,9 +51,10 @@
         
             <ul class="objGrid">
                 
-                %i = 1
+                %i = 0
                 %for object in slave.hbusSlaveObjects.values():
                 
+                    %i += 1
                     %if object.objectHidden:
                         %continue
                     %end
@@ -158,7 +168,6 @@
                             </li>
                     
                     %end
-                    %i += 1
                     
                %end
                 
@@ -174,9 +183,11 @@
         
             <ul class="objGrid">
                 
-                %i = 1
+                %i = 0
                 %for object in slave.hbusSlaveObjects.values():
-                
+                    
+                    %i += 1
+                    
                     %if object.objectHidden:
                         %continue
                     %end
@@ -227,7 +238,6 @@
                         %end
                     
                     %end
-                    %i += 1
                     
                %end
                 
