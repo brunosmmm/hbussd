@@ -258,7 +258,7 @@
                         
                         %else:
                         
-                            <li class="als-item empty">
+                            <li class="als-item integer">
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
@@ -275,7 +275,7 @@
                         
                     %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeInt:
                     
-                            <li class="als-item empty">
+                            <li class="als-item integer">
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
@@ -290,7 +290,7 @@
                     
                     %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeFixedPoint:
                     
-                            <li class="als-item empty">
+                            <li class="als-item integer">
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.objectDescription}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">

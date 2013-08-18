@@ -12,9 +12,10 @@ import hbus_crypto
 from twisted.internet import reactor, defer
 from array import array
 from math import log
+from bitstring import BitArray
 
-
-from bitstring import BitArray 
+from hbus_constants import * 
+from hbus_base import *
 
 def getMillis(td):
     
@@ -27,158 +28,6 @@ def nonBlockingDelay(td):
     while getMillis(datetime.now() - now) < td:
         pass
     
-class hbusCommand:
-    
-    def __init__(self,value,minimumSize,maximumSize, descStr):
-        
-        self.commandByte = value
-        self.minimumLength = minimumSize
-        self.maximumLength = maximumSize
-        self.descString = descStr
-        
-    def __repr__(self):
-        
-        return self.descString+"("+str(hex(self.commandByte))+")"
-    
-    def __eq__(self, other):
-        if isinstance(other, hbusCommand):
-            return self.commandByte == other.commandByte
-        return NotImplemented
-    
-    def __hash__(self):
-        
-        return hash(self.commandByte)
-
-HBUS_PUBKEY_SIZE = 192
-HBUS_SIGNATURE_SIZE = 192 #assinatura é 192, mas é acompanhada de mais um byte que é e/f/r (193 bytes)
-
-HBUSCOMMAND_SETCH = hbusCommand(0x01,3,32,"SETCH")
-HBUSCOMMAND_GETCH = hbusCommand(0x04,1,1,"GETCH")
-HBUSCOMMAND_SEARCH = hbusCommand(0x03,0,0,"SEARCH")
-HBUSCOMMAND_ACK = hbusCommand(0x06,0,0,"ACK")
-HBUSCOMMAND_QUERY = hbusCommand(0x07,1,1,"QUERY")
-HBUSCOMMAND_QUERY_RESP = hbusCommand(0x08,3,32,"QUERY_RESP")
-HBUSCOMMAND_RESPONSE = hbusCommand(0x10,1,32,"RESP")
-HBUSCOMMAND_ERROR = hbusCommand(0x20,2,2,"ERROR")
-HBUSCOMMAND_BUSLOCK = hbusCommand(0xF0,0,0,"BUSLOCK")
-HBUSCOMMAND_BUSUNLOCK = hbusCommand(0xF1,0,0,"BUSUNLOCK")
-HBUSCOMMAND_SOFTRESET = hbusCommand(0xF2,0,HBUS_SIGNATURE_SIZE+2,"SOFTRESET") #tamanho máximo é HBUS_SIGNATURE_SIZE + 2 -> (PSZ;e/f/r;assinatura)
-HBUSCOMMAND_QUERY_EP = hbusCommand(0x11,1,1,"QUERY_EP")
-HBUSCOMMAND_QUERY_INT = hbusCommand(0x12,1,1,"QUERY_INT")
-HBUSCOMMAND_STREAMW = hbusCommand(0x40,2,2,"STREAMW")
-HBUSCOMMAND_STREAMR = hbusCommand(0x41,2,2,"STREAMR")
-HBUSCOMMAND_INT = hbusCommand(0x80,1,1,"INT")
-HBUSCOMMAND_KEYSET = hbusCommand(0xA0,HBUS_PUBKEY_SIZE+1,HBUS_PUBKEY_SIZE+1,"KEYSET")
-HBUSCOMMAND_KEYRESET = hbusCommand(0xA1,1,1,"KEYRESET")
-
-HBUS_RESPONSEPAIRS = {HBUSCOMMAND_GETCH : HBUSCOMMAND_RESPONSE, HBUSCOMMAND_QUERY : HBUSCOMMAND_QUERY_RESP, HBUSCOMMAND_QUERY_EP : HBUSCOMMAND_QUERY_RESP, 
-                      HBUSCOMMAND_QUERY_INT : HBUSCOMMAND_QUERY_RESP, HBUSCOMMAND_SEARCH : HBUSCOMMAND_ACK}
-
-HBUS_COMMANDLIST = (HBUSCOMMAND_SETCH,HBUSCOMMAND_SEARCH,HBUSCOMMAND_GETCH,HBUSCOMMAND_ACK,HBUSCOMMAND_QUERY,HBUSCOMMAND_QUERY_RESP,HBUSCOMMAND_RESPONSE,
-                    HBUSCOMMAND_ERROR,HBUSCOMMAND_BUSLOCK,HBUSCOMMAND_BUSUNLOCK,HBUSCOMMAND_SOFTRESET, HBUSCOMMAND_QUERY_EP, HBUSCOMMAND_QUERY_INT, HBUSCOMMAND_STREAMW, 
-                    HBUSCOMMAND_STREAMR, HBUSCOMMAND_INT, HBUSCOMMAND_KEYSET, HBUSCOMMAND_KEYRESET)
-HBUS_COMMANDBYTELIST = (x.commandByte for x in HBUS_COMMANDLIST)
-
-HBUS_BROADCAST_ADDRESS = 255
-
-HBUS_UNITS = {'A' : 'A', 'V' : 'V', 'P' : 'Pa', 'C':'C', 'd' : 'dBm', 'D' : 'dB'}
-
-HBUS_SLAVE_QUERY_INTERVAL = 0.1
-
-class hbusInstruction:
-    
-    params = []
-    paramSize = 0
-    
-    def __init__(self, command, paramSize=0, params=()):
-        
-        self.command = command
-        
-        if command not in HBUS_COMMANDLIST:
-            if command == None:
-                raise ValueError("Erro desconhecido")
-            else:
-                raise ValueError("Comando inválido: %d" % ord(command.commandByte))
-        
-        self.paramSize = paramSize
-        self.params = params
-        
-        if (len(params)) > command.maximumLength:
-            
-            raise ValueError("Comando mal-formado, "+str(len(params))+" > "+str(command.maximumLength))
-        
-        if (len(params)+1) < command.minimumLength:
-            
-            raise ValueError("Comando mal-formado, "+str(len(params))+" < "+str(command.minimumLength))
-        
-    def __repr__(self):
-        
-        if (self.paramSize > 0):
-            
-            try:
-                return str(self.command)+str([hex(ord(x)) for x in self.params])
-            except TypeError:
-                return str(self.command)+str(self.params)
-        else:
-            return str(self.command)
-
-class hbusDeviceAddress:
-    
-    def __init__(self, busID, devID):
-        
-        if (devID > 32) and (devID != 255):
-            raise ValueError("Endereço inválido")
-        
-        self.hbusAddressBusNumber = busID
-        self.hbusAddressDevNumber = devID
-        
-    def __repr__(self):
-        
-        return "("+str(self.hbusAddressBusNumber)+":"+str(self.hbusAddressDevNumber)+")"
-    
-    def __eq__(self, other):
-        if isinstance(other, hbusDeviceAddress):
-            return self.hbusAddressBusNumber == other.hbusAddressBusNumber and self.hbusAddressDevNumber == other.hbusAddressDevNumber
-        return NotImplemented
-    
-    def getGlobalID(self):
-        
-        return self.hbusAddressBusNumber*32 + self.hbusAddressDevNumber
-
-class hbusOperation:
-    
-    def __init__(self, instruction, destination, source):
-        
-        self.instruction = instruction
-        
-        self.hbusOperationDestination = destination
-        self.hbusOperationSource = source
-        
-    def __repr__(self):
-        
-        return "HBUSOP: "+str(self.hbusOperationSource)+"->"+str(self.hbusOperationDestination)+" "+str(self.instruction)
-        
-    def getString(self):
-        
-        header = struct.pack('4c',chr(self.hbusOperationSource.hbusAddressBusNumber),chr(self.hbusOperationSource.hbusAddressDevNumber),
-                                  chr(self.hbusOperationDestination.hbusAddressBusNumber),chr(self.hbusOperationDestination.hbusAddressDevNumber))
-        
-        instruction = struct.pack('c',chr(self.instruction.command.commandByte))
-        
-        #if self.instruction.paramSize:
-            
-        #    instruction = instruction + struct.pack('c',chr(self.instruction.paramSize))
-            
-        for p in self.instruction.params:
-            
-            if (type(p) is str):
-                instruction = instruction + struct.pack('c',p)
-            else:
-                instruction = instruction + struct.pack('c',chr(p))
-        
-        terminator = '\xFF'
-                          
-        return header+instruction+terminator
 
 class hbusKeySet:
     
@@ -393,7 +242,7 @@ class hbusSlaveObjectDataType:
         if decode:
             return [ord(x) for x in struct.pack('>I',data)[size:]]
         
-        return self.unpackUINT(data)
+        return str(self.unpackUINT(data))
 
     def formatPercent(self,data,extInfo,size,decode=False):
         

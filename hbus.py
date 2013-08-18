@@ -20,6 +20,9 @@ BUSID = 0
 ##TODO: Estudar arquitetura do template engine (django) para interface de controle web mais robusta; observar possibilidades de "renomeação" dos dispositivos, barramentos e objetos; persistência;
 ##        possibilidade de plug-ins específicos ao objeto; etc 
 
+##TODO: Verificar ação em caso de timeouts no endereçamento
+##TODO: Verificar ação em caso de timeouts no processamento de objetos invisíveis
+
 class TwistedSerialPort(Protocol):
     
     def connectionMade(self):
@@ -90,6 +93,7 @@ def main():
     hbusSlaveChecker.start(300, False)
     
     #lança pagina web
+    ##TODO:lançar página apenas após enumeração
     hbusWeb = HBUSWEB(8000,hbusMaster)
     reactor.callInThread(hbusWeb.run)
     

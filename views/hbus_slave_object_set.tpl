@@ -159,7 +159,7 @@
                         
                         %else:
                         
-                            <li class="empty">
+                            <li class="integer">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:
@@ -178,7 +178,7 @@
                         
                     %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeInt:
                     
-                            <li class="empty">
+                            <li class="integer">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:
@@ -195,7 +195,7 @@
                     
                     %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeFixedPoint:
                     
-                            <li class="empty">
+                            <li class="integer">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:

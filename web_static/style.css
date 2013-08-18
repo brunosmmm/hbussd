@@ -1220,6 +1220,22 @@ li.byte {
     background-color: #F5F5F5;
 }
 
+li.integer {
+    
+    background: url(integer.svg) no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-color: #F5F5F5;
+}
+
+li.unitsdB {
+    
+    background: url(dB.svg) no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-color: #F5F5F5;
+}
+
 li.empty {
     
 }

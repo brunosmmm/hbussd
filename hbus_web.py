@@ -57,7 +57,7 @@ class HBUSWEB:
         else:
             data = "?"
             
-        ##todo: verificar problema aqui. só deve retornar strings, sendo que estão chegando outros tipos de dados
+        ##TODO: verificar problema aqui. só deve retornar strings, sendo que estão chegando outros tipos de dados
         return (data)
         
     def slaveInfo(self,addr=None,uid=None,obj=None):
