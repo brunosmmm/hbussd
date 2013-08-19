@@ -242,7 +242,15 @@ class hbusSlaveObjectDataType:
         if decode:
             return [ord(x) for x in struct.pack('>I',data)[size:]]
         
-        return str(self.unpackUINT(data))
+        value = str(self.unpackUINT(data))
+        
+        try:
+            unit = extInfo['UNIT']
+            value = str(value)+" "+HBUS_UNITS[chr(unit[0])]
+        except:
+            pass
+        
+        return value
 
     def formatPercent(self,data,extInfo,size,decode=False):
         
@@ -572,7 +580,7 @@ class hbusMaster:
         
     def getInformationData(self):
         
-        busses = list(set([slave.hbusSlaveAddress.hbusAddressBusNumber for slave in self.detectedSlaveList.values()]))
+        busses = list(set([slave.hbusSlaveAddress.hbusAddressBusNumber for slave in self.detectedSlaveList.values() if slave.basicInformationRetrieved == True]))
         
         return hbusMasterInformationData(len(self.detectedSlaveList),busses)
         

@@ -12,9 +12,45 @@
         <link rel="apple-touch-icon" href="/static/apple-touch-icon.png"/>
         <link rel="apple-touch-icon-precomposed" href="/static/apple-touch-icon-precomposed.png"/>
         
-        <link rel="stylesheet" href="/static/gallery.theme.css">
-        <link rel="stylesheet" href="/static/gallery.min.css">
+        <script type="text/javascript" src="/static/jquery-2.0.3.min.js" ></script>
         <link rel="stylesheet" href="/static/normalize.css">
+        
+        <script type="text/javascript">
+        //LÊ DADOS DE OBJETO ATRAVÉS DE AJAX
+            function loadObject(objectNumber)
+            {
+            var xmlhttp;
+            var ID = objectNumber;
+            
+            if (window.XMLHttpRequest)
+              {// code for IE7+, Firefox, Chrome, Opera, Safari
+              xmlhttp=new XMLHttpRequest();
+              }
+            else
+              {// code for IE6, IE5
+              xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+              }
+            xmlhttp.onreadystatechange=function()
+              {
+              if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                document.getElementById("OVAL-"+ID).innerHTML=xmlhttp.responseText;
+                }
+              }
+            xmlhttp.open("GET","/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/objdata-"+objectNumber,true);
+            xmlhttp.send();
+            }
+        </script> 
+        
+        <script>
+            //jQuery AJAX
+            function loadObject2(objectNumber)
+            {
+                $("#OVAL-"+objectNumber).load("/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/objdata-"+objectNumber);
+            }
+            
+        </script>
+        
         
     </head>
 
@@ -64,10 +100,10 @@
                         %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
                         
                             <li class="boolsw">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
+                                <a onclick="loadObject2({{objectNumber}})">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:                               
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -96,10 +132,10 @@
                         %else:
                         
                             <li class="byte">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
+                                <a onclick="loadObject({{objectNumber}})">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -117,10 +153,10 @@
                         %if object.objectDataTypeInfo in [hbusSlaveObjectDataType.dataTypeUintPercent,hbusSlaveObjectDataType.dataTypeUintLogPercent,hbusSlaveObjectDataType.dataTypeUintLinPercent]:
                         
                             <li class="percent">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
+                                <a onclick="loadObject({{objectNumber}})">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -160,10 +196,10 @@
                         %else:
                         
                             <li class="integer">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
+                                <a onclick="loadObject({{objectNumber}})">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -179,10 +215,10 @@
                     %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeInt:
                     
                             <li class="integer">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
+                                <a onclick="loadObject({{objectNumber}})">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:
@@ -196,10 +232,10 @@
                     %elif object.objectDataType == hbusSlaveObjectDataType.dataTypeFixedPoint:
                     
                             <li class="integer">
-                                <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/setget-{{objectNumber}}">
+                                <a onclick="loadObject({{objectNumber}})">
                                     <p>{{object.objectDescription}}</p>
                                     %if canRead:
-                                    <span class="hbusObjectValue">
+                                    <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
                                         %if object.objectLastValue == None:
                                             ?
                                         %else:

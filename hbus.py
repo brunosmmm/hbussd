@@ -23,6 +23,8 @@ BUSID = 0
 ##TODO: Verificar ação em caso de timeouts no endereçamento
 ##TODO: Verificar ação em caso de timeouts no processamento de objetos invisíveis
 
+##TODO: Realizar análise de objetos invisíveis por escravo após a enumeração de cada um e não como um todo
+
 class TwistedSerialPort(Protocol):
     
     def connectionMade(self):

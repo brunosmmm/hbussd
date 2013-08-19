@@ -59,6 +59,11 @@
         	   <ul class="devGrid">
         	       
         	       %for slave in slaveList:
+        	       
+        	           %if slave.basicInformationRetrieved == False:
+        	               %continue
+        	           %end
+        	       
         	           <li>
         	               <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}">
         	                   <div class="fill"> </div>

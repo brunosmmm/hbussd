@@ -134,43 +134,43 @@ class HBUSWEB:
         return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
         
-    def slaveWriteObjectRefresh(self,uid=None,obj=None):
-        
-        self.wait = False
-        def waitForSlaveRead(dummy):
-            
-            self.wait = False
-
-        if uid != None:
-            
-            devUID = string.split(uid,"0x")
-            
-            addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
-            
-            if addr == None:
-                s = None
-            else:
-                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
-                
-            if s == None:
-                
-                ##TODO: retornar template de erro, escravo indisponível
-                
-                pass
-            
-            if obj != None:
-                
-                try:
-                    self.wait = True
-                    self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead,timeoutCallback=waitForSlaveRead)
-                    
-                    while (self.wait == True):
-                        pass
-                except:
-                    pass
-        
-        return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
-                        objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
+#     def slaveWriteObjectRefresh(self,uid=None,obj=None):
+#         
+#         self.wait = False
+#         def waitForSlaveRead(dummy):
+#             
+#             self.wait = False
+# 
+#         if uid != None:
+#             
+#             devUID = string.split(uid,"0x")
+#             
+#             addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+#             
+#             if addr == None:
+#                 s = None
+#             else:
+#                 s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+#                 
+#             if s == None:
+#                 
+#                 ##TODO: retornar template de erro, escravo indisponível
+#                 
+#                 pass
+#             
+#             if obj != None:
+#                 
+#                 try:
+#                     self.wait = True
+#                     self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead,timeoutCallback=waitForSlaveRead)
+#                     
+#                     while (self.wait == True):
+#                         pass
+#                 except:
+#                     pass
+#         
+#         return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+#                         objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
     
     def slaveInfoSet(self,uid=None,obj=None):
         
@@ -249,7 +249,7 @@ class HBUSWEB:
         route("/slave-uid/<uid>/get-<obj>")(self.slaveInfo)
         route("/slave-uid/<uid>/set-<obj>")(self.slaveWriteObject)
         route("/slave-uid/<uid>/set-<obj>",method="POST")(self.slaveInfoSet)
-        route("/slave-uid/<uid>/setget-<obj>")(self.slaveWriteObjectRefresh)
+        #route("/slave-uid/<uid>/setget-<obj>")(self.slaveWriteObjectRefresh)
         route("/slave-uid/<uid>/objdata-<obj>")(self.readSlaveObject)
         
         #escravos por barramento
