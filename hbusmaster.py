@@ -16,7 +16,7 @@ from bitstring import BitArray
 
 from hbus_constants import * 
 from hbus_base import *
-
+from hbus_except import *
 def getMillis(td):
     
     return (td.days * 24 * 60 * 60 + td.seconds) * 1000 + td.microseconds / 1000.0
@@ -469,6 +469,21 @@ class hbusSlaveInfo:
     
     def __init__(self,explicitSlaveAddress):
         self.hbusSlaveAddress = explicitSlaveAddress
+        
+    def sortObjects(self):
+        
+        for key,val in self.hbusSlaveObjects.viewitems():
+            
+            if val.objectHidden == False:
+                continue
+            
+            self.hbusSlaveHiddenObjects[key] = val
+            
+        for key in self.hbusSlaveHiddenObjects.keys():
+            
+            if key in self.hbusSlaveObjects:
+                self.hbusSlaveObjects.pop(key)
+                
 
 class hbusMasterState:
     
@@ -498,11 +513,12 @@ class hbusPendingAnswer:
         self.actionParameters = actionParameters
         self.timeoutActionParameters = timeoutActionParameters
         
-        self.tCallback = defer.Deferred()
-        if timeoutAction != None:
-            self.tCallback.addCallback(timeoutAction)
+        #self.tCallback = defer.Deferred()
+        #if timeoutAction != None:
+        #    self.tCallback.addCallback(timeoutAction)
         
         #self.timeoutAction = timeoutAction
+
         
     def addTimeoutHandler(self,timeoutHandler):
         
@@ -991,7 +1007,7 @@ class hbusMaster:
                 
                 self.onBusFree()
                 
-    def pushCommand(self,command,dest,params=(),callBack=None,callBackParams=None,timeout=3000,timeoutCallBack=None,timeoutCallBackParams=None,immediate=False):
+    def pushCommand(self,command,dest,params=(),callBack=None,callBackParams=None,timeout=1000,timeoutCallBack=None,timeoutCallBackParams=None,immediate=False):
         
         d = None
         
@@ -1016,7 +1032,8 @@ class hbusMaster:
                     d = self.expectResponse(HBUS_RESPONSEPAIRS[command], dest, None, None, timeout, timeoutCallBack,timeoutCallBackParams)
                 except:
                     d = None
-                
+            
+            self.lastSent = (command,dest,params)
             self.sendCommand(command,dest,params)
             
             return d
@@ -1055,12 +1072,12 @@ class hbusMaster:
         else:
             self.serialWrite(busOp.getString())
         
-    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=3000, timeoutAction=None, timeoutActionParameters=None):
+    def expectResponse(self, command, source, action=None, actionParameters=None, timeout=1000, timeoutAction=None, timeoutActionParameters=None):
         
         d = defer.Deferred()
+        
         d.addCallback(action)
         d.addErrback(timeoutAction)
-        #d.addErrback(timeoutAction)
         
         pending = hbusPendingAnswer(command,source,timeout,d,actionParameters,timeoutAction,timeoutActionParameters)
         
@@ -1114,6 +1131,9 @@ class hbusMaster:
         
         #self.slaveReadDeferred.callback(None)
         
+        #processa objetos invisíveis
+        #self.slaveReadDeferred.addCallback(self.readExtendedSlaveInformation,*params)
+        
         if params[0].getGlobalID() == self.detectedSlaveList.keys()[-1]:
             self.slaveReadDeferred.addCallback(self.slaveReadEnded)
         
@@ -1136,8 +1156,61 @@ class hbusMaster:
         else:
             if address.getGlobalID() == self.detectedSlaveList.keys()[-1]:
                 self.slaveReadDeferred.addCallback(self.slaveReadEnded)
+    
+    def readExtendedSlaveInformationEnded(self,*params):
+        pass
+    
+    def readExtendedSlaveInformationFailed(self,*params):
         
-
+        failure, address, = params
+        
+        #nova tentativa ao fim da enumeração
+        if self.detectedSlaveList[address.getGlobalID()].scanRetryCount < 3:
+            self.slaveHiddenDeferred.addCallback(self.readExtendedSlaveInformation,address)
+            self.detectedSlaveList[address.getGlobalID()].scanRetryCount += 1
+    
+    def readExtendedSlaveInformation(self,*params):
+        
+        self.logger.debug("Processando objetos invisíveis")
+        
+        address = params[0]
+        
+        self.detectedSlaveList[address.getGlobalID()].scanRetryCount = 0
+        
+        d = defer.Deferred()
+        d.addCallback(self.readExtendedSlaveInformationEnded)
+        d.addErrback(self.readExtendedSlaveInformationFailed,address)
+        self.slaveHiddenDeferred = d
+        
+        #inicia
+        
+        return d
+    
+    def processHiddenObject(self,address,objectNumber):
+        
+        obj = self.detectedSlaveList[address.getGlobalID()].hbusSlaveHiddenObjects[objectNumber]
+        slave = self.detectedSlaveList[address.getGlobalID()]
+        
+        objFunction = obj.objectDescription.split(':')
+        objList = objFunction[0].split(',')
+        
+        for objSel in objList:
+            x= re.match(r"([0-9]+)-([0-9)+)",objSel)
+            
+            if x != None:
+                
+                for rangeObj in range(int(x.group(1)),int(x.group(2))+1):
+                    
+                    if slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo == None:
+                        slave.hbuslaveObjects[int(rangeObj)].objectExtendedInfo = {}
+                        
+                        slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
+                        
+            else:
+                if slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo == None:
+                    slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo = {}
+                    
+                    slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
         
     def readBasicSlaveInformation(self,deferResult, address):
         
@@ -1263,6 +1336,8 @@ class hbusMaster:
                     #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                     
+                    #self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
+                    
                     if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
                         reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
         
@@ -1300,8 +1375,9 @@ class hbusMaster:
                 else:
                     #self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                     self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
-                    #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
+                    
+                    #self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
                     
                     if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
                         reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
@@ -1331,17 +1407,26 @@ class hbusMaster:
                 #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                 self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                 
+                #self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
+                
                 if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
                     reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
-    
+        
+        elif data[0][0] == "D":
+            
+            #info dump
+            pass
+        
     def readSlaveObject(self,address,number,callBack=None,timeoutCallback=None):
+        
+        d = None
         
         if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectWrite:
         
             #self.expectResponse(HBUSCOMMAND_RESPONSE,address,self.receiveSlaveObjectData,actionParameters=(address,number,callBack),timeoutAction=timeoutCallback)
             #self.pushCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)],callBack=self.receiveSlaveObjectData,callBackParams=(address,number,callBack))
-            self.pushCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)],callBack=self.receiveSlaveObjectData,callBackParams=(address,number,callBack),
-                             timeoutCallBack=timeoutCallback)
+            d = self.pushCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)],callBack=self.receiveSlaveObjectData,callBackParams=(address,number,callBack),
+                                 timeoutCallBack=timeoutCallback)
             
         else:
             
@@ -1351,6 +1436,8 @@ class hbusMaster:
             if callBack != None:
                 
                 callBack(None)
+                
+        return d
             
     def receiveSlaveObjectData(self, data):
         
@@ -1536,6 +1623,10 @@ class hbusMaster:
             d = defer.Deferred()
             
             for slave in self.detectedSlaveList:
+                
+                if self.detectedSlaveList[slave].basicInformationRetrieved == True:
+                    continue
+                
                 d.addCallback(self.readBasicSlaveInformation,self.detectedSlaveList[slave].hbusSlaveAddress)
                 
             self.slaveReadDeferred = d
@@ -1571,7 +1662,7 @@ class hbusMaster:
         if self.masterState == hbusMasterState.hbusMasterScanning:
             self.hbusDeviceScanningTimeout = True
             
-        response.dCallback.errback(IOError(response.timeoutActionParameters))
+        response.dCallback.errback(HBUSTimeoutException(response.timeoutActionParameters))
         
         self.expectedResponseQueue.remove(response)
         
@@ -1613,6 +1704,9 @@ class hbusMaster:
     def processStaticSlaves(self):
         
         for addr in self.staticSlaveList:
+            
+            if addr.getGlobalID() in self.detectedSlaveList:
+                continue
             
             self.logger.info("Escravo com endereço estático em %s",str(addr))
             
