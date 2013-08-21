@@ -17,13 +17,17 @@ BUSID = 0
 
 ##TODO: Estudar a realização de dump automático de todos os valores de objetos no sistema ao completar enumeração
 
-##TODO: Estudar arquitetura do template engine (django) para interface de controle web mais robusta; observar possibilidades de "renomeação" dos dispositivos, barramentos e objetos; persistência;
+##TODO: Estudar arquitetura do template engine (django) para interface de controle web  mais robusta; observar possibilidades de "renomeação" dos dispositivos, barramentos e objetos; persistência;
 ##        possibilidade de plug-ins específicos ao objeto; etc 
 
 ##TODO: Verificar ação em caso de timeouts no endereçamento
 ##TODO: Verificar ação em caso de timeouts no processamento de objetos invisíveis
 
 ##TODO: Realizar análise de objetos invisíveis por escravo após a enumeração de cada um e não como um todo
+
+##TODO: Para finalizar versão de testes, incluir modificador para valores do tipo byte através da página web
+
+##TODO: Implementar servidor http integrado twisted, para troca de dados via JSON
 
 class TwistedSerialPort(Protocol):
     
