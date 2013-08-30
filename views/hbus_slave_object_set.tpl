@@ -145,6 +145,43 @@
                                     %end
                                 </a>
                             </li>
+                            
+                            <li class="binByte">
+                                
+                                <p class="objControlText">Controles</p>
+                                
+                                <form action="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{objectNumber}}" method="post">
+                                    
+                                    <!-- checkboxes / bits -->
+                                    
+                                    %for i in range(object.objectSize):
+                                        
+                                        <div class="byteBox">
+                                            
+                                            <p class="byteNumber">Byte {{i}}</p>
+                                        
+                                        <div class="bitSet">
+                                        
+                                        %for j in range(8)[::-1]:
+                                        
+                                        <div class="bitBox">
+                                            
+                                            <p class="bitNumber">{{j}}</p>
+                                            <input type="checkbox" id="bit-{{i}}-{{j}}" value="{{hex(1<<j)}}" class="bitCheck">
+                                            
+                                        </div>
+                                        
+                                        %end
+                                        
+                                        </div>
+                                        
+                                        </div>
+                                    
+                                    %end
+                                    
+                                </form>
+                                
+                            </li>
                         
                         %end
                     

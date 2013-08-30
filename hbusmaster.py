@@ -472,6 +472,8 @@ class hbusSlaveInfo:
         
     def sortObjects(self):
         
+        self.hbusSlaveHiddenObjects = {}
+        
         for key,val in self.hbusSlaveObjects.viewitems():
             
             if val.objectHidden == False:
@@ -642,7 +644,6 @@ class hbusMaster:
                                 slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
                             
                     else:
-                        ##TODO: verificar problema aqui
                         if slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo == None:
                             slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo = {}
                 
@@ -1007,7 +1008,7 @@ class hbusMaster:
                 
                 self.onBusFree()
                 
-    def pushCommand(self,command,dest,params=(),callBack=None,callBackParams=None,timeout=1000,timeoutCallBack=None,timeoutCallBackParams=None,immediate=False):
+    def pushCommand(self,command,dest,params=(),callBack=None,callBackParams=None,timeout=1000,timeoutCallBack=None,timeoutCallBackParams=None,immediate=False,deferredReturn=None):
         
         d = None
         
@@ -1117,7 +1118,9 @@ class hbusMaster:
         #self.slaveReadDeferred = None
         
         self.masterState = hbusMasterState.hbusMasterOperational
-        reactor.callInThread(self.processHiddenObjects)
+        #reactor.callInThread(self.processHiddenObjects)
+        self.logger.info("Fim da leitura de informações dos escravos")
+        self.logger.debug("tx: %d, rx %d bytes",self.txBytes,self.rxBytes)
         
         self.enterOperational()
         
@@ -1132,12 +1135,18 @@ class hbusMaster:
         #self.slaveReadDeferred.callback(None)
         
         #processa objetos invisíveis
+        
+        #self.slaveReadDeferred.addCallback(self.readExtendedSlaveInformation,*params)
+        d = defer.Deferred()
+        d.addCallback(self.readExtendedSlaveInformation)
         #self.slaveReadDeferred.addCallback(self.readExtendedSlaveInformation,*params)
         
         if params[0].getGlobalID() == self.detectedSlaveList.keys()[-1]:
             self.slaveReadDeferred.addCallback(self.slaveReadEnded)
+            
+        reactor.callLater(0.1,d.callback,*params)
         
-        pass
+        return d
         
     def readSlaveObjectInformationFailed(self,params):
         
@@ -1158,6 +1167,11 @@ class hbusMaster:
                 self.slaveReadDeferred.addCallback(self.slaveReadEnded)
     
     def readExtendedSlaveInformationEnded(self,*params):
+        
+        result,address = params
+        
+        self.detectedSlaveList[address.getGlobalID()].hbusSlaveHiddenObjects = None
+        
         pass
     
     def readExtendedSlaveInformationFailed(self,*params):
@@ -1165,9 +1179,9 @@ class hbusMaster:
         failure, address, = params
         
         #nova tentativa ao fim da enumeração
-        if self.detectedSlaveList[address.getGlobalID()].scanRetryCount < 3:
-            self.slaveHiddenDeferred.addCallback(self.readExtendedSlaveInformation,address)
-            self.detectedSlaveList[address.getGlobalID()].scanRetryCount += 1
+        #if self.detectedSlaveList[address.getGlobalID()].scanRetryCount < 3:
+        #    self.slaveHiddenDeferred.addCallback(self.readExtendedSlaveInformation,address)
+        #    self.detectedSlaveList[address.getGlobalID()].scanRetryCount += 1
     
     def readExtendedSlaveInformation(self,*params):
         
@@ -1175,18 +1189,29 @@ class hbusMaster:
         
         address = params[0]
         
+        if address == None:
+            address = params[1]
+        
         self.detectedSlaveList[address.getGlobalID()].scanRetryCount = 0
         
         d = defer.Deferred()
-        d.addCallback(self.readExtendedSlaveInformationEnded)
+        
+        for obj in self.detectedSlaveList[address.getGlobalID()].hbusSlaveHiddenObjects.keys():
+            d.addCallback(self.readSlaveHiddenObject,address,obj)
+            d.addCallback(self.processHiddenObject,address,obj)
+        
+        d.addCallback(self.readExtendedSlaveInformationEnded,address)
         d.addErrback(self.readExtendedSlaveInformationFailed,address)
         self.slaveHiddenDeferred = d
         
         #inicia
+        reactor.callLater(0.1,d.callback,None)
         
         return d
     
-    def processHiddenObject(self,address,objectNumber):
+    def processHiddenObject(self,deferredResult,address,objectNumber):
+        
+        ##TODO: verificar exceções aqui
         
         obj = self.detectedSlaveList[address.getGlobalID()].hbusSlaveHiddenObjects[objectNumber]
         slave = self.detectedSlaveList[address.getGlobalID()]
@@ -1195,16 +1220,16 @@ class hbusMaster:
         objList = objFunction[0].split(',')
         
         for objSel in objList:
-            x= re.match(r"([0-9]+)-([0-9)+)",objSel)
+            x= re.match(r"([0-9]+)-([0-9]+)",objSel)
             
             if x != None:
                 
                 for rangeObj in range(int(x.group(1)),int(x.group(2))+1):
                     
-                    if slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo == None:
-                        slave.hbuslaveObjects[int(rangeObj)].objectExtendedInfo = {}
+                    if slave.hbusSlaveObjects[rangeObj].objectExtendedInfo == None:
+                        slave.hbusSlaveObjects[rangeObj].objectExtendedInfo = {}
                         
-                        slave.hbusSlaveObjects[int(rangeObj)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
+                        slave.hbusSlaveObjects[rangeObj].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
                         
             else:
                 if slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo == None:
@@ -1336,7 +1361,7 @@ class hbusMaster:
                     #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                     
-                    #self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
+                    self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
                     
                     if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
                         reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
@@ -1377,7 +1402,7 @@ class hbusMaster:
                     self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                     
-                    #self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
+                    self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
                     
                     if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
                         reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
@@ -1407,7 +1432,7 @@ class hbusMaster:
                 #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                 self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                 
-                #self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
+                self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
                 
                 if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
                     reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
@@ -1438,10 +1463,51 @@ class hbusMaster:
                 callBack(None)
                 
         return d
+    
+    def readSlaveHiddenObject(self,*params):
+        
+        if isinstance(params[0],hbusDeviceAddress):
+            address = params[0]
+            number = params[1]
+        elif isinstance(params[1],hbusDeviceAddress):
+            address = params[1]
+            number = params[2]
+        else:
+            raise ValueError('')
+        
+        d = None
+        
+        if self.detectedSlaveList[address.getGlobalID()].hbusSlaveHiddenObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectWrite:
+        
+            #self.expectResponse(HBUSCOMMAND_RESPONSE,address,self.receiveSlaveObjectData,actionParameters=(address,number,callBack),timeoutAction=timeoutCallback)
+            #self.pushCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)],callBack=self.receiveSlaveObjectData,callBackParams=(address,number,callBack))
+            d = self.pushCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)],callBack=self.receiveSlaveHiddenObjectData,callBackParams=(address,number,None),
+                                 timeoutCallBack=None)
+            
+        else:
+            
+            self.logger.warning("Tentativa de leitura de objeto somente para escrita")
+            self.logger.debug("Tentativa de leitura do objeto %d, escravo com endereço %s",number,address)
+            
+            if callBack != None:
+                
+                callBack(None)
+                
+        return d
             
     def receiveSlaveObjectData(self, data):
         
         self.detectedSlaveList[data[0][0].getGlobalID()].hbusSlaveObjects[data[0][1]].objectLastValue = [ord(d) for d in data[1]]
+        
+        #print data[1]
+        
+        if data[0][2] != None:
+            
+            data[0][2](data[1])
+            
+    def receiveSlaveHiddenObjectData(self, data):
+        
+        self.detectedSlaveList[data[0][0].getGlobalID()].hbusSlaveHiddenObjects[data[0][1]].objectLastValue = [ord(d) for d in data[1]]
         
         #print data[1]
         

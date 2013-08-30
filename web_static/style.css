@@ -1357,6 +1357,74 @@ li.empty {
     
 }
 
+.objSetGrid li .byteNumber{
+    
+    position: absolute;
+    left: 8px;
+    
+    font-size: 0.9em;
+    
+    display: inline-block;
+    vertical-align: top;
+    margin-top: 8px;
+    
+    margin-bottom: 2px;
+    font-weight: bold;
+    
+    color: #D12F19;
+    
+}
+
+.objSetGrid li .bitNumber {
+    
+    margin-top: 4px;
+    margin-bottom: 4px;
+    
+    font-weight: bold;
+    color: #000000;
+    
+}
+
+.objSetGrid  li .bitBox{
+    
+    display: inline-block;
+    line-height: 0.5em;
+    
+    margin-top: 4px;
+}
+
+.objSetGrid li .bitSet {
+    
+    display: inline-block;
+    position: absolute;
+    right: 10px;
+    
+}
+
+.objSetGrid li .bitCheck {
+    
+    margin-top: 4px;
+    
+    transform: scale(1.5);
+    -webkit-transform: scale(1.5);
+    
+}
+
+.objSetGrid li .byteBox {
+    
+    position: relative;
+    
+    height: 40px;
+    
+    margin-top: 4px;
+    margin-bottom: 4px;
+    
+    border: 2px dashed #D12F19;
+    border-radius: 20px;
+    background-color: #FBC2C4;
+    
+}
+
 .objSetButton {
     
     width: 100px;
