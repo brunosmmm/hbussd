@@ -13,6 +13,10 @@ from twisted.internet.task import LoopingCall
 #from twisted.internet.defer import setDebugging
 #setDebugging(True)
 
+from twisted.web import server
+
+from hbusjsonserver import *
+
 import signal
 #import threading
 
@@ -20,8 +24,6 @@ BUSID = 0
 
 ##stable:
 ##TODO: Verificar ação em caso de timeouts no endereçamento
-##TODO: Verificar ação em caso de timeouts no processamento de objetos invisíveis
-##TODO: Realizar análise de objetos invisíveis por escravo após a enumeração de cada um e não como um todo
 ##TODO: Para finalizar versão de testes, incluir modificador para valores do tipo byte através da página web
 ##TODO: incluir código para permitir edição de objetos tipo Byte, Int e Unsigned Int
 
@@ -122,6 +124,9 @@ def main():
     
     if args['t'] == True:
         reactor.listenTCP(args['tp'], HBUSTCPFactory(hbusMaster))
+        
+    #JSON SERVER
+    reactor.listenTCP(7080, server.Site(HBUSJSONServer(hbusMaster)))
     
     reactor.run()
     

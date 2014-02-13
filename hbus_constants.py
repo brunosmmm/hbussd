@@ -42,3 +42,36 @@ HBUS_BROADCAST_ADDRESS = 255
 HBUS_UNITS = {'A' : 'A', 'V' : 'V', 'P' : 'Pa', 'C':'C', 'd' : 'dBm', 'D' : 'dB'}
 
 HBUS_SLAVE_QUERY_INTERVAL = 0.1
+
+class hbusBusStatus:
+    
+    hbusBusFree = 0
+    hbusBusLockedThis = 1
+    hbusBusLockedOther = 2
+    
+class hbusMasterRxState:
+    
+    hbusRXSBID = 0
+    hbusRXSDID = 1
+    hbusRXTBID = 2
+    hbusRXTDID = 3
+    hbusRXCMD  = 4
+    hbusRXADDR = 5
+    hbusRXPSZ  = 6
+    hbusRXPRM  = 7
+    hbusRXSTP  = 8
+    
+class hbusSlaveObjectPermissions:
+    
+    hbusSlaveObjectRead = 1
+    hbusSlaveObjectWrite = 2
+    hbusSlaveObjectReadWrite = 3
+    
+class hbusSlaveCapabilities:
+    
+    hbusSlaveAuthSupport = 8
+    hbusSlaveEndpointSupport = 2
+    hbusSlaveUCODESupport = 16
+    hbusSlaveIntSupport = 4
+    hbusSlaveCryptoSupport = 1
+    hbusSlaveRevAuthSupport = 0x20

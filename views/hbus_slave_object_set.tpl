@@ -179,6 +179,10 @@
                                     
                                     %end
                                     
+                                    <button type="submit" class="objSetButton" name="save">
+                                        Aplicar
+                                    </button>
+                                    
                                 </form>
                                 
                             </li>

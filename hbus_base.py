@@ -7,6 +7,7 @@ Created on 17/08/2013
 
 import struct
 import hbus_constants as hbusconst
+import re
 
 class hbusCommand:
     
@@ -89,6 +90,24 @@ class hbusDeviceAddress:
     def getGlobalID(self):
         
         return self.hbusAddressBusNumber*32 + self.hbusAddressDevNumber
+    
+def hbusDeviceAddressFromString(addr):
+    
+    p = re.compile(r'\(([0-9]+):([0-9]+)\)')
+    
+    m = p.match(addr)
+    
+    if m:
+        
+        try:
+            
+            return hbusDeviceAddress(int(m.group(1)),int(m.group(2)))
+        
+        except:
+            raise ValueError
+        
+    else:
+        raise ValueError
 
 class hbusOperation:
     
