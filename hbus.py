@@ -130,7 +130,7 @@ def main():
     hbusSlaveChecker.start(args['c'], False)
     
     #lança pagina web
-    #@todo lançar página apenas após enumeração
+    ##@todo lançar página apenas após enumeração
     
     if args['w'] == True:
         #habilita servidor integrado

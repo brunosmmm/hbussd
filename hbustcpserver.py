@@ -1,4 +1,10 @@
 #coding=utf-8
+
+##@package hbustcpserver
+#Módulo para comunicação e controle através de TCP
+#@author Bruno Morais <brunosmmm@gmail.com>
+#@date 2013-2014
+
 import logging
 from hbusmaster import *
 import re
@@ -7,13 +13,21 @@ import string
 from twisted.internet.protocol import Factory
 from twisted.protocols.basic import LineReceiver
 
+##Classe definidora de comandos aceitos pelo servidor TCP
 class HBUSTCPCommand:
     
+    ##Construtor
+    #@param CMDSTR String definidora do comando
+    #@param NPARAM Número de parâmetros do comando
     def __init__(self, CMDSTR, NPARAM):
         
+        ##String definidora
         self.cmdstr = CMDSTR
+        ##Número de parâmetros
         self.numParam = NPARAM
     
+    ##Compila valor para realizar match usando expressões regulares
+    #@return estrutura para realizar match
     def compile(self):
         
         if (self.numParam > 0):
@@ -30,21 +44,36 @@ class HBUSTCPCommand:
         else:
             return re.compile(r"^"+self.cmdstr, re.IGNORECASE)
     
-
+##@defgroup hbusTCPCommands Comandos TCP
+#@{
+#SEARCH - Realiza operação de busca no barramento
 HBUSTCPCMD_SEARCH = HBUSTCPCommand("SEARCH",0)
+##SCOUNT - Retorna o número de dispositivos ativos no barramento
 HBUSTCPCMD_SCOUNT = HBUSTCPCommand("SCOUNT",0)
+##NAME - Retorna o nome de um dispositivo escolhido
 HBUSTCPCMD_NAME = HBUSTCPCommand("NAME",1)
+##OCOUNT - Retorna o número de objetos disponíveis em um dispositivo
 HBUSTCPCMD_OCOUNT = HBUSTCPCommand("OCOUNT",1)
+##READ - Realiza leitura e retorna valor do objeto especificado
 HBUSTCPCMD_READ = HBUSTCPCommand("READ",1)
+##WRITE - Escreve valor no objeto especificado
 HBUSTCPCMD_WRITE = HBUSTCPCommand("WRITE",2)
+##QUERY - Retorna informações de objetos de um dispositivo
 HBUSTCPCMD_QUERY = HBUSTCPCommand("QUERY",1)
+##FIND - ?
 HBUSTCPCMD_FIND = HBUSTCPCommand("FIND",1)
+##INCR - Incrementa valor de um objeto de um dispositivo
 HBUSTCPCMD_INCR = HBUSTCPCommand("INCR",1)
+##DECR - Decrementa valor de um objeto de um dispositivo
 HBUSTCPCMD_DECR = HBUSTCPCommand("DECR",1)
+##ACTIVE - Retorna uma lista dos dispositivos ativos atualmente
 HBUSTCPCMD_ACTIVE = HBUSTCPCommand("ACTIVE",0)
+##RAW - Envia dados diretamente ao barramento
 HBUSTCPCMD_RAW = HBUSTCPCommand("RAW",1)
 
+##Lista de todos os comandos do servidor TCP
 HBUSTCPCMDLIST = (HBUSTCPCMD_SEARCH,HBUSTCPCMD_SCOUNT)
+##@}
 
 def incrementByteList(byteList):
     
@@ -61,6 +90,7 @@ def incrementByteList(byteList):
     return byteList
     
 
+##Servidor TCP (Twisted)
 class HBUSTCP(LineReceiver):
     
     def __init__(self, hbusMaster, tcpLogger):
@@ -75,19 +105,26 @@ class HBUSTCP(LineReceiver):
                             HBUSTCPCMD_ACTIVE : self.executeACTIVECommand,
                             HBUSTCPCMD_RAW    : self.executeRAWCommand}
     
+    ##Evento de recebimento de nova linha
+    #@param line String recebida
     def lineReceived(self, line):
         
         self.parseCommand(line)
     
+    ##Evento de nova conexão estabelecida
     def connectionMade(self):
         
         self.logger.info("Nova conexão realizada")
         
         self.sendLine("HBUS SERVER @ "+str(self.hbusMaster.hbusMasterAddr.hbusAddressBusNumber)+":0")
-        
+    
+    ##Evento de desconexão
+    #@param reason Motivo da desconexão
     def connectionLost(self, reason):
         self.logger.debug("Conexão fechada")
-        
+    
+    ##Processa comando recebido
+    #@param command Comando recebido (string)
     def parseCommand(self, command):
         
         command = command.strip()
@@ -111,25 +148,33 @@ class HBUSTCP(LineReceiver):
                 self.commandDict[cmd](paramList)
                 break
             
-            
+    ##Executa comando de busca no barramento
+    #@param param Parâmetro incluido para compatibilidade        
     def executeSearchCommand(self, param):
         
         self.hbusMaster.detectSlaves(callBack=self.searchCommandEnded)
-        
+    
+    ##Executa comando do tipo ACTIVE
+    #@param param Parâmetro incluido para compatibilidade
     def executeACTIVECommand(self, param):
         
         for s in self.hbusMaster.detectedSlaveList.values():
             
             self.sendLine(str(s.hbusSlaveAddress.hbusAddressBusNumber)+":"+str(s.hbusSlaveAddress.hbusAddressDevNumber)+", "+s.hbusSlaveDescription+", "+hex(s.hbusSlaveUniqueDeviceInfo))
-        
+    
+    ##Callback utilizado ao término da execução do comando SEARCH
     def searchCommandEnded(self):
         
         self.sendLine("OK")
-        
+    
+    ##Executa comando SCOUNT
+    #@param param Parâmetro incluido para compatibilidade
     def executeScountCommand(self, param):
         
         self.sendLine(str(len(self.hbusMaster.detectedSlaveList)))
-        
+    
+    ##Executa comando RAW
+    #@param data Dados a serem enviados em modo sem processamento
     def executeRAWCommand(self,data):
         
         byteList = []
@@ -142,7 +187,9 @@ class HBUSTCP(LineReceiver):
         byteList = ''.join([chr(x) for x in byteList])
         
         self.hbusMaster.serialWrite(byteList)
-        
+    
+    ##Executa comando NAME
+    #@param param Endereço do dispositivo
     def executeNameCommand(self, param):
         
         try:
@@ -155,7 +202,9 @@ class HBUSTCP(LineReceiver):
             
             self.logger.warning("endereço de dispositivo mal-formado ou inexistente")
             self.sendLine("ERROR")
-            
+    
+    ##Executa comando OCOUNT
+    #@param param Endereço do dispositivo
     def executeOCOUNTCommand(self,param):
         
         try:
@@ -168,7 +217,9 @@ class HBUSTCP(LineReceiver):
             
             self.logger.warning("endereço de dispositivo mal-formado ou inexistente")
             self.sendLine("ERROR")
-            
+    
+    ##Executa comando QUERY
+    #@param param endereço do dispositivo
     def executeQUERYCommand(self,param):
         
         try:
