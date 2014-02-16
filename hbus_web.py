@@ -1,31 +1,53 @@
 #coding=utf-8
 
+##@package hbus_web
+#Servidor integrado web para controle e visualização dos dados de dispositivos
+#@author Bruno Morais <brunosmmm@gmail.com>
+#@date 2013-2014
+
 from hbusmaster import *
 import string
 from bottle import route, run, template, static_file, request
 import re
 
+##Servidor web integrado HBUS para controle e visualização dos dados de dispositivos
 class HBUSWEB:
 
+    ##Indica o modo de espera do servidor (operações assíncronas)
     wait = False
 
+    ##Construtor
+    #@param port número da porta HTTP
+    #@param hbusMaster referência ao objeto principal do mestre para extração de informações
+    #@todo realizar separação e abstração entre objeto principal do mestre e outros
     def __init__(self,port,hbusMaster):
         
+        ##Porta do servidor
         self.port = port
+        ##Referência ao objeto principal do mestre
         self.hbusMaster = hbusMaster
+        #Nível dos objetos mostrados na interface
         self.objectLevel = 0
 
+    ##Gera a página principal do servidor web
+    #@return template HTML
     def index(self):
         
         return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values(),masterStatus=self.hbusMaster.getInformationData(),re=re)
     
+    ##Usado para fornecer ícone de favorito ao browser
+    #@return ícone de favorito
     def favicon(self):
         
         return static_file('favicon.ico',root='web_static') 
     
+    ##Realiza a leitura de um objeto de dispositivo e mostra ao usuário.
+    #
+    #Retorna um valor formatado do objeto para utilização com AJAX.
+    #@param uid UID do dispositivo
+    #@param obj número do objeto
+    #@return dados requisitados
     def readSlaveObject(self,uid=None,obj=None):
-        
-        #@summary: retorna um valor formatado do objeto para utilização com AJAX.
         
         self.wait = False
         def waitForSlaveRead(dummy):
@@ -61,7 +83,12 @@ class HBUSWEB:
             data = "?"
             
         return (data)
-        
+    
+    ##Gera uma página de informações sobre o dispositivo para mostrar ao usuário
+    #@param addr endereço do dispositivo
+    #@param uid UID do dispositivo
+    #@param obj número do objeto
+    #@return template HTML
     def slaveInfo(self,addr=None,uid=None,obj=None):
         
         getN = 0
@@ -103,7 +130,7 @@ class HBUSWEB:
                 
             if s == None:
                 
-                ##TODO: retornar template de erro, escravo indisponível
+                ##@todo retornar template de erro, escravo indisponível
                 
                 pass
                 
@@ -126,6 +153,10 @@ class HBUSWEB:
         response.content_type = 'application/json'
         return dumps(rv)
     
+    ##Escreve valor no objeto de dispositivo
+    #@param uid UID do dispositivo
+    #@param obj número do objeto
+    #@return template HTML com valores atualizados
     def slaveWriteObject(self,uid=None,obj=None):
         
 
@@ -142,7 +173,7 @@ class HBUSWEB:
                 
             if s == None:
                 
-                ##TODO: retornar template de erro, escravo indisponível
+                ##@todo retornar template de erro, escravo indisponível
                 
                 pass
         
@@ -179,6 +210,9 @@ class HBUSWEB:
                         objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
                         #readObjCount=readObjectCount,writeObjCount=writeObjectCount)
     
+    ##Gera uma página listando os dispositivos em um barramento
+    #@param busNumber número do barramento
+    #@return template HTML
     def slavesByBus(self,busNumber=None):
         
         if int(busNumber) == 255:
@@ -191,6 +225,8 @@ class HBUSWEB:
         
         return template('hbus_slave_by_bus',slaveList=slaveList,masterStatus=self.hbusMaster.getInformationData(),busNumber=busNumber,re=re)
     
+    ##Define o nível mínimo dos objetos mostrados na interface
+    #@param level nível mínimo dos objetos
     def setLevel(self,level=None):
         
         if level == None:
@@ -201,10 +237,16 @@ class HBUSWEB:
         finally:
             return
     
+    ##Obtém arquivos estáticos
+    #@param filename nome do arquivo a ser obtido
+    #@return arquivo
     def staticFiles(self,filename):
         
         return static_file(filename,root='web_static')
     
+    ##Converte percentuais para valores escalonados
+    #@param percentStr valor percentual em string
+    #@return valor
     def percentToRange(self,percentStr):
         
         if percentStr == "?" or percentStr == None:
@@ -214,7 +256,7 @@ class HBUSWEB:
         
         return s
     
-    #roda
+    ##Loop principal de execução do servidor web pyBottle
     def run(self):
         
         #cria rotas

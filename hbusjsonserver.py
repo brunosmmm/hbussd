@@ -1,8 +1,8 @@
+#coding=utf-8
 
 ##@package hbusjsonserver
 #Módulo para gerenciamento de entrada e saída de informações através de requisições HTTP usando JSON
-#@author Bruno Morais
-#@contact brunosmmm@gmail.com
+#@author Bruno Morais <brunosmmm@gmail.com>
 #@since 13/02/2014
 
 from txjsonrpc.web import jsonrpc
@@ -17,6 +17,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@param master referencia ao objeto principal do mestre hbus para manipulação de dados
     #@todo realizar separação entre corpo principal do mestre hbus e modulos exteriores
     def __init__(self,master):
+        
+        ##Referência ao objeto principal do mestre
         self.master = master
     
     ##Retorna lista de barramentos atualmente ativos

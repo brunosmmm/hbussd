@@ -1,4 +1,11 @@
 # coding=utf-8
+
+##@package hbus
+#Módulo principal do hbussd
+#@author Bruno Morais <brunosmmm@gmail.com>
+#@date 2012-2014
+
+
 import logging
 from hbusmaster import *
 from hbustcpserver import *
@@ -22,45 +29,49 @@ import signal
 
 BUSID = 0
 
-##stable:
-##TODO: Verificar ação em caso de timeouts no endereçamento
-##TODO: Para finalizar versão de testes, incluir modificador para valores do tipo byte através da página web
-##TODO: incluir código para permitir edição de objetos tipo Byte, Int e Unsigned Int
-
-##default (desenvolvimento)
-##TODO: Implementar servidor http integrado twisted, para troca de dados via JSON
-##TODO: Estudar a realização de dump automático de todos os valores de objetos no sistema ao completar enumeração
-
+##Subclasse de protocolo Twisted para acesso a porta serial
 class TwistedSerialPort(Protocol):
     
+    ##Protótipo de função para evento de realização de conexão
     def connectionMade(self):
         
         pass
-        
+    
+    ##Protótipo de função para evento de recepção de dados
+    #@param data dados recebidos
     def dataReceived(self, data):
         
         pass
 
+##Subclasse do objeto principal do servidor HBUS
+#
+#Contém elementos de controle de conexões externas
+#
+#@todo stable: Verificar ação em caso de timeouts no endereçamento
+#@todo stable: Para finalizar versão de testes, incluir modificador para valores do tipo byte através da página web
+#@todo stable: incluir código para permitir edição de objetos tipo Byte, Int e Unsigned Int
+#@todo default: Implementar servidor http integrado twisted, para troca de dados via JSON
+#@todo default: Estudar a realização de dump automático de todos os valores de objetos no sistema ao completar enumeração
 class TwistedhbusMaster(hbusMaster):
     
     hbusSerial = None
     
+    ##Função para inicialização do sistema de porta serial
     def serialCreate(self):
         
+        ##Objeto da porta serial
         self.hbusSerial = TwistedSerialPort()
 
         self.hbusSerial.dataReceived = self.serialNewData #overload forçado
         self.hbusSerial.connectionMade = self.serialConnected
         
         SerialPort(self.hbusSerial, self.serialPort, reactor, baudrate=self.serialBaud,timeout=0)
-        
-        pass
     
+    ##Realiza a escrita de dados na porta serial
+    #@param string string de dados a serem escritos na porta serial
     def serialWrite(self, string):
         
         self.hbusSerial.transport.write(string)
-        
-        #self.hbusSerial.transport.flushInput()
         
         pass
     
@@ -68,15 +79,20 @@ class TwistedhbusMaster(hbusMaster):
         
         pass
 
+##Função para gerenciamentos de sinais globais
+#@param signum identificador do sinal
+#@param frame quadro
 def SignalHandler(signum, frame):
     
     if signal == signal.SIGTERM:
         exit(0)
 
+##Função chamada no evento de término da leitura inicial dos dados de dispositivos HBUS
 def hbusMasterOperational():
     
     reactor.callInThread(hbusWeb.run)
 
+##Loop principal de execução
 def main():
     
     #argparse
@@ -114,7 +130,7 @@ def main():
     hbusSlaveChecker.start(args['c'], False)
     
     #lança pagina web
-    ##TODO:lançar página apenas após enumeração
+    #@todo lançar página apenas após enumeração
     
     if args['w'] == True:
         #habilita servidor integrado
@@ -130,6 +146,6 @@ def main():
     
     reactor.run()
     
-
+##Função principal do programa
 if __name__ == '__main__':
     main()

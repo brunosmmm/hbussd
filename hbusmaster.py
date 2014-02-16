@@ -1,5 +1,10 @@
 # coding=utf-8
 
+##@package hbusmaster
+#Módulo do mestre de barramento HBUS
+#@author Bruno Morais <brunosmmm@gmail.com>
+#@date 2012-2014
+
 import struct
 from datetime import datetime
 import logging
@@ -18,6 +23,9 @@ from hbus_constants import *
 from hbus_base import *
 from hbus_except import *
 
+##Converte o tempo atual em milissegundos
+#@param tempo atual
+#@return tempo atual em milissegundos
 def getMillis(td):
     
     return (td.days * 24 * 60 * 60 + td.seconds) * 1000 + td.microseconds / 1000.0
@@ -29,21 +37,34 @@ def nonBlockingDelay(td):
     while getMillis(datetime.now() - now) < td:
         pass
     
-
+##Conjunto de chaves de segurança HBUS
+#
+#A chave é um par de números (p,q)
 class hbusKeySet:
     
+    ##Número p da chave
     privateq = None
+    ##Número q da chave
     privatep = None
     
+    ##Construtor
+    #@param p número p
+    #@param q número q
     def __init__(self,p,q):
         
         self.privatep = p
         self.privateq = q
-        
+    
+    ##Gera chave pública
+    #
+    #A chave pública é obtida multiplicando-se p e q
+    #@return chave pública
     def pubKeyInt(self):
         
         return self.privatep*self.privateq
     
+    ##Gera string de chave pública
+    #@return chave pública em string
     def pubKeyStr(self):
         
         h = hex(self.privatep*self.privateq)[2:].rstrip('L')
@@ -64,6 +85,7 @@ p = 3426041604823131668161123340070891109102587202510163929851780729801948170981
 q = 609828164381195487560324418811535461583859042182887774624946398207269636262857827797730598026846661116173290667288561275278714668006770186716586859843775717295061922379022086436506552898287802124771661400922779346993469164594119
 HBUS_ASYMMETRIC_KEYS = hbusKeySet(p,q);
 
+##Classe para formatação de dados do tipo ponto fixo
 class hbusFixedPointHandler:
     
     pointLocation = None
@@ -357,6 +379,8 @@ class hbusSlaveObjectInfo:
     
     objectDataType = 0
     objectDataTypeInfo = None
+    
+    objectLevel = 0
     
     objectExtendedInfo = None
     
