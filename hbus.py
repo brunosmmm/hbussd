@@ -90,7 +90,7 @@ def SignalHandler(signum, frame):
 ##Função chamada no evento de término da leitura inicial dos dados de dispositivos HBUS
 def hbusMasterOperational():
     
-    reactor.callInThread(hbusWeb.run)
+    reactor.callInThread(hbusWeb.run) #@UndefinedVariable
 
 ##Loop principal de execução
 def main():
@@ -136,15 +136,15 @@ def main():
         #habilita servidor integrado
         logger.info('Servidor web integrado habilitado')
         hbusWeb = HBUSWEB(args['wp'],hbusMaster)
-        reactor.callInThread(hbusWeb.run)
+        reactor.callInThread(hbusWeb.run) #@UndefinedVariable
     
     if args['t'] == True:
-        reactor.listenTCP(args['tp'], HBUSTCPFactory(hbusMaster))
+        reactor.listenTCP(args['tp'], HBUSTCPFactory(hbusMaster)) #@UndefinedVariable
         
     #JSON SERVER
-    reactor.listenTCP(7080, server.Site(HBUSJSONServer(hbusMaster)))
+    reactor.listenTCP(7080, server.Site(HBUSJSONServer(hbusMaster))) #@UndefinedVariable
     
-    reactor.run()
+    reactor.run() #@UndefinedVariable
     
 ##Função principal do programa
 if __name__ == '__main__':

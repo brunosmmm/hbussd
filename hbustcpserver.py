@@ -46,7 +46,9 @@ class HBUSTCPCommand:
     
 ##@defgroup hbusTCPCommands Comandos TCP
 #@{
-#SEARCH - Realiza operação de busca no barramento
+#Definição dos comandos aceitos pelo servidor TCP
+
+##SEARCH - Realiza operação de busca no barramento
 HBUSTCPCMD_SEARCH = HBUSTCPCommand("SEARCH",0)
 ##SCOUNT - Retorna o número de dispositivos ativos no barramento
 HBUSTCPCMD_SCOUNT = HBUSTCPCommand("SCOUNT",0)

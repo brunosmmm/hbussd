@@ -8,20 +8,17 @@
 import struct
 from datetime import datetime
 import logging
-#import signal
-from collections import deque, OrderedDict
-#import threading
-import re
+from collections import deque
 import hbus_crypto
 
 from twisted.internet import reactor, defer
-from array import array
-from math import log
-from bitstring import BitArray
 
 from hbus_constants import * 
 from hbus_base import *
 from hbus_except import *
+from hbusslaves import *
+from hbus_datahandlers import *
+from hbusmasterobjects import *
 
 ##Converte o tempo atual em milissegundos
 #@param tempo atual
@@ -84,403 +81,6 @@ class hbusKeySet:
 p = 342604160482313166816112334007089110910258720251016392985178072980194817098198724574409056226636958394678465934459619696622719424740669649868502396485869067283396294556282972464396510025180816154985285048268006216979372669280971
 q = 609828164381195487560324418811535461583859042182887774624946398207269636262857827797730598026846661116173290667288561275278714668006770186716586859843775717295061922379022086436506552898287802124771661400922779346993469164594119
 HBUS_ASYMMETRIC_KEYS = hbusKeySet(p,q);
-
-##Classe para formatação de dados do tipo ponto fixo
-class hbusFixedPointHandler:
-    
-    pointLocation = None
-
-    def formatFixedPoint(self,dummy,data,extInfo,size,decode=False):
-        
-        x = [0]
-        while (len(data) < 4):
-            x.extend(data)
-            data = x
-            x = [0]
-        
-        byteList = array('B',data)
-        
-        value = float(struct.unpack('>i',byteList)[0])/(10**float(self.pointLocation))
-        
-        try:
-            unit = extInfo['UNIT']
-            value = str(value)+" "+HBUS_UNITS[chr(unit[0])]
-        except:
-            pass
-        
-        return  value
-    
-    def __getitem__(self,key):
-        
-        #ultra gambiarra
-        self.pointLocation = int(key)
-        
-        return self.formatFixedPoint
-    
-class hbusIntHandler:
-    
-    def formatInt(self,dummy,data,extInfo,size,decode=False):
-        
-        #x = [0]
-        #while (len(data) < 4):
-        #    x.extend(data)
-        #    data = x
-        #    x = [0]
-        
-        #byteList = array('B',data)
-        
-        #value = struct.unpack('>i',byteList)[0]
-        
-        value = BitArray(bytes=''.join([chr(x) for x in data])).int
-        
-        try:
-            unit = extInfo['UNIT']
-            value = str(value)+" "+HBUS_UNITS[chr(unit[0])]
-        except:
-            pass
-        
-        return str(value)
-    
-    def __getitem__(self,key):
-        
-        return self.formatInt
-    
-class hbusSlaveObjectLevel:
-    
-    level0  = 0x00
-    level1  = 0x40
-    level2  = 0x80
-    level3  = 0xC0
-
-class hbusSlaveObjectDataType:
-    
-    dataTypeByte        = 0x30
-    dataTypeInt         = 0x00
-    dataTypeUnsignedInt = 0x10
-    dataTypeFixedPoint  = 0x20
-    
-    dataTypeByteHex     = 0x01
-    dataTypeByteDec     = 0x02
-    dataTypeByteOct     = 0x03
-    dataTypeByteBin     = 0x07
-    dataTypeByteBool    = 0x08
-    
-    dataTypeUintPercent     = 0x04
-    dataTypeUintLinPercent  = 0x05
-    dataTypeUintLogPercent  = 0x06
-    dataTypeUintTime        = 0x09
-    dataTypeUintDate        = 0x0A
-    
-    dataTypeUintNone        = 0x00
-    
-    
-    def unpackUINT(self,data):
-
-        x = [0]
-        while (len(data) < 4):
-            x.extend(data)
-            data = x
-            x = [0]
-        
-        byteList = array('B',data)
-        
-        return struct.unpack('>I',byteList)[0]
-    
-    def formatBoolBytes(self,data,extInfo,size,decode=False):
-        
-        if decode:
-            if data == "ON":
-                return [1];
-            
-            return [0];
-        
-        if (data[0] > 0):
-            return 'ON'
-        else:
-            return 'OFF'
-    
-    def formatHexBytes(self,data,extInfo,size,decode=False):
-        
-        if decode:
-            return [0*x for x in range(0,size)]
-        
-        return ', '.join(['%X' % x for x in data])
-   
-    def formatDecBytes(self,data,extInfo,size,decode=False):
-        
-        if decode:
-            return [0*x for x in range(0,size)]
-        
-        return ', '.join(['%d' % x for x in data])
-   
-    def formatOctBytes(self,data,extInfo,size,decode=False):
-        
-        if decode:
-            return [0*x for x in range(0,size)]
-        
-        return ', '.join(['%o' % x for x in data])
-    
-    def formatBinBytes(self,data,extInfo,size,decode=False):
-        
-        if decode:
-            return [0*x for x in range(0,size)]
-        
-        return ', '.join(['0b{0:b}'.format(x) for x in data])
-
-    def formatUint(self,data,extInfo,size,decode=False):
-        
-        if decode:
-            return [ord(x) for x in struct.pack('>I',data)[size:]]
-        
-        value = str(self.unpackUINT(data))
-        
-        try:
-            unit = extInfo['UNIT']
-            value = str(value)+" "+HBUS_UNITS[chr(unit[0])]
-        except:
-            pass
-        
-        return value
-
-    def formatPercent(self,data,extInfo,size,decode=False):
-        
-        if len(data) > 0:
-            try:
-                data = int(data[::-1])
-            except:
-                data = 0
-            
-        if data > 100:
-            data = 100
-            
-        if decode:
-            return [ord(x) for x in struct.pack('>I',data)[size:]]
-            
-        return "%d%%" % data
-
-    def formatRelLinPercent(self,data,extInfo,size,decode=False):
-        
-        try:
-            minimumValue = self.unpackUINT(extInfo['MIN'])
-        except:
-            minimumValue = 0
-        
-        if decode:
-            
-            try:
-                maximumValue = self.unpackUINT(extInfo['MAX'])
-            except:
-                maximumValue = 2**(8*size) - 1
-                
-            
-            value = int((float(data)/100.0)*(maximumValue-minimumValue) + minimumValue)
-            
-            return [ord(x) for x in struct.pack('>I',value)[size:]]
-        
-        if data == None:
-            return "?"
-        
-        try:
-            maximumValue = self.unpackUINT(extInfo['MAX'])
-        except:
-            maximumValue = 2**(8*len(data)) - 1
-        
-        value = self.unpackUINT(data)
-        
-        return "%.2f%%" % ((float(value-minimumValue)/float(maximumValue-minimumValue))*100)
-
-    def formatRelLogPercent(self,data,extInfo,size,decode=False):
-        
-        try:
-            minimumValue = self.unpackUINT(extInfo['MIN'])
-        except:
-            minimumValue = 0
-        
-        if decode:
-            
-            try:
-                maximumValue = self.unpackUINT(extInfo['MAX'])
-            except:
-                maximumValue = 2**(8*size) - 1
-                
-            
-            value = int(10**((float(data)/100.0)*log(maximumValue-minimumValue)) + minimumValue)
-            
-            return [ord(x) for x in struct.pack('>I',value)[size:]]
-        
-        if data == None:
-            return "?"
-        
-        try:
-            maximumValue = self.unpackUINT(extInfo['MAX'])
-        except:
-            maximumValue = 2**(8*len(data)) - 1
-            
-        
-        value = self.unpackUINT(data)
-        
-        try:
-            percent = (log(float(value-minimumValue))/log(float(maximumValue-minimumValue)))*100
-        except:
-            percent = 0
-            
-        
-        return "%.2f%%" % percent
-    
-    def formatTime(self,data,extInfo,size,decode=False):
-        
-        if decode:
-            return [0*x for x in range(0,size)]
-        
-        tenthSeconds = (data[3] & 0xF0)>>4
-        milliSeconds = data[3] & 0x0F
-        
-        segundos = data[2] & 0x0F
-        dezenaSegundos = data[2] & 0xF0
-        
-        minutes = data[1] & 0x0F
-        dezena = (data[1] & 0xF0) >> 4
-        
-        horas24 = data[0] & 0x0F
-        
-        return "%2d:%2d:%2d,%2d" % (horas24,minutes+dezena*10,segundos+dezenaSegundos*10,milliSeconds+tenthSeconds*10)
-    
-
-    def formatDate(self,data,extInfo,size,decode=False):
-        
-        if decode:
-            return [0*x for x in range(0,size)]
-        
-        return "?"
-    
-    dataTypeNames = {dataTypeByte : 'Byte', dataTypeInt : 'Int', dataTypeUnsignedInt : 'Unsigned Int', dataTypeFixedPoint : 'Ponto fixo'}
-    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes  ,dataTypeByteDec : formatDecBytes  ,dataTypeByteOct : formatOctBytes ,dataTypeByteBin : formatBinBytes,
-                                       dataTypeByteBool : formatBoolBytes},
-                       dataTypeUnsignedInt : {dataTypeUintNone : formatUint, dataTypeUintPercent : formatPercent, dataTypeUintLinPercent : formatRelLinPercent, dataTypeUintLogPercent : formatRelLogPercent, 
-                                              dataTypeUintTime : formatTime, dataTypeUintDate : formatDate},
-                       dataTypeFixedPoint : hbusFixedPointHandler(),
-                       dataTypeInt : hbusIntHandler()}
-
-class hbusSlaveObjectExtendedInfo:
-    
-    objectMaximumValue = None
-    objectMinimumValue = None
-    
-    objectExtendedString = None
-
-class hbusSlaveObjectInfo:
-    
-    objectPermissions = 0
-    objectCrypto = False
-    objectHidden = False
-    objectDescription = None
-    objectSize = 0
-    objectLastValue = None
-    
-    objectDataType = 0
-    objectDataTypeInfo = None
-    
-    objectLevel = 0
-    
-    objectExtendedInfo = None
-    
-    def getFormattedValue(self):
-        
-        if self.objectLastValue == None:
-            return None
-        
-        if self.objectDataType not in hbusSlaveObjectDataType.dataTypeOptions.keys():
-            
-            #print self.objectDataType
-            #print hbusSlaveObjectDataType.dataTypeOptions.keys()
-            
-            return str(self.objectLastValue) #sem formato
-        
-        #analisa informação extra
-        if type(hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType]) == dict: 
-        
-            if self.objectDataTypeInfo not in hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys():
-            
-            #print self.objectDataTypeInfo
-            #print hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys()
-            
-                return str(self.objectLastValue) #sem formato
-                
-        return hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](hbusSlaveObjectDataType(),data=self.objectLastValue,size=self.objectSize,extInfo=self.objectExtendedInfo)
-        
-    
-    def __repr__(self):
-        
-        return self.objectDescription
-    
-class hbusSlaveEndpointInfo:
-    
-    endpointDirection = 0
-    endpointDescription = None
-    endpointBlockSize = 0
-    
-    def __repr__(self):
-        
-        return self.endpointDescription
-    
-class hbusSlaveInterruptInfo:
-    
-    interruptFlags = 0
-    interruptDescription = None
-    
-    def __repr__(self):
-        
-        return self.interruptDescription
-
-class hbusSlaveInfo:
-    
-    hbusSlaveAddress = None
-    
-    hbusSlaveDescription = None
-    hbusSlaveUniqueDeviceInfo = None
-    hbusSlaveObjectCount = 0
-    hbusSlaveEndpointCount = 0
-    hbusSlaveInterruptCount = 0
-    hbusSlaveCapabilities = 0
-    
-    basicInformationRetrieved = False
-    extendedInformationRetrieved = False
-    
-    hbusSlaveObjects = {}
-    hbusSlaveEndpoints = {}
-    hbusSlaveInterrupts = {}
-    
-    hbusSlaveHiddenObjects = {}
-    
-    waitFlag = False
-    
-    #flags de falhas
-    scanRetryCount = 0
-    pingRetryCount = 0
-    pingFailures = 0
-    
-    #tornar serializavel
-    def __repr__(self):
-        return str(self.__dict__)
-    
-    def __init__(self,explicitSlaveAddress):
-        self.hbusSlaveAddress = explicitSlaveAddress
-        
-    def sortObjects(self):
-        
-        self.hbusSlaveHiddenObjects = {}
-        
-        for key,val in self.hbusSlaveObjects.viewitems():
-            
-            if val.objectHidden == False:
-                continue
-            
-            self.hbusSlaveHiddenObjects[key] = val
-            
-        for key in self.hbusSlaveHiddenObjects.keys():
-            
-            if key in self.hbusSlaveObjects:
-                self.hbusSlaveObjects.pop(key)
                 
 
 class hbusMasterState:
@@ -492,6 +92,7 @@ class hbusMasterState:
     hbusMasterScanning = 4
     hbusMasterOperational = 5
     hbusMasterChecking = 6
+    hbusMasterInterrupted = 7
     
 class hbusPendingAnswer:
     
@@ -626,7 +227,7 @@ class hbusMaster:
         self.logger.debug("Aguardando RESET dos escravos...")
         
         #signal.alarm(1)
-        reactor.callLater(1,self.handleAlarm)
+        reactor.callLater(1,self.handleAlarm) #@UndefinedVariable
         
         #self.detectSlaves()
         self.serialRXMachineEnterIdle()
@@ -671,7 +272,7 @@ class hbusMaster:
                 
                 self.hbusRxState = hbusMasterRxState.hbusRXSDID
                 
-                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
                 
             elif self.hbusRxState == hbusMasterRxState.hbusRXSDID:
                 
@@ -688,7 +289,7 @@ class hbusMaster:
                 
                 self.hbusRxState = hbusMasterRxState.hbusRXTBID
                 
-                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
                 
             elif self.hbusRxState == hbusMasterRxState.hbusRXTBID:
                 
@@ -698,7 +299,7 @@ class hbusMaster:
                 
                 self.hbusRxState = hbusMasterRxState.hbusRXTDID
                 
-                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
                 
             elif self.hbusRxState == hbusMasterRxState.hbusRXTDID:
                 
@@ -715,7 +316,7 @@ class hbusMaster:
                 
                 self.hbusRxState = hbusMasterRxState.hbusRXCMD
                 
-                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
                 
             elif self.hbusRxState == hbusMasterRxState.hbusRXCMD:
                 
@@ -728,7 +329,7 @@ class hbusMaster:
                 else:
                     self.hbusRxState = hbusMasterRxState.hbusRXADDR
                 
-                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
                     
             elif self.hbusRxState == hbusMasterRxState.hbusRXADDR:
                 
@@ -742,7 +343,7 @@ class hbusMaster:
                 else:
                     self.hbusRxState = hbusMasterRxState.hbusRXPSZ
                     
-                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
                 
             elif self.hbusRxState == hbusMasterRxState.hbusRXPSZ:
                 
@@ -763,7 +364,7 @@ class hbusMaster:
                     else:
                         self.hbusRxState = hbusMasterRxState.hbusRXSTP
                         
-                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
                 
             elif self.hbusRxState == hbusMasterRxState.hbusRXPRM:
                 
@@ -796,7 +397,7 @@ class hbusMaster:
                         
                         return
                         #print self.communicationBuffer
-                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout)
+                self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
             
             elif self.hbusRxState == hbusMasterRxState.hbusRXSTP:
                 
@@ -933,6 +534,14 @@ class hbusMaster:
                 self.hbusBusLockedWith = None
                 
                 self.onBusFree()
+                
+            #Interrupções
+            elif busOp.instruction.command == HBUSCOMMAND_INT:
+                
+                self.masterState = hbusMasterState.hbusMasterInterrupted
+                
+                #Processa
+                ##@todo implementar mecanismos de interrupções para que possa ser inserido o sistema de objetos especiais do mestre
             
             if len(self.expectedResponseQueue) > 0:
                 
@@ -1028,7 +637,7 @@ class hbusMaster:
                 
         self.txBytes += len(busOp.getString())
         if self.masterState == hbusMasterState.hbusMasterScanning:
-            reactor.callFromThread(self.serialWrite,busOp.getString())
+            reactor.callFromThread(self.serialWrite,busOp.getString()) #@UndefinedVariable
         else:
             self.serialWrite(busOp.getString())
         
@@ -1042,7 +651,7 @@ class hbusMaster:
         pending = hbusPendingAnswer(command,source,timeout,d,actionParameters,timeoutAction,timeoutActionParameters)
         
         #timeout handler
-        timeoutHandler = reactor.callLater(timeout/1000,self.responseTimeoutCallback,pending)
+        timeoutHandler = reactor.callLater(timeout/1000,self.responseTimeoutCallback,pending) #@UndefinedVariable
         pending.addTimeoutHandler(timeoutHandler)
         
         self.expectedResponseQueue.append(pending)
@@ -1103,7 +712,7 @@ class hbusMaster:
         if params[0].getGlobalID() == self.detectedSlaveList.keys()[-1]:
             self.slaveReadDeferred.addCallback(self.slaveReadEnded)
             
-        reactor.callLater(0.1,d.callback,*params)
+        reactor.callLater(0.1,d.callback,*params) #@UndefinedVariable
         
         return d
         
@@ -1164,13 +773,13 @@ class hbusMaster:
         self.slaveHiddenDeferred = d
         
         #inicia
-        reactor.callLater(0.1,d.callback,None)
+        reactor.callLater(0.1,d.callback,None) #@UndefinedVariable
         
         return d
     
     def processHiddenObject(self,deferredResult,address,objectNumber):
         
-        ##TODO: verificar exceções aqui
+        ##@todo verificar exceções aqui
         
         obj = self.detectedSlaveList[address.getGlobalID()].hbusSlaveHiddenObjects[objectNumber]
         slave = self.detectedSlaveList[address.getGlobalID()]
@@ -1323,7 +932,7 @@ class hbusMaster:
                     self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
                     
                     if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
-                        reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
+                        reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams) #@UndefinedVariable
         
         elif data[0][0] == "E":
             
@@ -1364,7 +973,7 @@ class hbusMaster:
                     self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
                     
                     if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
-                        reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
+                        reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams) #@UndefinedVariable
                     
         elif data[0][0] == "I":
             
@@ -1394,7 +1003,7 @@ class hbusMaster:
                 self.detectedSlaveList[data[0][1].getGlobalID()].sortObjects()
                 
                 if self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback != None:
-                    reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams)
+                    reactor.callLater(HBUS_SLAVE_QUERY_INTERVAL,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedCallback.callback,self.detectedSlaveList[data[0][1].getGlobalID()].readEndedParams) #@UndefinedVariable
         
         elif data[0][0] == "D":
             
@@ -1448,17 +1057,15 @@ class hbusMaster:
             self.logger.warning("Tentativa de leitura de objeto somente para escrita")
             self.logger.debug("Tentativa de leitura do objeto %d, escravo com endereço %s",number,address)
             
-            if callBack != None:
-                
-                callBack(None)
+            #if callBack != None:
+            #    
+            #    callBack(None)
                 
         return d
             
     def receiveSlaveObjectData(self, data):
         
         self.detectedSlaveList[data[0][0].getGlobalID()].hbusSlaveObjects[data[0][1]].objectLastValue = [ord(d) for d in data[1]]
-        
-        #print data[1]
         
         if data[0][2] != None:
             
@@ -1467,8 +1074,6 @@ class hbusMaster:
     def receiveSlaveHiddenObjectData(self, data):
         
         self.detectedSlaveList[data[0][0].getGlobalID()].hbusSlaveHiddenObjects[data[0][1]].objectLastValue = [ord(d) for d in data[1]]
-        
-        #print data[1]
         
         if data[0][2] != None:
             
@@ -1536,7 +1141,7 @@ class hbusMaster:
         d = defer.Deferred()
         d.addCallback(self.dummyCallback)
         
-        reactor.callLater(time,d.callback,None)
+        reactor.callLater(time,d.callback,None) #@UndefinedVariable
         
         return d
     
@@ -1588,7 +1193,7 @@ class hbusMaster:
             self.masterState = hbusMasterState.hbusMasterSearching
             self.logger.info("Iniciando busca por escravos")
         
-        reactor.callLater(5,self.handleAlarm)
+        reactor.callLater(5,self.handleAlarm) #@UndefinedVariable
         
         self.detectSlavesEnded = callBack
         
@@ -1625,7 +1230,7 @@ class hbusMaster:
                 d.addCallback(self.readBasicSlaveInformation, slave.hbusSlaveAddress)
                 
         self.slaveReadDeferred = d
-        reactor.callLater(0.1,self.slaveReadStart)
+        reactor.callLater(0.1,self.slaveReadStart) #@UndefinedVariable
         
         return d
     
@@ -1661,7 +1266,7 @@ class hbusMaster:
             if i > 0:
                 self.slaveReadDeferred = d
                 
-                reactor.callLater(0.1,self.slaveReadStart)
+                reactor.callLater(0.1,self.slaveReadStart) #@UndefinedVariable
             
             else:
                 
