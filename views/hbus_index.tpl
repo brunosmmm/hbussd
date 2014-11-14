@@ -1,3 +1,4 @@
+<!-- hbussd web control interface -->
 <!DOCTYPE html>
 <html>
 	<head>
@@ -28,7 +29,7 @@
             <div class="hbusStatus">
                 
                 <div class = "activeSlaveCount">{{masterStatus.activeSlaveCount}}</div>
-                <div class = "statusText">Dispositivos <br /> ativos</div>
+                <div class = "statusText">Active <br /> devices</div>
                 
             </div>
             
@@ -41,7 +42,7 @@
 </div>
 	
 	<section class="hbusActiveDevices">
-	   Dispositivos ativos
+	   Active devices
 	</section>
 	
 	<div class="hbusMMain">
@@ -62,7 +63,7 @@
         	           <li>
         	               <a href="bus/255">
         	                   <div class="fill"> </div>
-        	                   <p>Todos</p>
+        	                   <p>All</p>
         	               </a>
         	           </li>
         	       

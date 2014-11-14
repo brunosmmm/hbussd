@@ -384,7 +384,7 @@ class HBUSTCPFactory(Factory):
     def __init__(self,hbusMaster):
         self.hbusMaster = hbusMaster
         
-        self.logger = logging.getLogger('hbus_skeleton.hbustcpserver')
+        self.logger = logging.getLogger('hbussd.hbustcpserver')
     
     def buildProtocol(self,addr):
         

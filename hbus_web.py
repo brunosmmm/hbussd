@@ -281,7 +281,7 @@ class HBUSWEB:
         #opções escondidas
         route ("/set-level/<level>")(self.setLevel)
         
-        run(host='192.168.1.122',port=self.port)
+        run(host='127.0.0.1',port=self.port)
 
 #test_server = HBUSWEB(8000,None)
 #test_server.run()

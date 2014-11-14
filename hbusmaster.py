@@ -4,6 +4,7 @@
 #Módulo do mestre de barramento HBUS
 #@author Bruno Morais <brunosmmm@gmail.com>
 #@date 2012-2014
+#@todo decouple and sanitize device scanning logic
 
 import struct
 from datetime import datetime
@@ -181,11 +182,7 @@ class hbusMaster:
         self.serialBaud = baudrate
         self.hbusMasterAddr = hbusDeviceAddress(busno, 0)
         
-        self.logger = logging.getLogger('hbus_skeleton.hbusmaster')
-        
-        #signal.signal(signal.SIGALRM, self.handleAlarm)
-        
-        #self.hbusSerial = hbusSerialConnection(port,baudrate,self.hbusSerialRxTimeout)
+        self.logger = logging.getLogger('hbussd.hbusmaster')
     
         self.serialCreate()
         
@@ -224,7 +221,7 @@ class hbusMaster:
         
         self.pushCommand(HBUSCOMMAND_SOFTRESET,address,params=myParamList)
         
-        self.logger.debug("Aguardando RESET dos escravos...")
+        self.logger.debug("Waiting for device RESET to complete...")
         
         #signal.alarm(1)
         reactor.callLater(1,self.handleAlarm) #@UndefinedVariable
@@ -242,11 +239,9 @@ class hbusMaster:
     
     def serialRXMachineTimeout(self):
         
-        self.logger.warning("Timeout na formação de pacote")
-        self.logger.debug("dump pacote: %s", self.communicationBuffer)
+        self.logger.warning("Packet receive timeout")
+        self.logger.debug("packet dump: %s", self.communicationBuffer)
         
-        #self.communicationBuffer = []
-        #self.hbusRxState = hbusMasterRxState.hbusRXSBID
         self.serialRXMachineEnterIdle()
         
     def serialRXMachineEnterIdle(self):
@@ -282,7 +277,7 @@ class hbusMaster:
                 if (ord(d) > 32) and (ord(d) != 255):
                     self.serialRXMachineEnterIdle()
                     
-                    self.logger.debug("Pacote com endereço inválido recebido")
+                    self.logger.debug("Invalid address in received packet")
                     return
                 
                 self.communicationBuffer.append(d)
@@ -309,7 +304,7 @@ class hbusMaster:
                 if (ord(d) > 32) and (ord(d) != 255):
                     self.serialRXMachineEnterIdle()
                     
-                    self.logger.debug("Pacote com endereço inválido recebido")
+                    self.logger.debug("Invalid address in received packet")
                     return
                 
                 self.communicationBuffer.append(d)
@@ -378,9 +373,6 @@ class hbusMaster:
                     if ord(d) == 0xFF:
                         self.communicationBuffer.append(d)
                         
-                        #self.logger.debug("pacote recebido, processando...")
-                        #self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
-                        
                         dataToParse = self.communicationBuffer
                         
                         self.serialRXMachineEnterIdle()
@@ -390,13 +382,13 @@ class hbusMaster:
                         return
                         
                     else:
-                        self.logger.debug("pacote mal-formado, erro no fechamento")
-                        self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
+                        self.logger.debug("malformed packet, termination error")
+                        self.logger.debug("packet dump: %s" % [hex(ord(x)) for x in self.communicationBuffer])
                         
                         self.serialRXMachineEnterIdle()
                         
                         return
-                        #print self.communicationBuffer
+
                 self.RXTimeout = reactor.callLater(0.2,self.serialRXMachineTimeout) #@UndefinedVariable
             
             elif self.hbusRxState == hbusMasterRxState.hbusRXSTP:
@@ -404,9 +396,6 @@ class hbusMaster:
                 self.RXTimeout.cancel()
                 
                 self.communicationBuffer.append(d)
-                
-                #self.logger.debug("pacote recebido, processando...")
-                #self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
                 
                 if ord(d) == 0xFF:
                     
@@ -419,15 +408,15 @@ class hbusMaster:
                     return
                 
                 else:
-                    self.logger.debug("pacote mal-formado, erro no fechamento")
-                    self.logger.debug("dump pacote: %s" % [hex(ord(x)) for x in self.communicationBuffer])
+                    self.logger.debug("malformed packet, termination error")
+                    self.logger.debug("packet dump: %s" % [hex(ord(x)) for x in self.communicationBuffer])
                                         
                     self.serialRXMachineEnterIdle()
                     return
                 
             else:
-                self.logger.error("HBUSOP erro fatal na recepção")
-                raise IOError("erro fatal na recepção")
+                self.logger.error("Fatal error receiving HBUSOP")
+                raise IOError("Fatal error receiving")
             
                 self.serialRXMachineEnterIdle()
                 
@@ -454,13 +443,13 @@ class hbusMaster:
         
         try:
             nextAddress = AddressByUID[self.nextSlaveUID].hbusAddressDevNumber
-            self.logger.debug("Re-integrando escravo com UID %s",hex(self.nextSlaveUID))
+            self.logger.debug("Re-integrating device with UID %s",hex(self.nextSlaveUID))
         except:
             nextAddress = self.registeredSlaveCount+1
             
         
         if (self.nextSlaveCapabilities & hbusSlaveCapabilities.hbusSlaveAuthSupport):
-            self.logger.debug("Novo escravo tem suporte AUTH")
+            self.logger.debug("New device has AUTH support")
 
         
         myParamList = [chr(HBUS_PUBKEY_SIZE)]
@@ -500,11 +489,11 @@ class hbusMaster:
             busOp = hbusOperation(hbusInstruction(self.getCommand(ord(data[4])), pSize, params), hbusDeviceAddress(ord(data[2]), ord(data[3])), hbusDeviceAddress(ord(data[0]),ord(data[1])))
         except:
             
-            self.logger.warning("Pacote inválido recebido")
+            self.logger.warning("Invalid packet was received")
             return
         
         if busOp.hbusOperationSource.hbusAddressDevNumber == 0:
-            self.logger.debug("Descartando pacote ilegal: endereço reservado utilizado")
+            self.logger.debug("Illegal packet ignored: reserved addres")
             return
             
         self.logger.debug(busOp)
@@ -633,7 +622,7 @@ class hbusMaster:
                 
             else:
                 
-                self.logger.debug("erro de BUSUNLOCK: travado com %s, tentativa de destravamento com %s" % (self.hbusBusLockedWith,dest))
+                self.logger.debug("BUSUNLOCK error: locked with %s, tried unlocking %s" % (self.hbusBusLockedWith,dest))
                 
         self.txBytes += len(busOp.getString())
         if self.masterState == hbusMasterState.hbusMasterScanning:
@@ -664,8 +653,8 @@ class hbusMaster:
         
         self.detectedSlaveList[address.getGlobalID()] = hbusSlaveInfo(address)
         
-        self.logger.info("Novo escravo registrado em "+str(address))
-        self.logger.debug("Novo escravo tem ID interno "+str(address.getGlobalID()))
+        self.logger.info("New device registered at "+str(address))
+        self.logger.debug("New device UID is "+str(address.getGlobalID()))
         
         #self.readBasicSlaveInformation(address)
         
@@ -673,7 +662,7 @@ class hbusMaster:
         
         del self.detectedSlaveList[address.getGlobalID()]
         
-        self.logger.info("Escravo em "+str(address)+" removido")
+        self.logger.info("Device at "+str(address)+" removed")
         
     def slaveReadStart(self):
         
@@ -681,13 +670,13 @@ class hbusMaster:
         
     def slaveReadEnded(self,callBackResult):
         
-        self.logger.debug("Fim da recuperação de informações de escravos.")
+        #self.logger.debug("Device information retrieval ended.")
         
         #self.slaveReadDeferred = None
         
         self.masterState = hbusMasterState.hbusMasterOperational
         #reactor.callInThread(self.processHiddenObjects)
-        self.logger.info("Fim da leitura de informações dos escravos")
+        self.logger.info("Device information retrieval finished.")
         self.logger.debug("tx: %d, rx %d bytes",self.txBytes,self.rxBytes)
         
         self.enterOperational()
@@ -718,9 +707,9 @@ class hbusMaster:
         
     def readSlaveObjectInformationFailed(self,params):
         
-        self.logger.warning("Falha na análise do escravo")
+        self.logger.warning("Failure while analyzing device")
         
-        self.slaveScanDeferred.errback(IOError("Falha na análise do escravo"))
+        self.slaveScanDeferred.errback(IOError("Failure while analyzing device"))
         
     def readBasicSlaveInformationFailed(self,*params):
         
@@ -753,7 +742,7 @@ class hbusMaster:
     
     def readExtendedSlaveInformation(self,*params):
         
-        self.logger.debug("Processando objetos invisíveis")
+        self.logger.debug("Invisible objects being processed now")
         
         address = params[0]
         
@@ -807,7 +796,7 @@ class hbusMaster:
         
     def readBasicSlaveInformation(self,deferResult, address):
         
-        self.logger.debug("Iniciando análise do escravo "+str(address.getGlobalID()))
+        self.logger.debug("Initializing device analysis "+str(address.getGlobalID()))
         
         d = defer.Deferred()
         d.addCallback(self.readBasicSlaveInformationEnded)
@@ -861,10 +850,10 @@ class hbusMaster:
             
             #self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
             
-            self.logger.info("Escravo em "+str(data[0][1])+" identificado como "+str(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveDescription)+"("+str(ord(data[1][0]))+","+str(ord(data[1][1]))+","+str(ord(data[1][2]))+") <"+str(
+            self.logger.info("Device at "+str(data[0][1])+" identified as "+str(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveDescription)+"("+str(ord(data[1][0]))+","+str(ord(data[1][1]))+","+str(ord(data[1][2]))+") <"+str(
                 hex(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveUniqueDeviceInfo))+">")
             
-            self.logger.debug("Recuperando informações dos objetos do escravo "+str(data[0][1].getGlobalID()))
+            self.logger.debug("Retrieving device's objects information "+str(data[0][1].getGlobalID()))
             
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects = {}
             
@@ -876,7 +865,7 @@ class hbusMaster:
             
             currentObject = len(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects)+1
             
-            self.logger.debug("Analisando objeto "+str(currentObject)+", escravo ID "+str(data[0][1].getGlobalID()))
+            self.logger.debug("Analysing object "+str(currentObject)+", in device with ID "+str(data[0][1].getGlobalID()))
             
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject] = hbusSlaveObjectInfo()
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectPermissions = ord(data[1][0]) & 0x03
@@ -910,14 +899,14 @@ class hbusMaster:
                 #RECEBE ENDPOINT INFO
                 if self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpointCount > 0:
                     
-                    self.logger.debug("Recuperando informações dos endpoints do escravo "+str(data[0][1].getGlobalID()))
+                    self.logger.debug("Retrieving device's endpoints information "+str(data[0][1].getGlobalID()))
                     
                     #self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("E",data[0][1]))
                     self.pushCommand(HBUSCOMMAND_QUERY_EP,data[0][1],params=[0],callBack=self.receiveSlaveInformation,callBackParams=("E",data[0][1]))
                     
                 elif self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveInterruptCount > 0:
                     
-                    self.logger.debug("Recuperando informações das interrupções do escravo "+str(data[0][1].getGlobalID()))
+                    self.logger.debug("Retrieving device's interrupts information "+str(data[0][1].getGlobalID()))
                     
                     #self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("I",data[0][1]))
                     self.pushCommand(HBUSCOMMAND_QUERY_INT,data[0][1],params=[0],callBack=self.receiveSlaveInformation,callBackParams=("I",data[0][1])
@@ -925,7 +914,7 @@ class hbusMaster:
                 
                 else:
                     #self.pushCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
-                    self.logger.debug("análise escravo "+str(data[0][1].getGlobalID())+" completa")
+                    self.logger.debug("Analysis of device "+str(data[0][1].getGlobalID())+" finished")
                     #self.processHiddenObjects(self.detectedSlaveList[data[0][1].getGlobalID()])
                     self.detectedSlaveList[data[0][1].getGlobalID()].basicInformationRetrieved = True
                     
@@ -940,7 +929,7 @@ class hbusMaster:
             
             currentEndpoint = len(self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpoints)+1
             
-            self.logger.debug("Analisando endpoint "+str(currentEndpoint)+", escravo ID "+str(data[0][1].getGlobalID()))
+            self.logger.debug("Analysing endpoint "+str(currentEndpoint)+", device with ID "+str(data[0][1].getGlobalID()))
             
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpoints[currentEndpoint] = hbusSlaveEndpointInfo()
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveEndpoints[currentEndpoint].endpointDirection = ord(data[1][0])
@@ -1023,7 +1012,7 @@ class hbusMaster:
             
         else:
             
-            self.logger.warning("Tentativa de leitura de objeto somente para escrita")
+            self.logger.warning("Write-only object read attempted")
             self.logger.debug("Tentativa de leitura do objeto %d, escravo com endereço %s",number,address)
             
             if callBack != None:

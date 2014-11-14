@@ -28,7 +28,7 @@
             <div class="hbusStatus">
                 
                 <div class = "activeSlaveCount">{{masterStatus.activeSlaveCount}}</div>
-                <div class = "statusText">Dispositivos <br /> ativos</div>
+                <div class = "statusText">Active <br /> devices</div>
                 
             </div>
             
@@ -39,12 +39,12 @@
     </header>
 	
     <section class="hbusDeviceDescription">
-        <a class ="left">Dispositivos ativos</a>
+        <a class ="left">Active devices</a>
         <div class="right">
             %if busNumber != "255":
                 BUS {{busNumber}}
             %else:
-                Todos dispositivos
+                All devices
             %end
         </div>
     </section>
