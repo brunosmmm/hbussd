@@ -1,7 +1,7 @@
 #coding=utf-8
 
 ##@package hbus_base
-#Estruturas base para uso geral do hbussd
+#hbussd general purpose data structures
 #@author Bruno Morais <brunosmmm@gmail.com>
 #@date 2013
 
@@ -9,78 +9,79 @@ import struct
 import hbus_constants as hbusconst
 import re
 
-##Comandos HBUS
+##HBUS commands
 class hbusCommand:
     
-    ##Construtor
-    #@param value valor do byte idenficador de comando
-    #@param minimumSize tamanho mínimo do comando em bytes
-    #@param maximumSize tamanho máximo do comando em bytes
-    #@param descStr string descritiva
+    ##Constructor
+    #@param value command identifier byte value
+    #@param minimumSize maximum command length in bytes
+    #@param maximumSize minimum command length in bytes
+    #@param descStr descriptive string
     def __init__(self,value,minimumSize,maximumSize, descStr):
         
-        ##Valor do byte (ID)
+        ##byte value (ID)
         self.commandByte = value
-        ##Tamanho mínimo
+        ##minimum length
         self.minimumLength = minimumSize
-        ##Tamanho máximo
+        ##maximum length
         self.maximumLength = maximumSize
-        ##String descritiva
+        ##descriptive string
         self.descString = descStr
     
-    ##Representação do comando
-    #@return representação do comando em string 
+    ##Command representation
+    #@return streing representation of command 
     def __repr__(self):
         
         return self.descString+"("+str(hex(self.commandByte))+")"
     
-    ##Verifica igualdade
-    #@return retorna se são iguais ou não
+    ##Equal operator
+    #@return returns equal or not
     def __eq__(self, other):
         if isinstance(other, hbusCommand):
             return self.commandByte == other.commandByte
         return NotImplemented
-    
+   
+    ##@todo check if this is being used
     def __hash__(self):
         
         return hash(self.commandByte)
 
-##Instrução de barramento HBUS
+##HBUS bus instructions
 class hbusInstruction:
     
-    ##Construtor
-    #@param command comando da instrução
-    #@param paramSize tamanho dos parâmetros em bytes
-    #@param params parâmetros a serem enviados
+    ##Constructor
+    #@param command instruction command
+    #@param paramSize parameter size in bytes
+    #@param params parameters to be sent
     def __init__(self, command, paramSize=0, params=()):
         
-        ##Lista de parâmetros
+        ##Parameter list
         self.params = []
-        ##Tamanho da lista de parâmetros
+        ##Parameter list size
         self.paramSize = 0
         
-        ##Comando HBUS
+        ##HBUS command
         self.command = command
         
         if command not in hbusconst.HBUS_COMMANDLIST:
             if command == None:
-                raise ValueError("Erro desconhecido")
+                raise ValueError("Undefined error")
             else:
-                raise ValueError("Comando inválido: %d" % ord(command.commandByte))
+                raise ValueError("Invalid command: %d" % ord(command.commandByte))
         
         self.paramSize = paramSize
         self.params = params
         
         if (len(params)) > command.maximumLength:
             
-            raise ValueError("Comando mal-formado, "+str(len(params))+" > "+str(command.maximumLength))
+            raise ValueError("Malformed command, "+str(len(params))+" > "+str(command.maximumLength))
         
         if (len(params)+1) < command.minimumLength:
             
-            raise ValueError("Comando mal-formado, "+str(len(params))+" < "+str(command.minimumLength))
+            raise ValueError("Malformed command, "+str(len(params))+" < "+str(command.minimumLength))
     
-    ##Representação da instrução
-    #@return retorna representação da instrução em string
+    ##Instruction representation
+    #@return string representation of instruction
     def __repr__(self):
         
         if (self.paramSize > 0):
@@ -92,46 +93,46 @@ class hbusInstruction:
         else:
             return str(self.command)
 
-##Endereço de dispositivos no barramento HBUS
+##HBUS device addresses
 class hbusDeviceAddress:
     
-    ##Construtor
-    #@param busID número do barramento
-    #@param devID número do dispositivo no barramento
+    ##Constructor
+    #@param busID bus number
+    #@param devID device number
     def __init__(self, busID, devID):
         
         if (devID > 32) and (devID != 255):
-            raise ValueError("Endereço inválido")
+            raise ValueError("Invalid address")
         
-        ##Número do barramento
+        ##Bus number
         self.hbusAddressBusNumber = busID
-        ##Número do dispositivo no barramento
+        ##Device number in this bus
         self.hbusAddressDevNumber = devID
     
-    ##Representação do endereço
-    #@return retorna representação do endereço em string
+    ##Address representation
+    #@return string representation of address
     def __repr__(self):
         
         return "("+str(self.hbusAddressBusNumber)+":"+str(self.hbusAddressDevNumber)+")"
     
-    ##Verifica se dois endereços são iguais
-    #@return retorna se são iguais ou não
+    ##Equal operator for addresses
+    #@return equal or not
     def __eq__(self, other):
         if isinstance(other, hbusDeviceAddress):
             return self.hbusAddressBusNumber == other.hbusAddressBusNumber and self.hbusAddressDevNumber == other.hbusAddressDevNumber
         return NotImplemented
     
-    ##Retorna um ID global para um endereço qualquer.
-    #O ID global é calculado fazendo-se ID = busNumber*32 + deviceNumber
-    #@return ID global do endereço
+    ##Calculates a global ID for an address
+    #Global IDs are calculated by doing ID = busNumber*32 + deviceNumber
+    #@return address global ID
     def getGlobalID(self):
         
         return self.hbusAddressBusNumber*32 + self.hbusAddressDevNumber
 
-##Função para criação de objeto de endereço a partir de uma string.
+##Parse a string and create an address from it
 #
-#A string deve estar no formato (X:Y) onde X é o numero do barramento e Y é o número do dispositivo no barramento
-#@return objeto de endereço do tipo hbusDeviceAddress
+#String format is (X:Y) where X is the bus number and Y the device number
+#@return HBUS address object
 def hbusDeviceAddressFromString(addr):
     
     p = re.compile(r'\(([0-9]+):([0-9]+)\)')
@@ -150,33 +151,33 @@ def hbusDeviceAddressFromString(addr):
     else:
         raise ValueError
 
-##Operação de barramento HBUS.
+##HBUS bus operation
 #
-#A operação é composta de uma instrução e indicadores de fonte e destino da mensagem
+#Bus operations are composed of an instruction, and message source and destination
 class hbusOperation:
     
-    ##Construtor
-    #@param instruction uma instrução do tipo hbusInstruction
-    #@param destination endereço do dispositivo que é o destinatário
-    #@param source endereço do dispositivo que é a fonte da operação
+    ##Constructor
+    #@param instruction a hbusInstruction object
+    #@param destination destination device address
+    #@param source source device address
     def __init__(self, instruction, destination, source):
         
-        ##Instrução HBUS
+        ##HBUS instruction
         self.instruction = instruction
         
-        ##Endereço de destino
+        ##Destination address
         self.hbusOperationDestination = destination
-        ##Endereço de fonte
+        ##Source address
         self.hbusOperationSource = source
     
-    ##Representação da operação
-    #@return representação da operação em string
+    ##Operation representation
+    #@return string representation of operation
     def __repr__(self):
         
         return "HBUSOP: "+str(self.hbusOperationSource)+"->"+str(self.hbusOperationDestination)+" "+str(self.instruction)
     
-    ##Gera a string que é correspondente a operação e que será enviada pelo mestre
-    #@return string com os dados a serem enviados ao barramento
+    ##Generates data string to be sent by master
+    #@return data string to be sent to bus
     def getString(self):
         
         header = struct.pack('4c',chr(self.hbusOperationSource.hbusAddressBusNumber),chr(self.hbusOperationSource.hbusAddressDevNumber),

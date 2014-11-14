@@ -1,12 +1,17 @@
 #coding=utf-8
 
+##@package hbus_crypto
+# cryptographic routines
+#@todo Document this
+#@todo Actually implement this functionality
+
 import hashlib
 import random
 import string
 import struct
 import logging
 
-logger = logging.getLogger('hbus_skeleton.hbus_crypto')
+logger = logging.getLogger('hbussd.hbus_crypto')
 
 class hbusSignature:
     
@@ -55,7 +60,7 @@ class hbusSignature:
 def hbusCrypto_RabinWilliamsSign(msg,p,q,size):
     
     while True:
-        z = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(32)) #gera string de 256bits aleatoria
+        z = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(32)) #random 256bit string
         
         r = int(hashlib.sha224(z.join(msg)).hexdigest()[0:1], 16)
         
@@ -96,7 +101,7 @@ def hbusCrypto_RabinWilliamsSign(msg,p,q,size):
         s = min(y,p*q-y)
         
         if ((e*f*(s**2))%(p*q) != h):
-            logger.debug("Erro na computação de assinatura")
+            logger.debug("Authentication problem")
         else:
             break
     

@@ -1,9 +1,10 @@
 #coding=utf-8
-'''
-Created on 19/08/2013
 
-@author: bruno
-'''
+##@package hbus_except
+#Exception events and handling
+#@author Bruno Morais <brunosmmm@gmail.com>
+#@since 08/19/2013
+#@todo Document this
 
 class HBUSDoNotRetryException(StandardError):
     

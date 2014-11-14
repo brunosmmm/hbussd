@@ -1,7 +1,7 @@
 # coding=utf-8
 
 ##@package hbus
-#Módulo principal do hbussd
+#hbussd main module
 #@author Bruno Morais <brunosmmm@gmail.com>
 #@date 2012-2014
 
@@ -25,50 +25,50 @@ from twisted.web import server
 from hbusjsonserver import *
 
 import signal
-#import threading
 
+##Main bus where master is located
 BUSID = 0
 
-##Subclasse de protocolo Twisted para acesso a porta serial
+##Twisted protocol subclass for serial port access
 class TwistedSerialPort(Protocol):
     
-    ##Protótipo de função para evento de realização de conexão
+    ##Function prototype for connection made event
     def connectionMade(self):
         
         pass
     
-    ##Protótipo de função para evento de recepção de dados
-    #@param data dados recebidos
+    ##Function prototype for data received event
+    #@param data received data
     def dataReceived(self, data):
         
         pass
 
-##Subclasse do objeto principal do servidor HBUS
+##Main HBUS server object class
 #
-#Contém elementos de controle de conexões externas
+#Cpntains control elements for external connections
 #
-#@todo stable: Verificar ação em caso de timeouts no endereçamento
-#@todo stable: Para finalizar versão de testes, incluir modificador para valores do tipo byte através da página web
+#@todo stable: Verify behavior in case addressing timeouts occur
+#@todo stable: Finishing up test version, include byte type value modifier for web page
 #@todo stable: incluir código para permitir edição de objetos tipo Byte, Int e Unsigned Int
-#@todo default: Implementar servidor http integrado twisted, para troca de dados via JSON
-#@todo default: Estudar a realização de dump automático de todos os valores de objetos no sistema ao completar enumeração
+#@todo default: Implement integrated twisted http server for JSON data exchange
+#@todo default: Explore feasibility of doing an automatic data dump of all system objects when enumeration is done
 class TwistedhbusMaster(hbusMaster):
     
     hbusSerial = None
     
-    ##Função para inicialização do sistema de porta serial
+    ##Serial port system initialization
     def serialCreate(self):
         
-        ##Objeto da porta serial
+        ##Serial port object
         self.hbusSerial = TwistedSerialPort()
 
-        self.hbusSerial.dataReceived = self.serialNewData #overload forçado
+        self.hbusSerial.dataReceived = self.serialNewData #overload the prototype
         self.hbusSerial.connectionMade = self.serialConnected
         
         SerialPort(self.hbusSerial, self.serialPort, reactor, baudrate=self.serialBaud,timeout=0)
     
-    ##Realiza a escrita de dados na porta serial
-    #@param string string de dados a serem escritos na porta serial
+    ##Writes data to serial port
+    #@param string data string to be written
     def serialWrite(self, string):
         
         self.hbusSerial.transport.write(string)
@@ -79,44 +79,44 @@ class TwistedhbusMaster(hbusMaster):
         
         pass
 
-##Função para gerenciamentos de sinais globais
-#@param signum identificador do sinal
-#@param frame quadro
+##Signal handler
+#@param signum signal number
+#@param frame signal frame
 def SignalHandler(signum, frame):
     
     if signal == signal.SIGTERM:
         exit(0)
 
-##Função chamada no evento de término da leitura inicial dos dados de dispositivos HBUS
+##Master entering Operational state after initial scan of HBUS devices event
 def hbusMasterOperational():
     
     reactor.callInThread(hbusWeb.run) #@UndefinedVariable
 
-##Loop principal de execução
+##Main execution loop
 def main():
     
     #argparse
     parser = argparse.ArgumentParser(description='HBUS Services Daemon')
-    parser.add_argument('-s',help='Caminho da porta serial',required=True)
-    parser.add_argument('-w',help='Habilita servidor web integrado',action='store_true')
-    parser.add_argument('-wp',help='Porta do servidor web',default=8000,type=int)
+    parser.add_argument('-s',help='Serial port path',required=True)
+    parser.add_argument('-w',help='Enables integrated web server',action='store_true')
+    parser.add_argument('-wp',help='Integrated web server port',default=8000,type=int)
     
-    parser.add_argument('-t',help='Habilita servidor TCP',action='store_true')
-    parser.add_argument('-tp',help='Porta do servidor TCP',default=8123,type=int)
+    parser.add_argument('-t',help='Enables TCP server',action='store_true')
+    parser.add_argument('-tp',help='TCP server port',default=8123,type=int)
     
-    parser.add_argument('-c',help='Intervalo de verificação de escravos em segundos',default=300,type=int)
+    parser.add_argument('-c',help='Slave polling interval in seconds',default=300,type=int)
     
     args = vars(parser.parse_args())
     
-    logging.basicConfig(level=logging.DEBUG,filename='hbus_skeleton.log',filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG,filename='hbussd.log',filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
     logging.getLogger('').addHandler(console)
     
-    logger = logging.getLogger('hbus_skeleton')
+    logger = logging.getLogger('hbussd')
     
-    logger.info("hbus_skeleton start")
+    logger.info("hbussd start")
     
     signal.signal(signal.SIGTERM, SignalHandler)
     
@@ -129,12 +129,12 @@ def main():
     hbusSlaveChecker = LoopingCall(hbusMaster.checkSlaves)
     hbusSlaveChecker.start(args['c'], False)
     
-    #lança pagina web
-    ##@todo lançar página apenas após enumeração
+    #web server start
+    ##@todo start server only after enumeration
     
     if args['w'] == True:
-        #habilita servidor integrado
-        logger.info('Servidor web integrado habilitado')
+        #integrated web server
+        logger.info('Integrated web server enabled')
         hbusWeb = HBUSWEB(args['wp'],hbusMaster)
         reactor.callInThread(hbusWeb.run) #@UndefinedVariable
     
@@ -146,6 +146,6 @@ def main():
     
     reactor.run() #@UndefinedVariable
     
-##Função principal do programa
+##Main function
 if __name__ == '__main__':
     main()

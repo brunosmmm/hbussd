@@ -1,6 +1,6 @@
 #coding=utf-8
 ##@package hbus_datahandlers
-#Classes interpretadoras de dados recebidos e enviados pelo mestre
+#Data parsers for data received and sent by master
 #@author Bruno Morais <brunosmmm@gmail.com>
 #@since 18/02/2014
 
@@ -9,7 +9,7 @@ import struct
 from hbus_constants import HBUS_UNITS
 from bitstring import BitArray  # @UnresolvedImport
 
-##Classe para formatação de dados do tipo ponto fixo
+##Fixed point formatting
 class hbusFixedPointHandler:
     
     pointLocation = None
@@ -36,12 +36,12 @@ class hbusFixedPointHandler:
     
     def __getitem__(self,key):
         
-        #ultra gambiarra
+        #hack
         self.pointLocation = int(key)
         
         return self.formatFixedPoint
 
-##Classe para formatação de dados do tipo Inteiro
+##Integer type formatting
 class hbusIntHandler:
     
     def formatInt(self,dummy,data,extInfo,size,decode=False):

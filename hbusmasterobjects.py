@@ -1,6 +1,7 @@
 #coding=utf-8
 ##@package hbusmasterobjects
-#Objetos especiais de mestre
+#Special master objects
 #@author Bruno Morais <brunosmmm@gmail.com>
-#@since 18/02/2014
+#@since 02/18/2014
+#@todo actually implement master objects
 

@@ -1,30 +1,31 @@
 #coding=utf-8
 
 ##@package hbus_constants
-#Constantes de uso geral no hbussd
+#hbussd general purpuse constants
 #@author Bruno Morais <brunosmmm@gmail.com>
 #@date 2013
 
 from hbus_base import hbusCommand
 
-##Tamanho da chave de segurança HBUS em bytes
+##HBUS security key size in bytes
+#@todo Make this useful
 HBUS_PUBKEY_SIZE = 192
 
-##Tamanho da assinatura de segurança HBUS em bytes
+##HBUS authentication key size in bytes
 #
-#Assinatura tem tamanho 192, mas é acompanhada de mais um byte que é e/f/r (193 bytes)
+#This size is 192 but it is followed by another byte, e/f/r (193 bytes)
 HBUS_SIGNATURE_SIZE = 192 
 
-##@defgroup hbusCommands Comandos HBUS
-#Lista de comandos do barramento HBUS e seus valores e propriedades
+##@defgroup hbusCommands HBUS commands
+#HBUS command list, values and properties
 #
 #@htmlonly
 #<table border>
 #<tr>
-#<td> <b> ID do comando </b> </td>
-#<td> <b> Tamanho mínimo </b> </td>
-#<td> <b> Tamanho máximo </b> </td>
-#<td> <b> Nome do comando </b> </td>
+#<td> <b> Command ID </b> </td>
+#<td> <b> Minimum length </b> </td>
+#<td> <b> Maximum lenght </b> </td>
+#<td> <b> Command name </b> </td>
 #</tr>
 #<tr>
 #<td> 0x01 </td>
@@ -132,131 +133,131 @@ HBUS_SIGNATURE_SIZE = 192
 #@endhtmlonly
 #@{
 
-##Comando de escrita de valor em objeto de dispositivo (SETCH)
+##Write a value in a device's object (SETCH)
 HBUSCOMMAND_SETCH = hbusCommand(0x01,3,32,"SETCH")
-##Comando de leitura de valor em objeto de dispositivo (GETCH)
+##Read a value from a device's object (GETCH)
 HBUSCOMMAND_GETCH = hbusCommand(0x04,1,1,"GETCH")
-##Comando para busca de dispositivos no barramento (SEARCH)
+##Search for devices in the bus (SEARCH)
 HBUSCOMMAND_SEARCH = hbusCommand(0x03,0,0,"SEARCH")
-##Comando para confirmação de operações no barramento (ACK)
+##Acknowledge command (ACK)
 HBUSCOMMAND_ACK = hbusCommand(0x06,0,0,"ACK")
-##Comando para busca de informações sobre objeto de dispositivo (QUERY) 
+##Queries a device's object descriptor for information (QUERY) 
 HBUSCOMMAND_QUERY = hbusCommand(0x07,1,1,"QUERY")
-##Comando de retorno de informações sobre objeto de dispositivo (QUERY_RESP)
+##Returns information about a device's object following a QUERY command (QUERY_RESP)
 HBUSCOMMAND_QUERY_RESP = hbusCommand(0x08,3,32,"QUERY_RESP")
-##Comando de retorno de resposta com valor de objeto de dispositivo (RESP)
+##Returns the value from a device object following a GETCH command (RESP)
 HBUSCOMMAND_RESPONSE = hbusCommand(0x10,1,32,"RESP")
-##Comando indicador de erros (ERROR)
+##Error indicator (ERROR)
 HBUSCOMMAND_ERROR = hbusCommand(0x20,2,2,"ERROR")
-##Comando de travamento do barramento (BUSLOCK)
+##Buslock command, locks bus traffic between two devices (BUSLOCK)
 HBUSCOMMAND_BUSLOCK = hbusCommand(0xF0,0,0,"BUSLOCK")
-##Comando de destravamento do barramento (BUSUNLOCK)
+##Busunlock command, frees bus from a buslock (BUSUNLOCK)
 HBUSCOMMAND_BUSUNLOCK = hbusCommand(0xF1,0,0,"BUSUNLOCK")
-##Comando de RESET dos dispositivos no barramento (RESET)
-HBUSCOMMAND_SOFTRESET = hbusCommand(0xF2,0,HBUS_SIGNATURE_SIZE+2,"SOFTRESET") #tamanho máximo é HBUS_SIGNATURE_SIZE + 2 -> (PSZ;e/f/r;assinatura)
-##Comando para busca de informações sobre endpoints de dispositivo (QUERY_EP)
+##Causes devices to do a soft-reset (RESET)
+HBUSCOMMAND_SOFTRESET = hbusCommand(0xF2,0,HBUS_SIGNATURE_SIZE+2,"SOFTRESET") #max length is HBUS_SIGNATURE_SIZE + 2 -> (PSZ;e/f/r;key)
+##Queries a device's endpoint descriptor for information (QUERY_EP)
 HBUSCOMMAND_QUERY_EP = hbusCommand(0x11,1,1,"QUERY_EP")
-##Comando para busca de informações sobre interrupções de dispositivo (QUERY_INT)
+##Queries a device's interrupt descriptor for information (QUERY_INT)
 HBUSCOMMAND_QUERY_INT = hbusCommand(0x12,1,1,"QUERY_INT")
-##Comando para realizar operação de escrita em bloco em endpoint de dispositivo (STREAMW)
+##Block write to a device endpoint (STREAMW)
 HBUSCOMMAND_STREAMW = hbusCommand(0x40,2,2,"STREAMW")
-##Comando para realizar operação de leitura em bloco em endpoint de dispositivo (STREAMR)
+##Block read from a device endpoint (STREAMR)
 HBUSCOMMAND_STREAMR = hbusCommand(0x41,2,2,"STREAMR")
-##Comando para indicar interrupção (INT)
+##Bus interrupt (INT)
 HBUSCOMMAND_INT = hbusCommand(0x80,1,1,"INT")
-##Comando para realizar gravação da chave de segurança em dispositivo (KEYSET)
+##Transfers security key to a device. Not to be used on a public bus (KEYSET)
 HBUSCOMMAND_KEYSET = hbusCommand(0xA0,HBUS_PUBKEY_SIZE+1,HBUS_PUBKEY_SIZE+1,"KEYSET")
-##Comando para realizar RESET da chave de segurança em dispositivo (KEYRESET)
+##Resets security key currently stored in device (KEYRESET)
 HBUSCOMMAND_KEYRESET = hbusCommand(0xA1,1,1,"KEYRESET")
 
 ##@}
 
-##Pares de resposta para comandos HBUS --- comandos esperados como resposta para comandos enviados
+##HBUS command response pairs --- expected response commands
 HBUS_RESPONSEPAIRS = {HBUSCOMMAND_GETCH : HBUSCOMMAND_RESPONSE, HBUSCOMMAND_QUERY : HBUSCOMMAND_QUERY_RESP, HBUSCOMMAND_QUERY_EP : HBUSCOMMAND_QUERY_RESP, 
                       HBUSCOMMAND_QUERY_INT : HBUSCOMMAND_QUERY_RESP, HBUSCOMMAND_SEARCH : HBUSCOMMAND_ACK}
 
-##Lista de todos os comandos HBUS
+##List of all HBUS commands
 HBUS_COMMANDLIST = (HBUSCOMMAND_SETCH,HBUSCOMMAND_SEARCH,HBUSCOMMAND_GETCH,HBUSCOMMAND_ACK,HBUSCOMMAND_QUERY,HBUSCOMMAND_QUERY_RESP,HBUSCOMMAND_RESPONSE,
                     HBUSCOMMAND_ERROR,HBUSCOMMAND_BUSLOCK,HBUSCOMMAND_BUSUNLOCK,HBUSCOMMAND_SOFTRESET, HBUSCOMMAND_QUERY_EP, HBUSCOMMAND_QUERY_INT, HBUSCOMMAND_STREAMW, 
                     HBUSCOMMAND_STREAMR, HBUSCOMMAND_INT, HBUSCOMMAND_KEYSET, HBUSCOMMAND_KEYRESET)
-##Lista de IDs de todos os comandos HBUS
+##List of all commands IDs
 HBUS_COMMANDBYTELIST = (x.commandByte for x in HBUS_COMMANDLIST)
 
-##Endereço de broadcast
+##Broadcast address
 HBUS_BROADCAST_ADDRESS = 255
 
-##Unidades aceitas e strings respectivas
+##Available units and associated strings for printing
 HBUS_UNITS = {'A' : 'A', 'V' : 'V', 'P' : 'Pa', 'C':'C', 'd' : 'dBm', 'D' : 'dB'}
 
-##Intervalo entre execução de comandos do tipo QUERY
+##Delay between QUERY command executions
 HBUS_SLAVE_QUERY_INTERVAL = 0.1
 
-##@defgroup stateMachines Máquinas de estado
-#Máquinas de estado utilizadas nos processos de controle do barramento
+##@defgroup stateMachines HBUS state machines
+#Used in bus control processes
 #@{
 
-##Status de recepção de pacote no mestre HBUS
+##Packet receiving on master
 class hbusMasterRxState:
     
-    ##SBID recebido
+    ##SBID received
     hbusRXSBID = 0
-    ##SDID recebido
+    ##SDID received
     hbusRXSDID = 1
-    ##TBID recebido
+    ##TBID received
     hbusRXTBID = 2
-    ##TDID recebido
+    ##TDID received
     hbusRXTDID = 3
-    ##CMD recebido
+    ##CMD received
     hbusRXCMD  = 4
-    ##ADDR recebido
+    ##ADDR received
     hbusRXADDR = 5
-    ##PSZ recebido
+    ##PSZ received
     hbusRXPSZ  = 6
-    ##PRM recebido
+    ##PRM received
     hbusRXPRM  = 7
-    ##STP recebido
+    ##STP received
     hbusRXSTP  = 8
 
 ##@}
 
-##@defgroup statusIndicators Indicadores de status e propriedades
-#Indicadores de estado do sistema e descritores de propriedades dos dispositivos e objetos
+##@defgroup statusIndicators Status and properties indicators
+#System status indicators, devices and objects properties descriptors
 #@{
 
-##Status do barramento HBUS
+##Bus state
 class hbusBusStatus:
     
-    ##Barramento livre 
+    ##Bus is free 
     hbusBusFree = 0
-    ##Barramento travado entre o mestre e um dispositivo
+    ##Bus is locked for master and a device
     hbusBusLockedThis = 1
-    ##Barramento travado entre outros dois dispositivos
+    ##Bus is locked for two other devices
     hbusBusLockedOther = 2
 
-##Permissões de objeto de dispositivo
+##Object and device permissions
 class hbusSlaveObjectPermissions:
     
-    ##O objeto tem permissão de leitura
+    ##Object has read permission
     hbusSlaveObjectRead = 1
-    ##O objeto tem permissão de escrita
+    ##Object has write permission
     hbusSlaveObjectWrite = 2
-    ##O objeto tem permissão de leitura e escrita
+    ##Object has read/write permission
     hbusSlaveObjectReadWrite = 3
     
-##Capacidades de um dispositivo
+##Device capabilities
 class hbusSlaveCapabilities:
     
-    ##O dispositivo tem suporte a autenticação
+    ##Device has master authentication support
     hbusSlaveAuthSupport = 8
-    ##O dispositivo tem suporte a endpoints
+    ##Device has endpoint support
     hbusSlaveEndpointSupport = 2
-    ##O dispositivo tem suporte a microcodigo HBUS
+    ##Device has HBUS microcode support
     hbusSlaveUCODESupport = 16
-    ##O dispositivo tem suporte a interrupções
+    ##Device has interrupt support
     hbusSlaveIntSupport = 4
-    ##O dispositivo tem suporte a criptografia
+    ##Device has crypto support
     hbusSlaveCryptoSupport = 1
-    ##O dispositivo tem suporte a autenticação reversa
+    ##Device has device (reverse) authentication support
     hbusSlaveRevAuthSupport = 0x20
     
 ##@}
