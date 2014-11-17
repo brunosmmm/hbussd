@@ -46,16 +46,6 @@ class hbusIntHandler:
     
     def formatInt(self,dummy,data,extInfo,size,decode=False):
         
-        #x = [0]
-        #while (len(data) < 4):
-        #    x.extend(data)
-        #    data = x
-        #    x = [0]
-        
-        #byteList = array('B',data)
-        
-        #value = struct.unpack('>i',byteList)[0]
-        
         value = BitArray(bytes=''.join([chr(x) for x in data])).int
         
         try:

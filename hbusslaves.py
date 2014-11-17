@@ -1,65 +1,65 @@
 #coding=utf-8
 ##@package hbusslaves
-#Estruturas de dados e funções pertinentes ao enumeramento e interpretação de dados de dispositivos
-#@author Bruno Morais <brunosmmm@gmail.com>
-#@since 18/02/2014
+# Data structures and functions related to enumeration and parsing of device data
+# @author Bruno Morais <brunosmmm@gmail.com>
+# @since 18/02/2014
 
 from hbus_datahandlers import *
 import struct
 from array import array
 from math import log
 
-##Classe para a identificação de nível de um objeto de dispositivo
+##Object level identifier
 class hbusSlaveObjectLevel:
     
-    ##Objeto tem nível 0
+    ##Object has level 0
     level0  = 0x00
-    ##Objeto tem nível 1
+    ##Object has level 1
     level1  = 0x40
-    ##Objeto tem nível 2
+    ##Object has level 2
     level2  = 0x80
-    ##Objeto tem nível 3
+    ##Object has level 3
     level3  = 0xC0
 
-##Classe para a identificação do tipo de dados de um objeto de dispositivo
+##Object data type identifier
 class hbusSlaveObjectDataType:
-    ##Objeto é do tipo Byte
+    ##Byte type
     dataTypeByte        = 0x30
-    ##Objeto é do tipo Inteiro
+    ##Integer type
     dataTypeInt         = 0x00
-    ##Objeto é do tiṕo Inteiro sem sinal
+    ##Unsigned integer type
     dataTypeUnsignedInt = 0x10
-    ##Objeto é do tipo Ponto Fixo
+    ##Fixed point type
     dataTypeFixedPoint  = 0x20
     
-    ##Interpreta tipo Byte como hexadecimal
+    ##Byte parsed as hexadecimal
     dataTypeByteHex     = 0x01
-    ##Interpreta tipo Byte como decimal
+    ##Byte parsed as decimal
     dataTypeByteDec     = 0x02
-    ##Interpreta tipo Byte como octal
+    ##Byte parsed as octal
     dataTypeByteOct     = 0x03
-    ##Interpreta tipo Byte como binário
+    ##Byte parsed as binary
     dataTypeByteBin     = 0x07
-    ##Interpreta tipo Byte como booleano
+    ##Byte parsed as boolean
     dataTypeByteBool    = 0x08
     
-    ##Interpreta tipo Inteiro sem sinal como percentual
+    ##Unsigned integer parsed as percent
     dataTypeUintPercent     = 0x04
-    ##Interpreta tipo Inteiro sem sinal como escala linear
+    ##Unsigned integer parsed as linear scale
     dataTypeUintLinPercent  = 0x05
-    ##Interpreta tipo Inteiro sem sinal como escala logarítmica 
+    ##Unsigned integer parsed as logarithm scale 
     dataTypeUintLogPercent  = 0x06
-    ##Interpreta tipo Inteiro sem sinal como hora
+    ##Unsigned integer parsed as time format
     dataTypeUintTime        = 0x09
-    ##Interpreta tipo Inteiro sem sinal como data
+    ##Unsigned integer parsed as date format
     dataTypeUintDate        = 0x0A
     
-    ##Não interpreta inteiro sem sinal
+    ##Raw unsigned integer
     dataTypeUintNone        = 0x00
     
-    ##Desempacota string de bytes recebida
-    #@param data String de bytes recebida do dispositivo
-    #@return valor interpretado como Inteiro sem sinal
+    ##Unpacks received data string
+    #@param data Data string received from device
+    #@return value parsed as unsigned integer
     def unpackUINT(self,data):
 
         x = [0]
@@ -72,12 +72,12 @@ class hbusSlaveObjectDataType:
         
         return struct.unpack('>I',byteList)[0]
     
-    ##Interpreta dados como sendo booleano
-    #@param data dados recebidos
-    #@param extInfo parâmetro para compatibilidade
-    #@param size parâmetro para compatibilidade
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as boolean
+    #@param data received data
+    #@param extInfo dummy parameter
+    #@param size dummy parameter
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatBoolBytes(self,data,extInfo,size,decode=False):
         
         if decode:
@@ -91,12 +91,12 @@ class hbusSlaveObjectDataType:
         else:
             return 'OFF'
     
-    ##Interpreta dados como sendo hexadecimal
-    #@param data dados recebidos
-    #@param extInfo parâmetro para compatibilidade
-    #@param size tamanho dos dados em bytes
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as a hexadecimal number
+    #@param data received data
+    #@param extInfo dummy parameter
+    #@param size data size in bytes
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatHexBytes(self,data,extInfo,size,decode=False):
         
         if decode:
@@ -104,12 +104,12 @@ class hbusSlaveObjectDataType:
         
         return ', '.join(['%X' % x for x in data])
    
-    ##Interpreta dados como sendo decimal
-    #@param data dados recebidos
-    #@param extInfo parâmetro para compatibilidade
-    #@param size tamanho dos dados em bytes
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as a decimal number
+    #@param data received data
+    #@param extInfo dummy parameter
+    #@param size data size in bytes
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatDecBytes(self,data,extInfo,size,decode=False):
         
         if decode:
@@ -117,12 +117,12 @@ class hbusSlaveObjectDataType:
         
         return ', '.join(['%d' % x for x in data])
    
-    ##Interpreta dados como sendo octal
-    #@param data dados recebidos
-    #@param extInfo parâmetro para compatibilidade
-    #@param size tamanho dos dados em bytes
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as an octal number
+    #@param data received data
+    #@param extInfo dummy parameter
+    #@param size data size in bytes
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatOctBytes(self,data,extInfo,size,decode=False):
         
         if decode:
@@ -130,12 +130,12 @@ class hbusSlaveObjectDataType:
         
         return ', '.join(['%o' % x for x in data])
     
-    ##Interpreta dados como sendo binário
-    #@param data dados recebidos
-    #@param extInfo parâmetro para compatibilidade
-    #@param size tamanho dos dados em bytes
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as a binary number
+    #@param data received data
+    #@param extInfo dummy parameter
+    #@param size data size in bytes
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatBinBytes(self,data,extInfo,size,decode=False):
         
         if decode:
@@ -143,12 +143,12 @@ class hbusSlaveObjectDataType:
         
         return ', '.join(['0b{0:b}'.format(x) for x in data])
     
-    ##Interpreta dados como sendo Inteiro sem sinal comum. Permite o uso de unidades
-    #@param data dados recebidos
-    #@param extInfo lista de propriedades extendidas do objeto de dispositivo relativo ao dado processado
-    #@param size tamanho dos dados em bytes
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as raw unsigned integer. Allows the use of units
+    #@param data received data
+    #@param extInfo extended object property list
+    #@param size data size in bytes
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatUint(self,data,extInfo,size,decode=False):
         
         if decode:

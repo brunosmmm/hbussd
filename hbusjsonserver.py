@@ -1,51 +1,50 @@
 #coding=utf-8
 
 ##@package hbusjsonserver
-#Módulo para gerenciamento de entrada e saída de informações através de requisições HTTP usando JSON
-#@author Bruno Morais <brunosmmm@gmail.com>
-#@since 13/02/2014
+# Manages information exchange & control with HTTP/JSON
+# @author Bruno Morais <brunosmmm@gmail.com>
+# @since 13/02/2014
 
 from txjsonrpc.web import jsonrpc
 import simplejson
 from hbus_serializers import *
 from hbus_base import hbusDeviceAddressFromString
 
-##Servidor HTTP de JSON para conexão com hbuswte
+##HTTP server for JSON connection
 class HBUSJSONServer(jsonrpc.JSONRPC):
 
-    ##Construtor
-    #@param master referencia ao objeto principal do mestre hbus para manipulação de dados
-    #@todo realizar separação entre corpo principal do mestre hbus e modulos exteriores
+    ##Constructor
+    #@param master main HBUS master object reference for manipulation
+    #@todo decouple main hbus master and peripheral modules
     def __init__(self,master):
         
-        ##Referência ao objeto principal do mestre
+        ##Master object reference
         self.master = master
     
-    ##Retorna lista de barramentos atualmente ativos
-    #@return informações a serem esrtuturadas em JSON
+    ##Gets a list of the busses currently active
+    #@return data to be JSON structured
     def jsonrpc_activebusses(self):
         return self.master.getInformationData().activeBusses
     
-    ##Retorna o número de dispositivos atualmente ativos
-    #@return informações a serem esrtuturadas em JSON
+    ##Gets the current active device count
+    #@return data to be JSON structured
     def jsonrpc_activeslavecount(self):
         
         return self.master.getInformationData().activeSlaveCount
     
 
-    ##Retorna lista de uids contendo todos os dispositivos ativos no momento
-    #@return informações a serem esrtuturadas em JSON
+    ##Gets a list of the UIDs from all currently active devices
+    #@return data to be JSON structured
     def jsonrpc_activeslavelist(self):
 
-        #slaveList = [hbusSlaveSerializer(x).getDict() for x in self.master.detectedSlaveList.values()]
         slaveList = [x.hbusSlaveUniqueDeviceInfo for x in self.master.detectedSlaveList.values()]
         
         return slaveList
     
 
-    ##Retorna informações detalhadas de um dispositivo
-    #@param uid UID do dispositivo
-    #@return informações a serem esrtuturadas em JSON   
+    ##Gets detailed information from a device
+    #@param uid device's UID
+    #@return data to be JSON structured   
     def jsonrpc_slaveinformation(self,uid):
 
         address = self.master.findDeviceByUID(uid)
@@ -57,9 +56,9 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         
         return hbusSlaveSerializer(slave).getDict()
     
-    ##Retorna lista de objetos de um dispositivo
-    #@param slaveuid UID do dispositivo
-    #@return informações a serem esrtuturadas em JSON
+    ##Gets a list of a device's objects
+    #@param slaveuid device's UID
+    #@return data to be JSON structured
     def jsonrpc_slaveobjectlist(self,slaveuid):
         
         address = self.master.findDeviceByUID(slaveuid)
@@ -73,9 +72,9 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         
         return objectList
     
-    ##Retorna lista de UIDs de dispositivos ativos em um barramento
-    #@param bus número do barramento
-    #@return informações a serem esrtuturadas em JSON
+    ##Gets a list of all active devices UIDs in a bus
+    #@param bus bus number
+    #@return data to be JSON structured
     def jsonrpc_activeslavesbybus(self,bus):
         
         if int(bus) == 255:
@@ -90,48 +89,48 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         
         return returnList
     
-    ##Executa leitura do valor de um objeto
-    #@param address endereço do dispositivo
-    #@param number número do objeto
-    #@return informações a serem esrtuturadas em JSON
+    ##Reads value from an object
+    #@param address device address
+    #@param number object number
+    #@return data to be JSON structured
     def jsonrpc_readobject(self,address,number):
 
         addr = hbusDeviceAddressFromString(address)
         
         if not addr.getGlobalID() in self.master.detectedSlaveList.keys():
             
-            #escravo não existe
+            #device does not exist
             return
         
         if not int(number) in self.master.detectedSlaveList[addr.getGlobalID()].hbusSlaveObjects.keys():
             
-            #objeto não existe
+            #object does not exist
             return
         
         #deferred?
         
-        ##@todo verificar como fazer o retorno dos dados -- utilizar deferreds
+        ##@todo use deferreds to return data
         
-    ##Executa escrita do valor de um objeto
-    #@param address endereço do dispositivo
-    #@param number número do objeto
-    #@param value novo valor a ser escrito no objeto
-    #@return informações a serem esrtuturadas em JSON
+    ##Writes a value to an object
+    #@param address device address
+    #@param number object number
+    #@param value value to be written
+    #@return data to be JSON structured
     def jsonrpc_writeobject(self,address,number,value):
         
         addr = hbusDeviceAddressFromString(address)
         
         if not addr.getGlobalID() in self.master.detectedSlaveList.keys():
             
-            #escravo não existe
+            #device does not exist
             return
         
         if not int(number) in self.master.detectedSlaveList[addr.getGlobalID()].hbusSlaveObjects.keys():
             
-            #objeto não existe
+            #object does not exist
             return
         
-        #interpretar valor
+        #value formatting
         self.master.writeSlaveObject(addr,int(number),int(value))
         
         return 'OK'
