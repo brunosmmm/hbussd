@@ -1,9 +1,10 @@
 #coding=utf-8
 
 ##@package hbustcpserver
-#Módulo para comunicação e controle através de TCP
-#@author Bruno Morais <brunosmmm@gmail.com>
-#@date 2013-2014
+# Communication and control through a TCP server
+# @author Bruno Morais <brunosmmm@gmail.com>
+# @date 2013-2014
+# @todo better documentation of some functions
 
 import logging
 from hbusmaster import *
@@ -13,21 +14,21 @@ import string
 from twisted.internet.protocol import Factory
 from twisted.protocols.basic import LineReceiver
 
-##Classe definidora de comandos aceitos pelo servidor TCP
+##TCP command specification class
 class HBUSTCPCommand:
     
-    ##Construtor
-    #@param CMDSTR String definidora do comando
-    #@param NPARAM Número de parâmetros do comando
+    ##Constructor
+    #@param CMDSTR Command string
+    #@param NPARAM Command parameter count
     def __init__(self, CMDSTR, NPARAM):
         
-        ##String definidora
+        ##string
         self.cmdstr = CMDSTR
-        ##Número de parâmetros
+        ##parameter count
         self.numParam = NPARAM
     
-    ##Compila valor para realizar match usando expressões regulares
-    #@return estrutura para realizar match
+    ##Match using regular expressions
+    #@return compiled regex 
     def compile(self):
         
         if (self.numParam > 0):
@@ -44,37 +45,37 @@ class HBUSTCPCommand:
         else:
             return re.compile(r"^"+self.cmdstr, re.IGNORECASE)
     
-##@defgroup hbusTCPCommands Comandos TCP
+##@defgroup hbusTCPCommands TCP commands
 #@{
-#Definição dos comandos aceitos pelo servidor TCP
+#Commands recognized by TCP server specification
 
-##SEARCH - Realiza operação de busca no barramento
+##SEARCH - Bus search operation
 HBUSTCPCMD_SEARCH = HBUSTCPCommand("SEARCH",0)
-##SCOUNT - Retorna o número de dispositivos ativos no barramento
+##SCOUNT - Gets the number of currently active devices
 HBUSTCPCMD_SCOUNT = HBUSTCPCommand("SCOUNT",0)
-##NAME - Retorna o nome de um dispositivo escolhido
+##NAME - Gets the name of a device
 HBUSTCPCMD_NAME = HBUSTCPCommand("NAME",1)
-##OCOUNT - Retorna o número de objetos disponíveis em um dispositivo
+##OCOUNT - Gets a device's object count
 HBUSTCPCMD_OCOUNT = HBUSTCPCommand("OCOUNT",1)
-##READ - Realiza leitura e retorna valor do objeto especificado
+##READ - Reads a device object and returns its value
 HBUSTCPCMD_READ = HBUSTCPCommand("READ",1)
-##WRITE - Escreve valor no objeto especificado
+##WRITE - Writes a device object
 HBUSTCPCMD_WRITE = HBUSTCPCommand("WRITE",2)
-##QUERY - Retorna informações de objetos de um dispositivo
+##QUERY - Gets information on a device object
 HBUSTCPCMD_QUERY = HBUSTCPCommand("QUERY",1)
 ##FIND - ?
 HBUSTCPCMD_FIND = HBUSTCPCommand("FIND",1)
-##INCR - Incrementa valor de um objeto de um dispositivo
+##INCR - Increments value of a device object
 HBUSTCPCMD_INCR = HBUSTCPCommand("INCR",1)
-##DECR - Decrementa valor de um objeto de um dispositivo
+##DECR - Decrements value of a device object
 HBUSTCPCMD_DECR = HBUSTCPCommand("DECR",1)
-##ACTIVE - Retorna uma lista dos dispositivos ativos atualmente
+##ACTIVE - Gets a list of all currently active devices
 HBUSTCPCMD_ACTIVE = HBUSTCPCommand("ACTIVE",0)
-##RAW - Envia dados diretamente ao barramento
+##RAW - Sends raw data to the bus
 HBUSTCPCMD_RAW = HBUSTCPCommand("RAW",1)
 
-##Lista de todos os comandos do servidor TCP
-HBUSTCPCMDLIST = (HBUSTCPCMD_SEARCH,HBUSTCPCMD_SCOUNT)
+##Command list
+HBUSTCPCMDLIST = (HBUSTCPCMD_SEARCH,HBUSTCPCMD_SCOUNT,HBUSTCPCMD_NAME,HBUSTCPCMD_OCOUNT,HBUSTCPCMD_READ,HBUSTCPCMD_WRITE,HBUSTCPCMD_QUERY,HBUSTCPCMD_FIND,HBUSTCPCMD_INCR,HBUSTCPCMD_DECR,HBUSTCPCMD_ACTIVE,HBUSTCPCMD_RAW)
 ##@}
 
 def incrementByteList(byteList):
@@ -92,13 +93,14 @@ def incrementByteList(byteList):
     return byteList
     
 
-##Servidor TCP (Twisted)
+##Twisted TCP server
 class HBUSTCP(LineReceiver):
     
     def __init__(self, hbusMaster, tcpLogger):
         self.hbusMaster = hbusMaster
         self.logger = tcpLogger
-    
+        
+        ##Commands and functions
         self.commandDict = {HBUSTCPCMD_SEARCH : self.executeSearchCommand, HBUSTCPCMD_SCOUNT : self.executeScountCommand, 
                             HBUSTCPCMD_NAME : self.executeNameCommand, HBUSTCPCMD_OCOUNT : self.executeOCOUNTCommand, 
                             HBUSTCPCMD_QUERY : self.executeQUERYCommand, HBUSTCPCMD_READ : self.executeREADCommand,
@@ -107,26 +109,26 @@ class HBUSTCP(LineReceiver):
                             HBUSTCPCMD_ACTIVE : self.executeACTIVECommand,
                             HBUSTCPCMD_RAW    : self.executeRAWCommand}
     
-    ##Evento de recebimento de nova linha
-    #@param line String recebida
+    ##New line event
+    #@param line received string
     def lineReceived(self, line):
         
         self.parseCommand(line)
     
-    ##Evento de nova conexão estabelecida
+    ##Connection made event
     def connectionMade(self):
         
-        self.logger.info("Nova conexão realizada")
+        self.logger.info("New connection made")
         
         self.sendLine("HBUS SERVER @ "+str(self.hbusMaster.hbusMasterAddr.hbusAddressBusNumber)+":0")
     
-    ##Evento de desconexão
-    #@param reason Motivo da desconexão
+    ##Disconnect event
+    #@param reason disconnection reason
     def connectionLost(self, reason):
-        self.logger.debug("Conexão fechada")
+        self.logger.debug("Connection closed")
     
-    ##Processa comando recebido
-    #@param command Comando recebido (string)
+    ##Parses received command
+    #@param command received string
     def parseCommand(self, command):
         
         command = command.strip()
@@ -138,45 +140,45 @@ class HBUSTCP(LineReceiver):
                 paramList = string.split(command,' ')[1::]
                 
                 if len(paramList) > cmd.numParam:
-                    #erro
-                    self.logger.warning("Comando mal-formado, removendo parâmetros em excesso")
+                    #error
+                    self.logger.warning("Malformed command, removing extra parameters")
                     paramList = paramList[0:cmd.numParam]
                     
                 elif len(paramList) < cmd.numParam:
-                    #erro
-                    self.logger.warning("Comando mal-formado, faltando parâmetros")
+                    #error
+                    self.logger.warning("Malformed command, missing parameters")
                     break
                 
                 self.commandDict[cmd](paramList)
                 break
             
-    ##Executa comando de busca no barramento
-    #@param param Parâmetro incluido para compatibilidade        
+    ##Executes search command
+    #@param param dummy parameter
     def executeSearchCommand(self, param):
         
         self.hbusMaster.detectSlaves(callBack=self.searchCommandEnded)
     
-    ##Executa comando do tipo ACTIVE
-    #@param param Parâmetro incluido para compatibilidade
+    ##Executes ACTIVE command
+    #@param param dummy parameter
     def executeACTIVECommand(self, param):
         
         for s in self.hbusMaster.detectedSlaveList.values():
             
             self.sendLine(str(s.hbusSlaveAddress.hbusAddressBusNumber)+":"+str(s.hbusSlaveAddress.hbusAddressDevNumber)+", "+s.hbusSlaveDescription+", "+hex(s.hbusSlaveUniqueDeviceInfo))
     
-    ##Callback utilizado ao término da execução do comando SEARCH
+    ##SEARCH end callback
     def searchCommandEnded(self):
         
         self.sendLine("OK")
     
-    ##Executa comando SCOUNT
-    #@param param Parâmetro incluido para compatibilidade
+    ##Executes SCOUNT command
+    #@param param dummy parameter
     def executeScountCommand(self, param):
         
         self.sendLine(str(len(self.hbusMaster.detectedSlaveList)))
     
-    ##Executa comando RAW
-    #@param data Dados a serem enviados em modo sem processamento
+    ##Executes RAW command
+    #@param data raw data to be sent
     def executeRAWCommand(self,data):
         
         byteList = []
@@ -190,8 +192,8 @@ class HBUSTCP(LineReceiver):
         
         self.hbusMaster.serialWrite(byteList)
     
-    ##Executa comando NAME
-    #@param param Endereço do dispositivo
+    ##Executes NAME command
+    #@param param device address
     def executeNameCommand(self, param):
         
         try:
@@ -202,11 +204,11 @@ class HBUSTCP(LineReceiver):
             
         except:
             
-            self.logger.warning("endereço de dispositivo mal-formado ou inexistente")
+            self.logger.warning("Malformed or non-existent device address")
             self.sendLine("ERROR")
     
-    ##Executa comando OCOUNT
-    #@param param Endereço do dispositivo
+    ##Executes OCOUNT command
+    #@param param device address
     def executeOCOUNTCommand(self,param):
         
         try:
@@ -217,11 +219,11 @@ class HBUSTCP(LineReceiver):
             
         except:
             
-            self.logger.warning("endereço de dispositivo mal-formado ou inexistente")
+            self.logger.warning("Malformed or non-existent device address")
             self.sendLine("ERROR")
     
-    ##Executa comando QUERY
-    #@param param endereço do dispositivo
+    ##Executes QUERY command
+    #@param param device address
     def executeQUERYCommand(self,param):
         
         try:
@@ -231,7 +233,7 @@ class HBUSTCP(LineReceiver):
             
                 if len(devAddr) < 1:
             
-                    self.logger.warning("endereço de dispositivo mal-formado")
+                    self.logger.warning("malformed device address")
                     self.sendLine("ADDRESS ERROR")
                     return None
                 
@@ -241,7 +243,7 @@ class HBUSTCP(LineReceiver):
                     
                     if len(devUID) < 2:
                         
-                        self.logger.warning("endereço de dispositivo mal-formado")
+                        self.logger.warning("malformed device address")
                         self.sendLine("ADDRESS ERROR")
                         return None
                     
@@ -251,7 +253,7 @@ class HBUSTCP(LineReceiver):
                         
                         if device == None:
                             
-                            self.logger.warning("dispositivo requisitado não existe")
+                            self.logger.warning("the specified device does not exist")
                             self.sendLine("UNKNOWN SLAVE")
                             return None
                         
@@ -271,9 +273,11 @@ class HBUSTCP(LineReceiver):
                 i = i + 1
             
         except:
-            self.logger.warning("endereço de objeto e/ou dispositivo mal-formado ou inexistente")
+            self.logger.warning("malformed or non-existant object and/or device address")
             self.sendLine("ERROR")
     
+    ##Executes READ command
+    # @param param device address
     def executeREADCommand(self,param):
         
         try:
@@ -281,7 +285,7 @@ class HBUSTCP(LineReceiver):
             
             if len(devAddr) < 3:
                 
-                self.logger.warning("endereço de dispositivo mal-formado")
+                self.logger.warning("malformed device address")
                 self.sendLine("ADDRESS ERROR")
                 return None
             
@@ -291,6 +295,8 @@ class HBUSTCP(LineReceiver):
             self.logger.warning("endereço de objeto e/ou dispositivo mal-formado ou inexistente")
             self.sendLine("ERROR")
             
+    ##READ command end callback
+    # @param slaveObjectData data read from device object
     def readCommandEnded(self, slaveObjectData):
 
         if slaveObjectData != None:
@@ -299,6 +305,8 @@ class HBUSTCP(LineReceiver):
         else:
             self.sendLine("ERROR")
 
+    ##Executes WRITE command
+    # @param param value to be written
     def executeWRITECommand(self,param):
         
         devAddr = string.split(param[0],":")
@@ -307,7 +315,7 @@ class HBUSTCP(LineReceiver):
         
             if len(devAddr) < 2:
         
-                self.logger.warning("endereço de dispositivo mal-formado")
+                self.logger.warning("malformed device address")
                 self.sendLine("ADDRESS ERROR")
                 return None
             
@@ -317,7 +325,7 @@ class HBUSTCP(LineReceiver):
                 
                 if len(devUID) < 2:
                     
-                    self.logger.warning("endereço de dispositivo mal-formado")
+                    self.logger.warning("malformed device address")
                     self.sendLine("ADDRESS ERROR")
                     return None
                 
@@ -327,7 +335,7 @@ class HBUSTCP(LineReceiver):
                     
                     if device == None:
                         
-                        self.logger.warning("dispositivo requisitado não existe")
+                        self.logger.warning("specified device does not exist")
                         self.sendLine("UNKNOWN SLAVE")
                         return None
                     
@@ -348,13 +356,15 @@ class HBUSTCP(LineReceiver):
         
         if self.hbusMaster.detectedSlaveList[device.getGlobalID()].hbusSlaveObjectCount < int(objNumber):
             
-            self.logger.warning("objeto requisitado não existe")
+            self.logger.warning("specified object does not exist")
             self.sendLine("UNKNOWN OBJECT")
             return None
         
         self.hbusMaster.writeSlaveObject(device, int(objNumber), byteList)
         
     
+    ##Executes FIND command
+    # @param param dummy parameter
     def executeFINDCommand(self,param):
         
         address = self.hbusMaster.findDeviceByUID(int(param[0]))
@@ -365,21 +375,22 @@ class HBUSTCP(LineReceiver):
         else:
             self.sendLine("ERROR")
             
+    ##Executes INCR command
+    # @param param device/object address
     def executeINCRCommand(self,param):
         
         devAddr = string.split(param[0],":")
         
         if len(devAddr) < 3:
         
-            self.logger.warning("endereço de dispositivo mal-formado")
+            self.logger.warning("malformed device address")
             return None
         
         slaveObjectValue = self.hbusMaster.detectedSlaveList[hbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID()].hbusSlaveObjects[int(devAddr[2])].objectLastValue
         
-        #print slaveObjectValue
-        
         self.hbusMaster.writeSlaveObject(hbusDeviceAddress(int(devAddr[0]),int(devAddr[1])), int(devAddr[2]), incrementByteList(slaveObjectValue))
 
+##TCP server instance
 class HBUSTCPFactory(Factory):
     def __init__(self,hbusMaster):
         self.hbusMaster = hbusMaster

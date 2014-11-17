@@ -164,12 +164,12 @@ class hbusSlaveObjectDataType:
         
         return value
 
-    ##Interpreta dados como sendo percentual (0-100)
-    #@param data dados recebidos
-    #@param extInfo parâmetro para compatibilidade
-    #@param size parâmetro para compatibilidade
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as percent (0-100)
+    #@param data received data
+    #@param extInfo dummy parameter
+    #@param size dummy parameter
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatPercent(self,data,extInfo,size,decode=False):
         
         if len(data) > 0:
@@ -186,15 +186,16 @@ class hbusSlaveObjectDataType:
             
         return "%d%%" % data
 
-    ##Interpreta dados como sendo escala linear
-    #@param data dados recebidos
-    #@param extInfo lista de propriedades extendidas do objeto de dispositivo relativo ao dado processado
-    #@param size parâmetro para compatibilidade
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as a value in a linear scale
+    #@param data received data
+    #@param extInfo extended object property list
+    #@param size dummy parameter
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatRelLinPercent(self,data,extInfo,size,decode=False):
         
         try:
+            #Try to set the minimum value for the scale based on the presence of the hidden object MIN
             minimumValue = self.unpackUINT(extInfo['MIN'])
         except:
             minimumValue = 0
@@ -202,11 +203,12 @@ class hbusSlaveObjectDataType:
         if decode:
             
             try:
+                #Same as the minimum value, extracts maximum value from hidden object MAX if present
                 maximumValue = self.unpackUINT(extInfo['MAX'])
             except:
                 maximumValue = 2**(8*size) - 1
                 
-            
+            #Normalizes value to a percent (0-100) scale
             value = int((float(data)/100.0)*(maximumValue-minimumValue) + minimumValue)
             
             return [ord(x) for x in struct.pack('>I',value)[size:]]
@@ -214,6 +216,7 @@ class hbusSlaveObjectDataType:
         if data == None:
             return "?"
         
+        #This is encoding, retrieve information and calculate 
         try:
             maximumValue = self.unpackUINT(extInfo['MAX'])
         except:
@@ -221,16 +224,18 @@ class hbusSlaveObjectDataType:
         
         value = self.unpackUINT(data)
         
+        #Maps a percentual value to the object native linear scale 
         return "%.2f%%" % ((float(value-minimumValue)/float(maximumValue-minimumValue))*100)
 
-    ##Interpreta dados como sendo escala logarítmica
-    #@param data dados recebidos
-    #@param extInfo lista de propriedades extendidas do objeto de dispositivo relativo ao dado processado
-    #@param size parâmetro para compatibilidade
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parse data as a value in a logarithmic scale
+    #@param data received data
+    #@param extInfo extended object property list
+    #@param size dummy parameter
+    #@param decode indicates if decoding or encoding data
+    #@return formatted string
     def formatRelLogPercent(self,data,extInfo,size,decode=False):
         
+        #Similar to the linear scale processing
         try:
             minimumValue = self.unpackUINT(extInfo['MIN'])
         except:
@@ -243,7 +248,7 @@ class hbusSlaveObjectDataType:
             except:
                 maximumValue = 2**(8*size) - 1
                 
-            
+            #Maps log scale value to a percent (0-100) scale
             value = int(10**((float(data)/100.0)*log(maximumValue-minimumValue)) + minimumValue)
             
             return [ord(x) for x in struct.pack('>I',value)[size:]]
@@ -251,6 +256,7 @@ class hbusSlaveObjectDataType:
         if data == None:
             return "?"
         
+        #This is the encoding portion
         try:
             maximumValue = self.unpackUINT(extInfo['MAX'])
         except:
@@ -259,6 +265,7 @@ class hbusSlaveObjectDataType:
         
         value = self.unpackUINT(data)
         
+        #Maps value to object native scale
         try:
             percent = (log(float(value-minimumValue))/log(float(maximumValue-minimumValue)))*100
         except:
@@ -267,12 +274,12 @@ class hbusSlaveObjectDataType:
         
         return "%.2f%%" % percent
     
-    ##Interpreta dados como sendo tempo (hora)
-    #@param data dados recebidos
-    #@param extInfo parâmetro para compatibilidade
-    #@param size parâmetro para compatibilidade
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parses data as time format
+    #@param data received data
+    #@param extInfo dummy parameter
+    #@param size dummy parameter
+    #@param decode indicates if encoding or decoding data
+    #@return formatted string
     def formatTime(self,data,extInfo,size,decode=False):
         
         if decode:
@@ -281,78 +288,93 @@ class hbusSlaveObjectDataType:
         tenthSeconds = (data[3] & 0xF0)>>4
         milliSeconds = data[3] & 0x0F
         
-        segundos = data[2] & 0x0F
-        dezenaSegundos = data[2] & 0xF0
+        seconds = data[2] & 0x0F
+        tensOfSeconds = data[2] & 0xF0
         
         minutes = data[1] & 0x0F
-        dezena = (data[1] & 0xF0) >> 4
+        tens = (data[1] & 0xF0) >> 4
         
-        horas24 = data[0] & 0x0F
+        hours24 = data[0] & 0x0F
         
-        return "%2d:%2d:%2d,%2d" % (horas24,minutes+dezena*10,segundos+dezenaSegundos*10,milliSeconds+tenthSeconds*10)
+        return "%2d:%2d:%2d,%2d" % (hours24,minutes+tens*10,seconds+tensOfSeconds*10,milliSeconds+tenthSeconds*10)
+
+        ##@todo missing encode portion
     
-    ##Interpreta dados como sendo data
-    #@param data dados recebidos
-    #@param extInfo parâmetro para compatibilidade
-    #@param size parâmetro para compatibilidade
-    #@param decode informa a direção da operação: decodificação ou codificação
-    #@return string formatada para visualização ou dados
+    ##Parse data as date format
+    #@param data received data
+    #@param extInfo dummy parameter
+    #@param size dummy parameter
+    #@param decode indicates if encoding or decoding data
+    #@return formatted string
     def formatDate(self,data,extInfo,size,decode=False):
         
+        ##@todo implement this parser
+
         if decode:
             return [0*x for x in range(0,size)]
         
         return "?"
     
-    ##Dicionário associando tipos de dados possíveis para os objetos de dispositivos e suas strings para exibição
-    dataTypeNames = {dataTypeByte : 'Byte', dataTypeInt : 'Int', dataTypeUnsignedInt : 'Unsigned Int', dataTypeFixedPoint : 'Ponto fixo'}
-    ##Dicionário de tipos extendidos de dados possiveis e métodos de decodificação
-    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes  ,dataTypeByteDec : formatDecBytes  ,dataTypeByteOct : formatOctBytes ,dataTypeByteBin : formatBinBytes,
+    ##Data type and display string association dictionary
+    dataTypeNames = {dataTypeByte : 'Byte', 
+                     dataTypeInt : 'Int', 
+                     dataTypeUnsignedInt : 'Unsigned Int', 
+                     dataTypeFixedPoint : 'Fixed point'}
+
+    ##Extended data types decoding dictionary
+    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes, 
+                                       dataTypeByteDec : formatDecBytes,
+                                       dataTypeByteOct : formatOctBytes,
+                                       dataTypeByteBin : formatBinBytes, 
                                        dataTypeByteBool : formatBoolBytes},
-                       dataTypeUnsignedInt : {dataTypeUintNone : formatUint, dataTypeUintPercent : formatPercent, dataTypeUintLinPercent : formatRelLinPercent, dataTypeUintLogPercent : formatRelLogPercent, 
-                                              dataTypeUintTime : formatTime, dataTypeUintDate : formatDate},
+                       dataTypeUnsignedInt : {dataTypeUintNone : formatUint, 
+                                              dataTypeUintPercent : formatPercent, 
+                                              dataTypeUintLinPercent : formatRelLinPercent, 
+                                              dataTypeUintLogPercent : formatRelLogPercent, 
+                                              dataTypeUintTime : formatTime, 
+                                              dataTypeUintDate : formatDate},
                        dataTypeFixedPoint : hbusFixedPointHandler(),
                        dataTypeInt : hbusIntHandler()}
 
-##Informações extendidas para um objeto de dispositivo
+##Devcice object extended information
 class hbusSlaveObjectExtendedInfo:
     
-    ##Valor máximo
+    ##Maximum value
     objectMaximumValue = None
-    ##Valor mínimo
+    ##Minimum value
     objectMinimumValue = None
     
-    ##String extendida do objeto
+    ##Object extended string
     objectExtendedString = None
 
-##Classe principal do objeto de dispositivo
+##Device object main class
 class hbusSlaveObjectInfo:
     
-    ##Permissões do objeto
+    ##Object permissions
     objectPermissions = 0
-    ##Indica se é criptografado
+    ##Indicates if data is encrypted
     objectCrypto = False
-    ##Indica se é invisível
-    #@todo isto não faz sentido uma vez que os objetos invisíveis e visíveis já são segregados em diferentes listas
+    ##Indicates if object is invisible
+    #@todo makes no sense as invisible and visible objects are separated into two different lists
     objectHidden = False
-    ##String de descrição do objeto
+    ##Object descriptor string
     objectDescription = None
-    ##Tamanho do objeto em bytes
+    ##Object size in bytes
     objectSize = 0
-    ##Último valor conhecido do objeto
+    ##Object's last known value
     objectLastValue = None
     
-    ##Tipo de dados do objeto
+    ##Object data type
     objectDataType = 0
-    ##Informação extendida sobre o tipo de dados
+    ##Extended data type information
     objectDataTypeInfo = None
-    ##Nível do objeto
+    ##Object level
     objectLevel = 0
-    ##Informação extendida sobre o objeto
+    ##Object extended information
     objectExtendedInfo = None
     
-    ##Formata valor do objeto para exibição
-    #@return valor formatado para exibição
+    ##Gets a formatted output for object's value
+    #@return formatted string for display
     def getFormattedValue(self):
         
         if self.objectLastValue == None:
@@ -360,112 +382,111 @@ class hbusSlaveObjectInfo:
         
         if self.objectDataType not in hbusSlaveObjectDataType.dataTypeOptions.keys():
             
-            return str(self.objectLastValue) #sem formato
+            return str(self.objectLastValue) #has no explicit format
         
-        #analisa informação extra
+        #analyzes extended information
         if type(hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType]) == dict: 
         
             if self.objectDataTypeInfo not in hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys():
             
-                return str(self.objectLastValue) #sem formato
+                return str(self.objectLastValue) #has no explicit format
                 
         return hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](hbusSlaveObjectDataType(),data=self.objectLastValue,size=self.objectSize,extInfo=self.objectExtendedInfo)
         
-    ##Representação do objeto
-    #@return string descritiva do objeto para log, etc
+    ##Object string representation
+    #@return descriptive string for logging
     def __repr__(self):
         
         return self.objectDescription
 
-##Classe principal do endpoint de dispositivo
+##Device endpoint main class
 class hbusSlaveEndpointInfo:
     
-    ##Direção do endpoint: escrita ou leitura ou ambos
+    ##Endpoint direction: read, write or both
     endpointDirection = 0
-    ##String descritiva do endpoint
+    ##Endpoint descriptive string
     endpointDescription = None
-    ##Tamanho do bloco de dados em bytes
+    ##Data block size in bytes
     endpointBlockSize = 0
     
-    ##Representação
-    #@return string descritiva do endpoint para log, etc
+    ##String representation
+    #@return descriptive string for logging
     def __repr__(self):
         
         return self.endpointDescription
 
-##Classe principal das interrupções de dispositivo
+##Device interrupts main class
 class hbusSlaveInterruptInfo:
     
-    ##Flags de interrupção
+    ##Interrupt flags
     interruptFlags = 0
-    ##String descritiva da interrupção
+    ##Interrupt descriptive string
     interruptDescription = None
     
-    ##Representação
-    #@return string descritiva da interrupção para log, etc
+    ##String representation
+    #@return descriptive string for logging
     def __repr__(self):
         
         return self.interruptDescription
 
-##Classe principal para armazenamento de informações sobre um dispositivo
+##Device information main class
 class hbusSlaveInfo:
     
-    ##Endereço do dispositivo no barramento
+    ##Device address
     hbusSlaveAddress = None
     
-    ##String descritiva do dispositivo
+    ##Device descriptive string
     hbusSlaveDescription = None
-    ##UID do dispositivo
+    ##Device UID
     hbusSlaveUniqueDeviceInfo = None
-    ##Número de objetos no dispositivo
-    #@todo verificar se esse número inclui objetos invisíveis ou não
+    ##Object count
+    #@todo verify if invisible objects are being counted here
     hbusSlaveObjectCount = 0
-    ##Número de endpoints no dispositivo
+    ##Endpoint count
     hbusSlaveEndpointCount = 0
-    ##Número de interrupções no dispositivo
+    ##Interrupt count
     hbusSlaveInterruptCount = 0
-    ##Capabilidades do dispositivo
+    ##Device capabilities/features
     hbusSlaveCapabilities = 0
     
-    ##Indica se as informações básicas deste dispositivo já foram recebidas
+    ##Flags if basic device information has been received
     basicInformationRetrieved = False
-    ##Indica se as informações extendidas deste dispositivo já foram recebidas
+    ##Flags if extended device information has been received
     extendedInformationRetrieved = False
     
-    ##Dicionário de objetos do dispositivo
+    ##Device object dictionary
     hbusSlaveObjects = {}
-    ##Dicionário de Endpoints do dispositivo
+    ##Device endpoint dictionary
     hbusSlaveEndpoints = {}
-    ##Dicionário de Interrupções do dispositivo
+    ##Device interrupt dictionary
     hbusSlaveInterrupts = {}
-    ##Dicionário de objetos invisíveis do dispositivo
+    ##Device invisible object dictionary
     hbusSlaveHiddenObjects = {}
     
-    ##@todo verificar a funcionalidade, não estou lembrando
+    ##@todo see where is this used
     waitFlag = False
     
-    #Flags de falhas
-    ##Número de tentativas de leitura inicial realizadas sem sucesso
+    #Failure flags
+    ##Initial scanning fail count
     scanRetryCount = 0
-    ##Número de tentativas consecutivas de ping sem sucesso
+    ##Consecutive ping fail count
     pingRetryCount = 0
-    ##Número total de falhas de ping sem sucesso (resultado na remoção temporária do dispositivo do barramento)
+    ##Total ping failures that resulted in device eviction from bus
     pingFailures = 0
     
-    ##Representação para serialização
-    #@return dicionário de strings dos objetos internos da classe
+    ##String representation for serialization
+    #@return internal data in a string dictionary
     def __repr__(self):
         return str(self.__dict__)
     
-    ##Construtor
-    #@param explicitSlaveAddress endereço que o dispositivo assumirá no barramento
+    ##Constructor
+    #@param explicitSlaveAddress new device address
     def __init__(self,explicitSlaveAddress):
         self.hbusSlaveAddress = explicitSlaveAddress
     
-    ##Separa objetos visíveis e invisíveis
+    ##Separates invisible and visible objects
     #
-    #Os objetos visíveis e invisíveis são todos colocados no dicionário hbusSlaveObjects no ato da leitura inicial. Após a leitura inicial, a função é chamada
-    #e separa os objetos em dois dicionários diferentes
+    #Both kinds of objects will be in hbusSlaveObjects after initial scanning. This function is called after that to sort objects by type
     def sortObjects(self):
         
         self.hbusSlaveHiddenObjects = {}

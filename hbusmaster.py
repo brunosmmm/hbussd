@@ -1,10 +1,10 @@
 # coding=utf-8
 
 ##@package hbusmaster
-#Módulo do mestre de barramento HBUS
-#@author Bruno Morais <brunosmmm@gmail.com>
-#@date 2012-2014
-#@todo decouple and sanitize device scanning logic
+# main HBUS master module
+# @author Bruno Morais <brunosmmm@gmail.com>
+# @date 2012-2014
+# @todo decouple and sanitize device scanning logic
 
 import struct
 from datetime import datetime
