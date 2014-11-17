@@ -13,6 +13,7 @@ from collections import deque
 import hbus_crypto
 
 from twisted.internet import reactor, defer
+from twisted.internet.protocol import Factory
 
 from hbus_constants import * 
 from hbus_base import *
@@ -20,6 +21,10 @@ from hbus_except import *
 from hbusslaves import *
 from hbus_datahandlers import *
 from hbusmasterobjects import *
+from fakebus import hbus_fb
+
+import shlex, subprocess
+import re
 
 ##Converte o tempo atual em milissegundos
 #@param tempo atual
@@ -176,15 +181,46 @@ class hbusMaster:
     rxBytes = 0
     txBytes = 0
     
-    def __init__(self, port, baudrate=100000, busno = 0):
+    def __init__(self, port, baudrate=100000, busno = 0,reactor = None):
         
+        ## @todo only works when socat is available, could be done by substituting serial ports with other kind of twisted communication interface, must substitute on both sides
+        """
+        if port == None:
+            #generate virtual ports with socat
+            socat_cmd = 'socat -d -d pty,raw,echo=0 pty,raw,echo=0'
+            self.socat = subprocess.Popen(shlex.split(socat_cmd),stderr=subprocess.PIPE)
+
+            #parse output
+            port1 = self.socat.stderr.readline()
+            port2 = self.socat.stderr.readline()
+
+            m1 = re.match(r"/dev/pts/([0-9]+)$",port1)
+            m2 = re.match(r"/dev/pts/([0-9]+)$",port2)
+
+            if m1 == None or m2 == None:
+                raise IOError("Error trying to open virtual serial ports")
+            
+            fakeport = '/dev/pts/'+m1.group(1)
+            port = '/dev/pts/'+m2.group(2)
+            
+            self.fakebusPort = hbus_fb.FakeBusSerialPort(reactor,fakeport,baudrate)
+        """
+
         self.serialPort = port
         self.serialBaud = baudrate
         self.hbusMasterAddr = hbusDeviceAddress(busno, 0)
         
         self.logger = logging.getLogger('hbussd.hbusmaster')
-    
-        self.serialCreate()
+        
+        if port == None:
+            #create fakebus structure
+            f = Factory()
+            f.protocol = hbus_fb.FakeBusSerialPort
+            reactor.listenTCP(9090,f)
+            
+            self.serialCreate(fake=True)
+        else:
+            self.serialCreate(fake=False)
         
     def enterOperational(self):
         

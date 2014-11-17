@@ -14,7 +14,7 @@ import argparse
 
 from twisted.internet import reactor
 from twisted.internet.serialport import SerialPort
-from twisted.internet.protocol import Factory, Protocol
+from twisted.internet.protocol import Factory, Protocol, ClientFactory
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.task import LoopingCall
 #from twisted.internet.defer import setDebugging
@@ -57,7 +57,7 @@ class TwistedhbusMaster(hbusMaster):
     hbusSerial = None
     
     ##Serial port system initialization
-    def serialCreate(self):
+    def serialCreate(self,fake=False):
         
         ##Serial port object
         self.hbusSerial = TwistedSerialPort()
@@ -65,7 +65,15 @@ class TwistedhbusMaster(hbusMaster):
         self.hbusSerial.dataReceived = self.serialNewData #overload the prototype
         self.hbusSerial.connectionMade = self.serialConnected
         
-        SerialPort(self.hbusSerial, self.serialPort, reactor, baudrate=self.serialBaud,timeout=0)
+        if fake == False:
+            SerialPort(self.hbusSerial, self.serialPort, reactor, baudrate=self.serialBaud,timeout=0)
+        else:
+            #fake bus
+            f = ClientFactory()
+            TwistedSerialPort.dataReceived = self.serialNewData
+            TwistedSerialPort.connectionMade = self.serialConnected
+            f.procotol = TwistedSerialPort
+            reactor.connectTCP('localhost',9090,f)
     
     ##Writes data to serial port
     #@param string data string to be written
@@ -97,7 +105,9 @@ def main():
     
     #argparse
     parser = argparse.ArgumentParser(description='HBUS Services Daemon')
-    parser.add_argument('-s',help='Serial port path',required=True)
+    mutexArgs = parser.add_mutually_exclusive_group()
+    mutexArgs.add_argument('-s',help='Serial port path')
+    mutexArgs.add_argument('-f',help='Enable fake bus for debugging without actual hardware',action='store_true')
     parser.add_argument('-w',help='Enables integrated web server',action='store_true')
     parser.add_argument('-wp',help='Integrated web server port',default=8000,type=int)
     
@@ -105,9 +115,14 @@ def main():
     parser.add_argument('-tp',help='TCP server port',default=8123,type=int)
     
     parser.add_argument('-c',help='Slave polling interval in seconds',default=300,type=int)
-    
+
     args = vars(parser.parse_args())
     
+    if args['s'] == None and args['f'] == False:
+        print "error: bus connection not setup! use -f or -s"
+        #parser.print_help()
+        exit(1)
+
     logging.basicConfig(level=logging.DEBUG,filename='hbussd.log',filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
     console = logging.StreamHandler()
@@ -120,8 +135,7 @@ def main():
     
     signal.signal(signal.SIGTERM, SignalHandler)
     
-    hbusMaster = TwistedhbusMaster(args['s'],baudrate=100000)
-    #hbusMaster.enterOperational = hbusMasterOperational
+    hbusMaster = TwistedhbusMaster(args['s'],baudrate=100000,reactor=reactor)
     
     hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
     hbusMasterPeriodicTask.start(1)
