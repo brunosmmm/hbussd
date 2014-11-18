@@ -31,17 +31,40 @@ BUSID = 0
 
 ##Twisted protocol subclass for serial port access
 class TwistedSerialPort(Protocol):
+
+    def __init__(self,master):
+        self.master = master
     
     ##Function prototype for connection made event
     def connectionMade(self):
         
-        pass
+        self.master.serialConnected()
     
     ##Function prototype for data received event
     #@param data received data
     def dataReceived(self, data):
         
+        self.master.serialNewData(data)
+
+##Fakebus client interface
+class HBUSFakeBus(ClientFactory):
+
+    def __init__(self,master):
+        self.master = master
+        self.serial = TwistedSerialPort(self.master)
+    
+    def startedConnecting(self,connector):
         pass
+
+    def buildProtocol(self, addr):
+        return self.serial
+    
+    def clientConnectionLost(self, connector, reason):
+        pass
+
+    def clientConnectionFailed(self, connector, reason):
+        pass
+
 
 ##Main HBUS server object class
 #
@@ -59,21 +82,14 @@ class TwistedhbusMaster(hbusMaster):
     ##Serial port system initialization
     def serialCreate(self,fake=False):
         
-        ##Serial port object
-        self.hbusSerial = TwistedSerialPort()
-
-        self.hbusSerial.dataReceived = self.serialNewData #overload the prototype
-        self.hbusSerial.connectionMade = self.serialConnected
-        
         if fake == False:
+            self.hbusSerial = TwistedSerialPort(self)
             SerialPort(self.hbusSerial, self.serialPort, reactor, baudrate=self.serialBaud,timeout=0)
         else:
             #fake bus
-            f = ClientFactory()
-            TwistedSerialPort.dataReceived = self.serialNewData
-            TwistedSerialPort.connectionMade = self.serialConnected
-            f.procotol = TwistedSerialPort
-            reactor.connectTCP('localhost',9090,f)
+            f = HBUSFakeBus(self)
+            self.hbusSerial = f.serial
+            reactor.connectTCP('localhost',9090,f) #connect to ourselves!
     
     ##Writes data to serial port
     #@param string data string to be written

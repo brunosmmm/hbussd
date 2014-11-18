@@ -5,6 +5,7 @@
 # @author Bruno Morais <brunosmmm@gmail.com>
 # @date 2012-2014
 # @todo decouple and sanitize device scanning logic
+# @todo translate documentation and comment strings
 
 import struct
 from datetime import datetime
@@ -26,9 +27,9 @@ from fakebus import hbus_fb
 import shlex, subprocess
 import re
 
-##Converte o tempo atual em milissegundos
-#@param tempo atual
-#@return tempo atual em milissegundos
+##Gets actual time in milliseconds
+# @param td actual time
+# @return actual time in milliseconds
 def getMillis(td):
     
     return (td.days * 24 * 60 * 60 + td.seconds) * 1000 + td.microseconds / 1000.0
@@ -88,7 +89,7 @@ p = 3426041604823131668161123340070891109102587202510163929851780729801948170981
 q = 609828164381195487560324418811535461583859042182887774624946398207269636262857827797730598026846661116173290667288561275278714668006770186716586859843775717295061922379022086436506552898287802124771661400922779346993469164594119
 HBUS_ASYMMETRIC_KEYS = hbusKeySet(p,q);
                 
-
+##HBUS master machine state
 class hbusMasterState:
     
     hbusMasterStarting = 0
@@ -100,6 +101,7 @@ class hbusMasterState:
     hbusMasterChecking = 6
     hbusMasterInterrupted = 7
     
+##Pending answer system using deferreds
 class hbusPendingAnswer:
     
     def __init__(self,command,source,timeout,callBackDefer,actionParameters=None,timeoutAction=None,timeoutActionParameters=None):
@@ -183,29 +185,6 @@ class hbusMaster:
     
     def __init__(self, port, baudrate=100000, busno = 0,reactor = None):
         
-        ## @todo only works when socat is available, could be done by substituting serial ports with other kind of twisted communication interface, must substitute on both sides
-        """
-        if port == None:
-            #generate virtual ports with socat
-            socat_cmd = 'socat -d -d pty,raw,echo=0 pty,raw,echo=0'
-            self.socat = subprocess.Popen(shlex.split(socat_cmd),stderr=subprocess.PIPE)
-
-            #parse output
-            port1 = self.socat.stderr.readline()
-            port2 = self.socat.stderr.readline()
-
-            m1 = re.match(r"/dev/pts/([0-9]+)$",port1)
-            m2 = re.match(r"/dev/pts/([0-9]+)$",port2)
-
-            if m1 == None or m2 == None:
-                raise IOError("Error trying to open virtual serial ports")
-            
-            fakeport = '/dev/pts/'+m1.group(1)
-            port = '/dev/pts/'+m2.group(2)
-            
-            self.fakebusPort = hbus_fb.FakeBusSerialPort(reactor,fakeport,baudrate)
-        """
-
         self.serialPort = port
         self.serialBaud = baudrate
         self.hbusMasterAddr = hbusDeviceAddress(busno, 0)
@@ -213,7 +192,7 @@ class hbusMaster:
         self.logger = logging.getLogger('hbussd.hbusmaster')
         
         if port == None:
-            #create fakebus structure
+            #create fakebus system
             f = Factory()
             f.protocol = hbus_fb.FakeBusSerialPort
             reactor.listenTCP(9090,f)
@@ -241,6 +220,7 @@ class hbusMaster:
     def serialConnected(self):
         
         #reseta todos dispositivos
+        self.logger.debug("Connected. Resetting all devices now")
         
         address = hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,HBUS_BROADCAST_ADDRESS)
         

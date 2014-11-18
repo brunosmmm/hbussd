@@ -25,5 +25,3 @@ class FakeBusSerialPort(Protocol):
 
     def dataReceived(self,data):
         pass
-
-
