@@ -1162,7 +1162,7 @@ class hbusMaster:
         
         if address.getGlobalID() not in self.detectedSlaveList.keys():
             if address in self.staticSlaveList:
-                self.logger.info("Escravo estático presente")
+                self.logger.info("Device with static address present")
                 self.registerNewSlave(address)
 
         if self.detectedSlaveList[address.getGlobalID()].pingRetryCount > 0:
@@ -1180,7 +1180,7 @@ class hbusMaster:
             if self.detectedSlaveList[address.getGlobalID()].pingRetryCount < 3:
                 self.detectedSlaveList[address.getGlobalID()].pingRetryCount += 1
             else:
-                self.logger.warning("Removendo escravo por falta de resposta")
+                self.logger.warning("Removing device from bus for lack of response")
                 self.unRegisterSlave(address)
         else:
             #é um escravo estático
@@ -1196,7 +1196,7 @@ class hbusMaster:
             self.masterState = hbusMasterState.hbusMasterChecking
         else:
             self.masterState = hbusMasterState.hbusMasterSearching
-            self.logger.info("Iniciando busca por escravos")
+            self.logger.info("Starting device search")
         
         reactor.callLater(5,self.handleAlarm) #@UndefinedVariable
         
