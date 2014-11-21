@@ -71,7 +71,7 @@ class FakeBusSerialPort(Protocol):
         self.config = ConfigParser.ConfigParser()
         self.deviceList = {}
         try:
-            self.config.read('fakebus.config')
+            self.config.read('fakebus/fakebus.config')
             self.buildBus()
         except:
             self.logger.debug("no configuration file found")
@@ -183,16 +183,17 @@ class FakeBusSerialPort(Protocol):
     ##Parse configuration files and builds bus structure
     def buildBus(self):
         
+        self.logger.debug("start adding fake devices...")
         #get device path
-        devicePath = self.config.get('fakebus','object_dir')
+        devicePath = 'fakebus/'+self.config.get('fakebus','object_dir')
         
         deviceFiles = [x for x in os.listdir(devicePath) if x.endswith('.config')]
 
         #read device files to build tree
         devConfig = ConfigParser.ConfigParser()
-        for device in deviceFiles:
+        for devFile in deviceFiles:
             device = FakeBusDevice(None)
-            devConfig.read(devicePath+device)
+            devConfig.read(devicePath+devFile)
             
             #start building device
             try:
@@ -202,7 +203,7 @@ class FakeBusSerialPort(Protocol):
                 pass
 
             #UID
-            device.hbusSlaveUniqueDeviceInfo = devConfig.getint('device','uid')
+            device.hbusSlaveUniqueDeviceInfo = int(devConfig.get('device','uid'),16)
             device.hbusSlaveDescription = devConfig.get('device','descr')
             device.hbusSlaveObjectCount = devConfig.getint('device','object_count')
             device.hbusSlaveEndpointCount = devConfig.getint('device','endpoint_count')
@@ -221,7 +222,7 @@ class FakeBusSerialPort(Protocol):
                 
                 #generate flags for permissions
                 canRead = devConfig.getboolean(section,'can_read')
-                canWrite = devconfig.getboolean(section, 'can_write')
+                canWrite = devConfig.getboolean(section, 'can_write')
                 
                 if canRead == True:
                     if canWrite == True:
@@ -241,8 +242,8 @@ class FakeBusSerialPort(Protocol):
                 
                 #must generate value from configfile
                 dataType = devConfig.get(section,'data_type')
-                dataTypeInfo = devconfig.get(section,'data_type_info')
-                level = devconfig.getint(section,'level')
+                dataTypeInfo = devConfig.get(section,'data_type_info')
+                level = devConfig.getint(section,'level')
                 
                 try:
                     obj.objectDataType = configDataType[dataType]
@@ -264,3 +265,4 @@ class FakeBusSerialPort(Protocol):
             #when finished
             ##add to device list
             self.deviceList[device.hbusSlaveUniqueDeviceInfo] = device
+            self.logger.debug('fake device "'+device.hbusSlaveDescription+'" <'+hex(device.hbusSlaveUniqueDeviceInfo)+'> added')
