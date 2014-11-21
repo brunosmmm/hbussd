@@ -360,6 +360,9 @@ class FakeBusSerialPort(Protocol):
             self.sendPacket(HBUSCOMMAND_BUSUNLOCK,FakeBusMasterAddress,self.deviceList[self.addressingDevice].hbusSlaveAddress)
             self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceEnumerated
             self.addressingDevice = None
+
+            #Must immediately start processing next slave!
+            reactor.callLater(0.1,self.addressNextDevice)
             
             return
 
