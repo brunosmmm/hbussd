@@ -1244,13 +1244,13 @@ class hbusMaster:
         if self.masterState in [hbusMasterState.hbusMasterSearching,hbusMasterState.hbusMasterChecking] :
             
             if self.masterState == hbusMasterState.hbusMasterSearching:
-                self.logger.info("Fim da busca por escravos, "+str(self.registeredSlaveCount)+" encontrado(s)")
+                self.logger.info("Device search ended, "+str(self.registeredSlaveCount)+" found")
             
             if self.detectSlavesEnded != None:
                 
                 self.detectSlavesEnded()
             
-            self.logger.debug("Recuperando informações dos escravos...")
+            self.logger.debug("Retrieving devices information...")
             
             if self.masterState == hbusMasterState.hbusMasterSearching:
                 self.processStaticSlaves()
@@ -1352,7 +1352,7 @@ class hbusMaster:
             if addr.getGlobalID() in self.detectedSlaveList:
                 continue
             
-            self.logger.info("Escravo com endereço estático em %s",str(addr))
+            self.logger.info("Device with static address in %s",str(addr))
             
             self.registerNewSlave(addr)
             

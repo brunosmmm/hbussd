@@ -188,11 +188,14 @@ class hbusOperation:
         #if self.instruction.paramSize:
             
         #    instruction = instruction + struct.pack('c',chr(self.instruction.paramSize))
-            
+        
         for p in self.instruction.params:
             
             if (type(p) is str):
-                instruction = instruction + struct.pack('c',p)
+                if len(p) == 1:
+                    instruction = instruction + struct.pack('c',p)
+                else:
+                    instruction = instruction + p
             else:
                 instruction = instruction + struct.pack('c',chr(p))
         
