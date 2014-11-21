@@ -19,6 +19,46 @@ from hbusslaves import *
 import ConfigParser ##for fakebus device tree emulation
 import os
 
+##Configuration file options equivalence
+configDataType = { 'I' : hbusSlaveObjectDataType.dataTypeInt,
+                   'U' : hbusSlaveObjectDataType.dataTypeUnsignedInt,
+                   'B' : hbusSlaveObjectDataType.dataTypeByte,
+                   'F' : hbusSlaveObjectDataType.dataTypeFixedPoint
+                 }
+
+configDataTypeInfo = { 'h' : hbusSlaveObjectDataType.dataTypeByteHex,
+                       'd' : hbusSlaveObjectDataType.dataTypeByteDec,
+                       'o' : hbusSlaveObjectDataType.dataTypeByteOct,
+                       'b' : hbusSlaveObjectDataType.dataTypeByteBin,
+                       'B' : hbusSlaveObjectDataType.dataTypeByteBool,
+                       'p' : hbusSlaveObjectDataType.dataTypeUintPercent,
+                       'L' : hbusSlaveObjectDataType.dataTypeUintLinPercent,
+                       'l' : hbusSlaveObjectDataType.dataTypeUintLogPercent,
+                       't' : hbusSlaveObjectDataType.dataTypeUintTime,
+                       'D' : hbusSlaveObjectDataType.dataTypeUintDate,
+                       'u' : hbusSlaveObjectDataType.dataTypeUintNone
+                     }
+
+configLevel = { 0 : hbusSlaveObjectLevel.level0,
+                1 : hbusSlaveObjectLevel.level1,
+                2 : hbusSlaveObjectLevel.level2,
+                3 : hbusSlaveObjectLevel.level3
+                }
+
+##Device internal status emulation for addressing simulation
+class FakeBusDeviceStatus:
+    deviceIdle = 0
+    deviceAddressing = 1
+    deviceEnumerated = 2
+
+##Device data structure
+# inherits hbusSlaveInfo and adds objects to emulate addressing of devices
+class FakeBusDevice(hbusSlaveInfo):
+    
+    ##Device internal status emulation
+    deviceStatus = FakeBusDeviceStatus.deviceIdle
+    
+
 ##Fake bus main class
 class FakeBusSerialPort(Protocol):
 
@@ -151,7 +191,7 @@ class FakeBusSerialPort(Protocol):
         #read device files to build tree
         devConfig = ConfigParser.ConfigParser()
         for device in deviceFiles:
-            device = hbusSlaveInfo(None)
+            device = FakeBusDevice(None)
             devConfig.read(devicePath+device)
             
             #start building device
@@ -159,7 +199,7 @@ class FakeBusSerialPort(Protocol):
                 if devConfig.getboolean('device','dont_read') == True:
                     continue
             except:
-                continue
+                pass
 
             #UID
             device.hbusSlaveUniqueDeviceInfo = devConfig.getint('device','uid')
@@ -177,30 +217,49 @@ class FakeBusSerialPort(Protocol):
                     continue
                 
 
-                object = hbusSlaveObjectInfo()
+                obj = hbusSlaveObjectInfo()
                 
                 #generate flags for permissions
-                ##@todo generate permissions from config file
                 canRead = devConfig.getboolean(section,'can_read')
                 canWrite = devconfig.getboolean(section, 'can_write')
-                #object.objectPermissions = ? 
                 
-                object.objectCrypto = devConfig.getboolean(section,'is_crypto')
-                object.objectHidden = devConfig.getboolean(section,'hidden')
-                object.objectDescription = devConfig.get(section,'descr')
-                object.objectSize = devConfig.getint(section,'size')
-                object.objectLastValue = devConfig.getint(section,'value')
+                if canRead == True:
+                    if canWrite == True:
+                        obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectReadWrite
+                    else:
+                        obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectRead
+                elif canWrite == True:
+                    obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectWrite
+                else:
+                    #error!
+                    pass #for now
+                
+                obj.objectCrypto = devConfig.getboolean(section,'is_crypto')
+                obj.objectHidden = devConfig.getboolean(section,'hidden')
+                obj.objectDescription = devConfig.get(section,'descr')
+                obj.objectSize = devConfig.getint(section,'size')
                 
                 #must generate value from configfile
-                ##@todo generate datatype from configfile
-                #object.objectDataType = ?
-                #object.objectDataTypeInfo = ?
+                dataType = devConfig.get(section,'data_type')
+                dataTypeInfo = devconfig.get(section,'data_type_info')
+                level = devconfig.getint(section,'level')
+                
+                try:
+                    obj.objectDataType = configDataType[dataType]
+                    obj.objectDataTypeInfo = configDataTypeInfo[dataTypeInfo]
+                    obj.objectLevel = configLevel[level]
+                except:
+                    #invalid data type
+                    pass #for now
 
-                object.objectLevel = devConfig.getint(section,'level')
+                obj.objectLevel = devConfig.getint(section,'level')
+
+                #must interpret dummy return value in file
+                rawValue = devConfig.get(section,'value')
 
                 #when finished
-                ##add to object list
-                device.hbusSlaveObjects[int(m.group(1))] = object
+                ##add to obj list
+                device.hbusSlaveObjects[int(m.group(1))] = obj
                 
             #when finished
             ##add to device list

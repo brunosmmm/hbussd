@@ -161,7 +161,7 @@ class hbusMaster:
     
     detectedSlaveList = {}
     
-    staticSlaveList = [hbusDeviceAddress(0, 31),hbusDeviceAddress(1,30)]
+    staticSlaveList = []
     
     registeredSlaveCount = 0
     
