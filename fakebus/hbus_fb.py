@@ -14,6 +14,10 @@ import struct
 import logging
 from hbus_base import *
 from hbus_constants import *
+from hbusslaves import *
+
+import ConfigParser ##for fakebus device tree emulation
+import os
 
 ##Fake bus main class
 class FakeBusSerialPort(Protocol):
@@ -24,6 +28,13 @@ class FakeBusSerialPort(Protocol):
         self.logger.debug("fakebus active")
         self.dataBuffer = []
         self.rxState = hbusMasterRxState.hbusRXSBID
+        self.config = ConfigParser.ConfigParser()
+        self.deviceList = {}
+        try:
+            self.config.read('fakebus.config')
+            self.buildBus()
+        except:
+            self.logger.debug("no configuration file found")
 
     ##Master connected to fakebus
     def connectionMade(self):
@@ -128,3 +139,69 @@ class FakeBusSerialPort(Protocol):
     def parsePacket(self,packet):
         self.logger.debug("I got a packet!")
         pass
+
+    ##Parse configuration files and builds bus structure
+    def buildBus(self):
+        
+        #get device path
+        devicePath = self.config.get('fakebus','object_dir')
+        
+        deviceFiles = [x for x in os.listdir(devicePath) if x.endswith('.config')]
+
+        #read device files to build tree
+        devConfig = ConfigParser.ConfigParser()
+        for device in deviceFiles:
+            device = hbusSlaveInfo(None)
+            devConfig.read(devicePath+device)
+            
+            #start building device
+            try:
+                if devConfig.getboolean('device','dont_read') == True:
+                    continue
+            except:
+                continue
+
+            #UID
+            device.hbusSlaveUniqueDeviceInfo = devConfig.getint('device','uid')
+            device.hbusSlaveDescription = devConfig.get('device','descr')
+            device.hbusSlaveObjectCount = devConfig.getint('device','object_count')
+            device.hbusSlaveEndpointCount = devConfig.getint('device','endpoint_count')
+            device.hbusSlaveInterruptCount = devConfig.getint('device','int_count')
+            
+            #capabilities, must generate flags
+            ##@todo generate flags for capabilities from configuration file
+
+            for section in devConfig.sections():
+                m = re.match(r"object([0-9+])",section)
+                if m == None:
+                    continue
+                
+
+                object = hbusSlaveObjectInfo()
+                
+                #generate flags for permissions
+                ##@todo generate permissions from config file
+                canRead = devConfig.getboolean(section,'can_read')
+                canWrite = devconfig.getboolean(section, 'can_write')
+                #object.objectPermissions = ? 
+                
+                object.objectCrypto = devConfig.getboolean(section,'is_crypto')
+                object.objectHidden = devConfig.getboolean(section,'hidden')
+                object.objectDescription = devConfig.get(section,'descr')
+                object.objectSize = devConfig.getint(section,'size')
+                object.objectLastValue = devConfig.getint(section,'value')
+                
+                #must generate value from configfile
+                ##@todo generate datatype from configfile
+                #object.objectDataType = ?
+                #object.objectDataTypeInfo = ?
+
+                object.objectLevel = devConfig.getint(section,'level')
+
+                #when finished
+                ##add to object list
+                device.hbusSlaveObjects[int(m.group(1))] = object
+                
+            #when finished
+            ##add to device list
+            self.deviceList[device.hbusSlaveUniqueDeviceInfo] = device

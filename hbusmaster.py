@@ -1180,7 +1180,7 @@ class hbusMaster:
             if self.detectedSlaveList[address.getGlobalID()].pingRetryCount < 3:
                 self.detectedSlaveList[address.getGlobalID()].pingRetryCount += 1
             else:
-                self.logger.warning("Removing device from bus for lack of response")
+                self.logger.warning("Removing device from bus for unresponsiveness")
                 self.unRegisterSlave(address)
         else:
             #é um escravo estático
