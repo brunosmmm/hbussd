@@ -178,6 +178,7 @@ class hbusOperation:
     
     ##Generates data string to be sent by master
     #@return data string to be sent to bus
+    #@todo automatically generate parameter size field which depends on command
     def getString(self):
         
         header = struct.pack('4c',chr(self.hbusOperationSource.hbusAddressBusNumber),chr(self.hbusOperationSource.hbusAddressDevNumber),

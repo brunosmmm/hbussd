@@ -443,6 +443,7 @@ class FakeBusSerialPort(Protocol):
 
                 #must interpret dummy return value in file
                 rawValue = devConfig.get(section,'value')
+                obj.objectLastValue = self.listValueToInt(rawValue,obj.objectDataType)
 
                 #when finished
                 ##add to obj list
@@ -452,3 +453,22 @@ class FakeBusSerialPort(Protocol):
             ##add to device list
             self.deviceList[device.hbusSlaveUniqueDeviceInfo] = device
             self.logger.debug('fake device "'+device.hbusSlaveDescription+'" <'+hex(device.hbusSlaveUniqueDeviceInfo)+'> added')
+        
+    def listValueToInt(self,value,valueType):
+
+        if valueType == hbusSlaveObjectDataType.dataTypeInt:
+            return int(value)
+        elif valueType == hbusSlaveObjectDataType.dataTypeByte:
+            value = value.split(' ')
+            intValue = 0
+            for i in range(0,len(value)):
+                intValue = intValue + int(value[i],16) << i
+                
+            return intValue
+        elif valueType == hbusSlaveObjectDataType.dataTypeFixedPoint:
+            return 0 ##@todo fixed point parsing
+        elif valuetype == hbusSlaveObjectDataType.dataTypeUnsignedInt:
+            return int(value)
+        else:
+            return 0
+        

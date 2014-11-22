@@ -107,9 +107,9 @@ class TwistedhbusMaster(hbusMaster):
 #@param signum signal number
 #@param frame signal frame
 def SignalHandler(signum, frame):
-    
-    if signal == signal.SIGTERM:
-        exit(0)
+
+    reactor.stop()
+    #exit(0)
 
 ##Master entering Operational state after initial scan of HBUS devices event
 def hbusMasterOperational():
@@ -150,6 +150,7 @@ def main():
     logger.info("hbussd start")
     
     signal.signal(signal.SIGTERM, SignalHandler)
+    signal.signal(signal.SIGINT, SignalHandler)
     
     hbusMaster = TwistedhbusMaster(args['s'],baudrate=100000,reactor=reactor)
     
