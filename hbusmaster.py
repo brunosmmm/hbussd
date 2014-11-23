@@ -23,6 +23,7 @@ from hbusslaves import *
 from hbus_datahandlers import *
 from hbusmasterobjects import *
 from fakebus import hbus_fb
+from hbussd_plugin import hbusPluginManager
 
 import shlex, subprocess
 import re
@@ -141,6 +142,8 @@ class hbusMasterInformationData:
 
 class hbusMaster:
     
+    pluginManager = None
+    
     hbusSerialRxTimeout = 100
     
     hbusBusState = hbusBusStatus.hbusBusFree
@@ -190,6 +193,9 @@ class hbusMaster:
         self.hbusMasterAddr = hbusDeviceAddress(busno, 0)
         
         self.logger = logging.getLogger('hbussd.hbusmaster')
+
+        self.pluginManager = hbusPluginManager('./plugins',self)
+        self.searchAndLoadPlugins()
         
         if port == None:
             #create fakebus system
@@ -200,6 +206,16 @@ class hbusMaster:
             self.serialCreate(fake=True)
         else:
             self.serialCreate(fake=False)
+
+    def searchAndLoadPlugins(self):
+
+        self.logger.debug("scanning plugins")
+
+        self.pluginManager.scanPlugins()
+        
+        for plugin in self.pluginManager.getAvailablePlugins():
+            self.logger.debug('loading plugin '+plugin)
+            self.pluginManager.loadPlugin(plugin)
         
     def enterOperational(self):
         

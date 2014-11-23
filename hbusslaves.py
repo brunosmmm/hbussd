@@ -349,7 +349,7 @@ class hbusSlaveObjectExtendedInfo:
 
 ##Device object main class
 class hbusSlaveObjectInfo:
-    
+
     ##Object permissions
     objectPermissions = 0
     ##Indicates if data is encrypted
@@ -432,6 +432,9 @@ class hbusSlaveInterruptInfo:
 ##Device information main class
 class hbusSlaveInfo:
     
+    ##Virtual devices
+    hbusSlaveIsVirtual = False
+
     ##Device address
     hbusSlaveAddress = None
     
