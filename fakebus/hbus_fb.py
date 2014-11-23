@@ -308,8 +308,12 @@ class FakeBusSerialPort(Protocol):
         except:
             #device is not enumerated in this bus
             return
-
-        if ord(packet[4]) == HBUSCOMMAND_QUERY.commandByte:
+        
+        if ord(packet[4]) == HBUSCOMMAND_SEARCH.commandByte:
+            #ping some device
+            self.sendPacket(HBUSCOMMAND_ACK,FakeBusMasterAddress,self.deviceList[targetUID].hbusSlaveAddress)
+            return
+        elif ord(packet[4]) == HBUSCOMMAND_QUERY.commandByte:
             #querying some object
             params = self.deviceList[targetUID].makeQueryResponse(ord(packet[5]))
             if params == None:
