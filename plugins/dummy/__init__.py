@@ -15,7 +15,7 @@ pluginID = None
 ##Register plugin
 # @param pluginManager plugin manager object
 # @param pID this plugin's ID
-def register(pluginManager,pID):
+def register(pluginManager, pID):
     global pluginMgr
     global pluginID
     pluginMgr = pluginManager
@@ -28,14 +28,14 @@ def unregister():
 ##Read object from virtual device originating in this plugin
 # @param device device id
 # @param obj object number
-def virtualDeviceReadObject(device,obj):
+def virtualDeviceReadObject(device, obj):
     pass
 
 ##Writes a virtual device object
 # @param device device id
 # @param obj object number
 # @param value value written
-def virtualDeviceWriteObject(device,obj,value):
+def virtualDeviceWriteObject(device, obj, value):
     pass
 
 ##Master event broadcast receiver

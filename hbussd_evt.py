@@ -7,7 +7,7 @@
 
 ##Types of events that are broadcasted
 class hbusMasterEventType:
-    
+
     ##Master started
     eventStarted = 0
     ##Master entered operational phase
@@ -23,8 +23,8 @@ class hbusMasterEventType:
 
 ##Complete event information class
 class hbusMasterEvent:
-    
+
     eventType = hbusMasterEventType.eventNone
 
-    def __init__(self,eventType = hbusMasterEventType.eventNone):
+    def __init__(self, eventType=hbusMasterEventType.eventNone):
         self.eventType = eventType

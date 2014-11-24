@@ -322,12 +322,12 @@ class hbusSlaveObjectDataType:
                      dataTypeFixedPoint : 'Fixed point'}
 
     ##Extended data types decoding dictionary
-    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes, 
+    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : formatHexBytes,
                                        dataTypeByteDec : formatDecBytes,
                                        dataTypeByteOct : formatOctBytes,
-                                       dataTypeByteBin : formatBinBytes, 
+                                       dataTypeByteBin : formatBinBytes,
                                        dataTypeByteBool : formatBoolBytes},
-                       dataTypeUnsignedInt : {dataTypeUintNone : formatUint, 
+                       dataTypeUnsignedInt : {dataTypeUintNone : formatUint,
                                               dataTypeUintPercent : formatPercent, 
                                               dataTypeUintLinPercent : formatRelLinPercent, 
                                               dataTypeUintLogPercent : formatRelLogPercent, 

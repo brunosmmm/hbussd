@@ -24,10 +24,12 @@ from hbus_datahandlers import *
 from hbusmasterobjects import *
 from fakebus import hbus_fb
 from hbussd_plugin import hbusPluginManager
-from hbussd_evt import *
+from hbussd_evt import hbusMasterEvent, hbusMasterEventType
 
-import shlex, subprocess
 import re
+
+BROADCAST_BUS = 255
+VIRTUAL_BUS = 254
 
 ##Gets actual time in milliseconds
 # @param td actual time
@@ -164,10 +166,12 @@ class hbusMaster:
     removeQueue = []
     
     detectedSlaveList = {}
+    virtualSlaveList = {}
     
     staticSlaveList = []
     
     registeredSlaveCount = 0
+    virtualSlavecount = 0
     
     masterState = hbusMasterState.hbusMasterStarting
     
@@ -275,7 +279,7 @@ class hbusMaster:
         
     def serialWrite(self, string):
         
-        pass #fazer overload
+        pass
     
     def serialRead(self,size):
         
@@ -474,23 +478,41 @@ class hbusMaster:
                 return c
             
         return None
-    
+
+    def getNewAddress(self, uid):
+        """Get address for new slave
+        @param uid slave's UID
+        """
+        UIDList = [x.hbusSlaveUniqueDeviceInfo for x in self.detectedSlaveList.values()]
+        addressList = [x.hbusSlaveAddress for x in self.detectedSlaveList.values()]
+        
+        AddressByUID = dict(zip(UIDList, addressList))
+        
+        #see if already registered at some point
+        if uid in AddressByUID.keys():
+            return AddressByUID[uid].hbusAddressDevNumber
+            self.logger.debug("Re-integrating device with UID %s", hex(uid))
+        else:
+            return self.registeredSlaveCount+1
+
+    def getnewvirtualaddress(self, uid):
+        uidList = [x.hbusSlaveUniqueDeviceInfo for x in self.virtualSlaveList.values()]
+        addressList = [x.hbusSlaveAddress for x in self.virtualSlaveList.values()]
+        addressByUid = dict(zip(uidList,addressList))
+        
+        if uid in addressByUid.keys():
+            return addressByUid[uid].hbusAddressDevNumber
+        else:
+            return self.virtualSlaveCount+1
+        
+
     def setNextSlaveCapabilities(self,params):
         
         self.nextSlaveCapabilities = ord(params[3])
         self.nextSlaveUID, = struct.unpack('I',''.join(params[4:8]))
-        
-        UIDList = [x.hbusSlaveUniqueDeviceInfo for x in self.detectedSlaveList.values()]
-        addressList = [x.hbusSlaveAddress for x in self.detectedSlaveList.values()]
-        
-        AddressByUID = dict(zip(UIDList,addressList))
-        
-        try:
-            nextAddress = AddressByUID[self.nextSlaveUID].hbusAddressDevNumber
-            self.logger.debug("Re-integrating device with UID %s",hex(self.nextSlaveUID))
-        except:
-            nextAddress = self.registeredSlaveCount+1
-            
+
+        #get new address
+        nextAddress = self.getNewAddress(self.nextSlaveUID)
         
         if (self.nextSlaveCapabilities & hbusSlaveCapabilities.hbusSlaveAuthSupport):
             self.logger.debug("New device has AUTH support")
@@ -555,24 +577,23 @@ class hbusMaster:
                 
                 #caso especial: buslock de (x,255)
                 if busOp.hbusOperationSource.hbusAddressDevNumber == HBUS_BROADCAST_ADDRESS and self.masterState in [hbusMasterState.hbusMasterSearching,hbusMasterState.hbusMasterChecking]:
-                    
-                    #self.expectResponse(HBUSCOMMAND_RESPONSE, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber, HBUS_BROADCAST_ADDRESS),action=self.setNextSlaveCapabilities)
+
                     self.pushCommand(HBUSCOMMAND_GETCH, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,HBUS_BROADCAST_ADDRESS),params=[chr(0)],callBack=self.setNextSlaveCapabilities)
-                    
+
                     self.masterState = hbusMasterState.hbusMasterAddressing
-                
-                
+
+
             elif busOp.instruction.command == HBUSCOMMAND_BUSUNLOCK:
                 self.hbusBusState = hbusBusStatus.hbusBusFree
                 self.hbusBusLockedWith = None
-                
+
                 self.onBusFree()
-                
+
             #Interrupções
             elif busOp.instruction.command == HBUSCOMMAND_INT:
-                
+
                 self.masterState = hbusMasterState.hbusMasterInterrupted
-                
+
                 #Processa
                 ##@todo implementar mecanismos de interrupções para que possa ser inserido o sistema de objetos especiais do mestre
             
@@ -689,22 +710,38 @@ class hbusMaster:
         
         self.expectedResponseQueue.append(pending)
         
-        #self.logger.debug("Registrando resposta esperada")
-        
         return d
         
-    def registerNewSlave(self, address):
-        
-        self.detectedSlaveList[address.getGlobalID()] = hbusSlaveInfo(address)
+    def registerNewSlave(self, address, slaveInfo=None):
+        """Registers a new device in the bus.
+        @param address device address
+        @param slaveInfo for virtual devices, complete description
+        """
+        if slaveInfo != None:
+            if slaveInfo.virtual == True:
+                #virtual device
+                #doesn't know virtual bus number
+                addr = hbusDeviceAddress(VIRTUAL_BUS,address)
+                slaveInfo.hbusSlaveAddress = addr
+                self.virtualDeviceList[addr.getGlobalID()] = slaveInfo
+            else:
+                #not supported
+                raise UserWarning("adding pre-formed real device not supported")
+                return
+        else:
+            self.detectedSlaveList[address.getGlobalID()] = hbusSlaveInfo(address)
         
         self.logger.info("New device registered at "+str(address))
         self.logger.debug("New device UID is "+str(address.getGlobalID()))
         
         #self.readBasicSlaveInformation(address)
         
-    def unRegisterSlave(self, address):
+    def unRegisterSlave(self, address, virtual=False):
         
-        del self.detectedSlaveList[address.getGlobalID()]
+        if virtual == True:
+            del self.virtualSlaveList[hbusSlaveAddress(VIRTUAL_BUS,address).getGlobalID()]
+        else:
+            del self.detectedSlaveList[address.getGlobalID()]
         
         self.logger.info("Device at "+str(address)+" removed")
         
@@ -826,6 +863,7 @@ class hbusMaster:
                     
                     slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
         
+    ##@todo this method is horrible
     def readBasicSlaveInformation(self,deferResult, address):
         
         self.logger.debug("Initializing device analysis "+str(address.getGlobalID()))
@@ -1035,6 +1073,16 @@ class hbusMaster:
         
         d = None
         
+        #see if this is a virtual device first
+        if address.busNumber == VIRTUAL_BUS:
+            #read and update
+            result = self.pluginManager.readVirtualDeviceObject(address.devNumber,number)
+            self.virtualDeviceList[address.getGlobalID()].hbusSlaveObjects[number].objectLastValue = result
+            
+            if callBack != None:
+                callBack(result)
+            return
+
         if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectWrite:
         
             #self.expectResponse(HBUSCOMMAND_RESPONSE,address,self.receiveSlaveObjectData,actionParameters=(address,number,callBack),timeoutAction=timeoutCallback)
@@ -1045,7 +1093,7 @@ class hbusMaster:
         else:
             
             self.logger.warning("Write-only object read attempted")
-            self.logger.debug("Tentativa de leitura do objeto %d, escravo com endereço %s",number,address)
+            self.logger.debug("Tried reading object %d of slave with address %s",number,address)
             
             if callBack != None:
                 
@@ -1101,6 +1149,12 @@ class hbusMaster:
             data[0][2](data[1])
             
     def writeSlaveObject(self,address,number,value):
+
+        #check if is virtual bus
+        if address.busNumber == VIRTUAL_BUS:
+            self.virtualDeviceList[address.getGlobalID()].hbusSlaveObjects[number].objectLastValue = value
+            self.pluginManager.writeVirtualDeviceObject(address.devNumber, number, value)
+            return
         
         if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectRead:
             
@@ -1204,7 +1258,7 @@ class hbusMaster:
         
         return self.deferredDelay(0.1)
 
-    def detectSlaves(self, callBack = None, allBusses = False):
+    def detectSlaves(self, callBack=None, allBusses=False):
         
         self.pushCommand(HBUSCOMMAND_SEARCH, hbusDeviceAddress(self.hbusMasterAddr.hbusAddressBusNumber,255))
         
