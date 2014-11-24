@@ -166,12 +166,12 @@ class hbusMaster:
     removeQueue = []
     
     detectedSlaveList = {}
-    virtualSlaveList = {}
+    virtualDeviceList = {}
     
     staticSlaveList = []
     
     registeredSlaveCount = 0
-    virtualSlavecount = 0
+    virtualSlaveCount = 0
     
     masterState = hbusMasterState.hbusMasterStarting
     
@@ -224,11 +224,11 @@ class hbusMaster:
         self.pluginManager.scanPlugins()
         
         for plugin in self.pluginManager.getAvailablePlugins():
-            try:
-                self.logger.debug('loading plugin '+plugin)
-                self.pluginManager.loadPlugin(plugin)
-            except:
-                self.logger.debug('error loading plugin '+plugin)
+            #try:
+            #    self.logger.debug('loading plugin '+plugin)
+            self.pluginManager.loadPlugin(plugin)
+            #except:
+            #    self.logger.debug('error loading plugin '+plugin)
 
     ##Master entering operational phase
     def enterOperational(self):
@@ -241,8 +241,11 @@ class hbusMaster:
     def getInformationData(self):
         
         busses = list(set([slave.hbusSlaveAddress.hbusAddressBusNumber for slave in self.detectedSlaveList.values() if slave.basicInformationRetrieved == True]))
+
+        if len(self.virtualDeviceList) > 0:
+            busses.append(VIRTUAL_BUS)
         
-        return hbusMasterInformationData(len(self.detectedSlaveList),busses)
+        return hbusMasterInformationData(len(self.detectedSlaveList), busses)
             
     
     def serialCreate(self):
@@ -496,8 +499,8 @@ class hbusMaster:
             return self.registeredSlaveCount+1
 
     def getnewvirtualaddress(self, uid):
-        uidList = [x.hbusSlaveUniqueDeviceInfo for x in self.virtualSlaveList.values()]
-        addressList = [x.hbusSlaveAddress for x in self.virtualSlaveList.values()]
+        uidList = [x.hbusSlaveUniqueDeviceInfo for x in self.virtualDeviceList.values()]
+        addressList = [x.hbusSlaveAddress for x in self.virtualDeviceList.values()]
         addressByUid = dict(zip(uidList,addressList))
         
         if uid in addressByUid.keys():
@@ -718,7 +721,7 @@ class hbusMaster:
         @param slaveInfo for virtual devices, complete description
         """
         if slaveInfo != None:
-            if slaveInfo.virtual == True:
+            if slaveInfo.hbusSlaveIsVirtual == True:
                 #virtual device
                 #doesn't know virtual bus number
                 addr = hbusDeviceAddress(VIRTUAL_BUS,address)
@@ -729,17 +732,18 @@ class hbusMaster:
                 raise UserWarning("adding pre-formed real device not supported")
                 return
         else:
+            addr = address
             self.detectedSlaveList[address.getGlobalID()] = hbusSlaveInfo(address)
         
-        self.logger.info("New device registered at "+str(address))
-        self.logger.debug("New device UID is "+str(address.getGlobalID()))
+        self.logger.info("New device registered at "+str(addr))
+        self.logger.debug("New device UID is "+str(addr.getGlobalID()))
         
         #self.readBasicSlaveInformation(address)
         
     def unRegisterSlave(self, address, virtual=False):
         
         if virtual == True:
-            del self.virtualSlaveList[hbusSlaveAddress(VIRTUAL_BUS,address).getGlobalID()]
+            del self.virtualDeviceList[hbusSlaveAddress(VIRTUAL_BUS,address).getGlobalID()]
         else:
             del self.detectedSlaveList[address.getGlobalID()]
         
@@ -1074,9 +1078,9 @@ class hbusMaster:
         d = None
         
         #see if this is a virtual device first
-        if address.busNumber == VIRTUAL_BUS:
+        if address.hbusAddressBusNumber == VIRTUAL_BUS:
             #read and update
-            result = self.pluginManager.readVirtualDeviceObject(address.devNumber,number)
+            result = self.pluginManager.readVirtualDeviceObject(address.hbusAddressDevNumber,number)
             self.virtualDeviceList[address.getGlobalID()].hbusSlaveObjects[number].objectLastValue = result
             
             if callBack != None:
@@ -1151,9 +1155,9 @@ class hbusMaster:
     def writeSlaveObject(self,address,number,value):
 
         #check if is virtual bus
-        if address.busNumber == VIRTUAL_BUS:
+        if address.hbusAddressBusNumber == VIRTUAL_BUS:
             self.virtualDeviceList[address.getGlobalID()].hbusSlaveObjects[number].objectLastValue = value
-            self.pluginManager.writeVirtualDeviceObject(address.devNumber, number, value)
+            self.pluginManager.writeVirtualDeviceObject(address.hbusAddressDevNumber, number, value)
             return
         
         if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectRead:
@@ -1191,8 +1195,10 @@ class hbusMaster:
     def writeFormattedSlaveObject(self,address,number,value):
         
         #decodifica formatação e realiza escrita no objeto
-        
-        obj = self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number]
+        if address.hbusAddressBusNumber == VIRTUAL_BUS:
+            obj = self.virtualDeviceList[address.getGlobalID()].hbusSlaveObjects[number]
+        else:
+            obj = self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number]
         
         data = hbusSlaveObjectDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](hbusSlaveObjectDataType(),data=value,extInfo=obj.objectExtendedInfo,decode=True,size=obj.objectSize)
         
@@ -1356,12 +1362,14 @@ class hbusMaster:
     def findDeviceByUID(self, uid):
         
         for dev in self.detectedSlaveList:
-            
             if self.detectedSlaveList[dev].hbusSlaveUniqueDeviceInfo == int(uid):
-                
                 return self.detectedSlaveList[dev].hbusSlaveAddress
+
+        for dev in self.virtualDeviceList:
+            if self.virtualDeviceList[dev].hbusSlaveUniqueDeviceInfo == int(uid):
+                return self.virtualDeviceList[dev].hbusSlaveAddress
             
-        self.logger.debug("dispositivo com UID <"+str(int(uid))+"> não encontrado")
+        self.logger.debug("device with UID <"+str(int(uid))+"> not found")
         return None
     
     def responseTimeoutCallback(self,response):

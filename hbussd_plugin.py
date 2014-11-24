@@ -64,7 +64,7 @@ class hbusPluginManager:
         self.plugins[plugin].module = p
         #create logger for plugin
         self.plugins[plugin].logger = logging.getLogger('hbussd.hbusPluginMgr.'+plugin)
-        p.register(self,plugin) #plugin entry point
+        p.register(self, plugin) #plugin entry point
         self.plugins[plugin].active = True
 
     ##Deactivates and unloads plugin
@@ -94,16 +94,16 @@ class hbusPluginManager:
 
         uid, plugin, dnum = self.virtualDeviceTranslator[deviceNum]
         #read and return
-        return self.plugins[plugin].readVirtualDeviceObject(dnum, objNum)
+        return self.plugins[plugin].module.readVirtualDeviceObject(dnum, objNum)
 
-    def writeVirtualDeviceObject(self, deviceNum, objNum):
+    def writeVirtualDeviceObject(self, deviceNum, objNum, value):
         
         if deviceNum not in self.virtualDeviceTranslator.keys():
             raise UserWarning("virtual device not found")
         
         uid, plugin, dnum = self.virtualDeviceTranslator[deviceNum]
         #write
-        self.plugins[plugin].writeVirtualDeviceObject(dnum, objnum, value)
+        self.plugins[plugin].module.writeVirtualDeviceObject(dnum, objNum, value)
     
     #Begin functions accessed by plugins
 
@@ -113,6 +113,8 @@ class hbusPluginManager:
         uid = uuid.uuid4()
         #register a virtual device in the master, get an address
         devNumber = self.__master.getnewvirtualaddress(uid.int)
+        #save generated uid
+        deviceInfo.hbusSlaveUniqueDeviceInfo = uid.int
         #add to local translator
         self.virtualDeviceTranslator[devNumber] = (uid, plugin, deviceNum)
         self.__master.registerNewSlave(devNumber, deviceInfo)

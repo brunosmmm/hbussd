@@ -55,14 +55,18 @@ class HBUSWEB:
             
             self.wait = False
         
-        devUID = string.split(uid,"0x")
+        m = re.match(r"0x([0-9A-Fa-f]+)L?",uid)
+        devUID = m.group(1)
             
-        addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+        addr = self.hbusMaster.findDeviceByUID(int(devUID,16))
         
         if addr == None:
             s = None
         else:
-            s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+            if addr.hbusAddressBusNumber == 254:
+                s = self.hbusMaster.virtualDeviceList[addr.getGlobalID()]
+            else:
+                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
         
         if obj != None:
             
@@ -73,7 +77,7 @@ class HBUSWEB:
                 while (self.wait == True):
                     pass
             except:
-                pass
+                self.logger.debug('error reading device object!!')
             
         if s != None:
             data = s.hbusSlaveObjects[int(obj)].getFormattedValue()
@@ -107,14 +111,18 @@ class HBUSWEB:
             s = self.hbusMaster.detectedSlaveList[device.getGlobalID()]
         elif uid != None:
             
-            devUID = string.split(uid,"0x")
+            m = re.match(r"0x([0-9A-Fa-f]+)L?",uid)
+            devUID = m.group(1)
             
-            addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+            addr = self.hbusMaster.findDeviceByUID(int(devUID,16))
             
             if addr == None:
                 s = None
             else:
-                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                if addr.hbusAddressBusNumber == 254:
+                    s = self.hbusMaster.virtualDeviceList[addr.getGlobalID()]
+                else:
+                    s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
             
             if obj != None:
                 
@@ -164,14 +172,18 @@ class HBUSWEB:
 
         if uid != None:
             
-            devUID = string.split(uid,"0x")
+            m = re.match(r"0x([0-9A-Fa-f]+)L?",uid)
+            devUID = m.group(1)
             
-            addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+            addr = self.hbusMaster.findDeviceByUID(int(devUID,16))
             
             if addr == None:
                 s = None
             else:
-                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                if addr.hbusAddressBusNumber == 254:
+                    s = self.hbusMaster.virtualDeviceList[addr.getGlobalID()]
+                else:
+                    s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
                 
             if s == None:
                 
@@ -189,14 +201,18 @@ class HBUSWEB:
         
         if uid != None:
             
-            devUID = string.split(uid,"0x")
+            m = re.match(r"0x([0-9A-Fa-f]+)L?",uid)
+            devUID = m.group(1)
             
-            addr = self.hbusMaster.findDeviceByUID(int(devUID[1],16))
+            addr = self.hbusMaster.findDeviceByUID(int(devUID,16))
             
             if addr == None:
                 s = None
             else:
-                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                if addr.hbusAddressBusNumber == 254:
+                    s = self.hbusMaster.virtualDeviceList[addr.getGlobalID()]
+                else:
+                    s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
             
             if obj != None:
                 
@@ -220,6 +236,10 @@ class HBUSWEB:
         
         if int(busNumber) == 255:
             slaveList = self.hbusMaster.detectedSlaveList.values()
+            slaveList.extend(self.hbusMaster.virtualDeviceList.values())
+        elif int(busNumber) == 254:
+            #virtual device bus
+            slaveList = self.hbusMaster.virtualDeviceList.values()
         else:
             slaveList = []
             for slave in self.hbusMaster.detectedSlaveList.values():

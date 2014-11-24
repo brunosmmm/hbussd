@@ -7,8 +7,10 @@
 
 from hbussd_evt import *
 import logging
+#import our things
+import plugins.dummy.devobjs
 
-virtualDevices = []
+virtualDevices = {}
 pluginMgr = None
 pluginID = None
 
@@ -18,8 +20,16 @@ pluginID = None
 def register(pluginManager, pID):
     global pluginMgr
     global pluginID
+    global virtualDevices
+
     pluginMgr = pluginManager
     pluginID = pID
+    
+    virtualDevices = plugins.dummy.devobjs.getVirtualDevices()
+    
+    #register devices
+    for num,vdev in virtualDevices.iteritems():
+        pluginMgr.pluginRegisterVirtualDevice(pluginID, num, vdev.device)
 
 ##Unregister plugin from hbussd
 def unregister():
@@ -28,15 +38,15 @@ def unregister():
 ##Read object from virtual device originating in this plugin
 # @param device device id
 # @param obj object number
-def virtualDeviceReadObject(device, obj):
-    pass
+def readVirtualDeviceObject(device, obj):
+    return virtualDevices[device].readObject(obj)
 
 ##Writes a virtual device object
 # @param device device id
 # @param obj object number
 # @param value value written
-def virtualDeviceWriteObject(device, obj, value):
-    pass
+def writeVirtualDeviceObject(device, obj, value):
+    virtualDevices[device].writeObject(obj, value)
 
 ##Master event broadcast receiver
 # @param event event container
