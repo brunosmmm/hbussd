@@ -153,7 +153,7 @@ def main():
     signal.signal(signal.SIGINT, SignalHandler)
     
     hbusMaster = TwistedhbusMaster(args['s'],baudrate=100000,reactor=reactor)
-    
+
     hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
     hbusMasterPeriodicTask.start(1)
     

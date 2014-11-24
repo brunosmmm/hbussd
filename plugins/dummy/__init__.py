@@ -2,23 +2,43 @@
 
 ##@package dummy
 # @brief dummy plugin
+# @author Bruno Morais <brunosmmm@gmail.com>
+# @since 11/23/2014
+
+from hbussd_evt import *
+import logging
 
 virtualDevices = []
+pluginMgr = None
+pluginID = None
 
-def register(pluginManager):
+##Register plugin
+# @param pluginManager plugin manager object
+# @param pID this plugin's ID
+def register(pluginManager,pID):
+    global pluginMgr
+    global pluginID
+    pluginMgr = pluginManager
+    pluginID = pID
+
+##Unregister plugin from hbussd
+def unregister():
     pass
 
-def unregister(pluginManager):
+##Read object from virtual device originating in this plugin
+# @param device device id
+# @param obj object number
+def virtualDeviceReadObject(device,obj):
     pass
 
-def virtualDeviceReadObject(pluginManager,device,object):
+##Writes a virtual device object
+# @param device device id
+# @param obj object number
+# @param value value written
+def virtualDeviceWriteObject(device,obj,value):
     pass
 
-def virtualDeviceWriteObject(pluginManager,device,object,value):
-    pass
-
-def virtualDeviceQueryObject(pluginManager,device,object):
-    pass
-
+##Master event broadcast receiver
+# @param event event container
 def masterEventOccurred(event):
-    pass
+    pluginMgr.pluginLog(pluginID,"I got an event!")

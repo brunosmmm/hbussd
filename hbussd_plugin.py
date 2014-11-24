@@ -7,6 +7,8 @@
 
 import imp
 import os
+import logging
+import inspect
 
 pluginMain = "__init__"
 
@@ -26,6 +28,7 @@ class hbusPluginManager:
         self.path = pluginPath
         self.__master = master
         self.virtualDeviceTranslator = {}
+        self.logger = logging.getLogger('hbussd.hbusPluginMgr')
 
     ##Scan plugin folder for plugins
     def scanPlugins(self):
@@ -45,6 +48,7 @@ class hbusPluginManager:
         return self.plugins.keys()
 
     ##Loads and activates plugin
+    # @param plugin plugin id
     def loadPlugin(self,plugin):
         
         if plugin not in self.plugins.keys():
@@ -56,9 +60,13 @@ class hbusPluginManager:
         
         p = imp.load_module(pluginMain, *self.plugins[plugin].data)
         self.plugins[plugin].module = p
-        p.register(self) #plugin entry point
+        #create logger for plugin
+        self.plugins[plugin].logger = logging.getLogger('hbussd.hbusPluginMgr.'+plugin)
+        p.register(self,plugin) #plugin entry point
+        self.plugins[plugin].active = True
 
     ##Deactivates and unloads plugin
+    # @param plugin plugin id
     def unloadPlugin(self,plugin):
         
         if plugin not in self.plugins.keys():
@@ -79,10 +87,28 @@ class hbusPluginManager:
     ##Unregister virtual device
     def pluginUnregisterVirtualDevice(self):
         pass
+
+    ##Interruption from plugin
+    # @param pluginID plugin id
+    # @param interrupt interrupt container
+    def pluginInterrupt(self,pluginID,interrupt):
+        pass
+
+    ##Log output from plugin
+    # @param pluginID plugin identification
+    # @param msg message to log
+    # @param level logging level
+    def pluginLog(self,pluginID,msg,level=logging.DEBUG):
         
+        if pluginID not in self.plugins.keys():
+            self.logger.debug('plugin '+pluginID+' not activated!')
+            return
+        
+        self.plugins[pluginID].logger.log(level,msg)
         
     ##Event broadcasts
+    # @param event event container
     def masterEventBroadcast(self,event):
         for plugin in self.plugins.keys():
-            if plugin.active == True:
-                plugin.module.masterEventOccurred(event)
+            if self.plugins[plugin].active == True:
+                self.plugins[plugin].module.masterEventOccurred(event)

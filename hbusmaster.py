@@ -24,6 +24,7 @@ from hbus_datahandlers import *
 from hbusmasterobjects import *
 from fakebus import hbus_fb
 from hbussd_plugin import hbusPluginManager
+from hbussd_evt import *
 
 import shlex, subprocess
 import re
@@ -206,7 +207,12 @@ class hbusMaster:
             self.serialCreate(fake=True)
         else:
             self.serialCreate(fake=False)
+        
+        #system started event
+        event = hbusMasterEvent(hbusMasterEventType.eventStarted)
+        self.pluginManager.masterEventBroadcast(event)
 
+    ##Search and load plugins using plugin manager
     def searchAndLoadPlugins(self):
 
         self.logger.debug("scanning plugins")
@@ -214,13 +220,19 @@ class hbusMaster:
         self.pluginManager.scanPlugins()
         
         for plugin in self.pluginManager.getAvailablePlugins():
-            self.logger.debug('loading plugin '+plugin)
-            self.pluginManager.loadPlugin(plugin)
-        
+            try:
+                self.logger.debug('loading plugin '+plugin)
+                self.pluginManager.loadPlugin(plugin)
+            except:
+                self.logger.debug('error loading plugin '+plugin)
+
+    ##Master entering operational phase
     def enterOperational(self):
         
-        #overload
-        pass
+        #broadcast event to plugin system
+        event = hbusMasterEvent(hbusMasterEventType.eventOperational)
+        self.pluginManager.masterEventBroadcast(event)
+        
         
     def getInformationData(self):
         
@@ -715,20 +727,8 @@ class hbusMaster:
         
     def readBasicSlaveInformationEnded(self,*params):
         
-        #self.slaveReadDeferred = defer.Deferred()
-        #if len(self.slavesToRead) > 0:
-        #    self.slaveReadDeferred.addCallback(self.readBasicSlaveInformation,self.detectedSlaveList[self.slavesToRead.popleft()])
-        #else:
-        #    self.slaveReadDeferred.addCallback(self.slaveReadEnded)
-        
-        #self.slaveReadDeferred.callback(None)
-        
-        #processa objetos invisíveis
-        
-        #self.slaveReadDeferred.addCallback(self.readExtendedSlaveInformation,*params)
         d = defer.Deferred()
         d.addCallback(self.readExtendedSlaveInformation)
-        #self.slaveReadDeferred.addCallback(self.readExtendedSlaveInformation,*params)
         
         if params[0].getGlobalID() == self.detectedSlaveList.keys()[-1]:
             self.slaveReadDeferred.addCallback(self.slaveReadEnded)
@@ -1335,14 +1335,11 @@ class hbusMaster:
         
         #expectedResponseQueue cleanup
         
-        #remove elementos desnecessários
         for r in self.removeQueue:
             
             if r in self.expectedResponseQueue:
                 
                 self.expectedResponseQueue.remove(r)
-                
-                #self.logger.debug("Limpeza da fila de respostas...")
                 
         del self.removeQueue[:]
         
