@@ -41,7 +41,7 @@ class hbusObjectSerializer:
     def __init__(self,obj):
         
         ##Object permissions
-        self.permissions = obj.objectPermissions
+        self.permissions = obj.permissions
         ##Object descriptor string (name)
         self.description = obj.objectDescription
         ##Object size in bytes

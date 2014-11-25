@@ -199,7 +199,7 @@
                         %continue
                     %end
                     
-                    %if object.objectPermissions == 2:
+                    %if object.permissions == 2:
                         %continue
                     %end
                     
@@ -340,7 +340,7 @@
                         %continue
                     %end
                     
-                    %if object.objectPermissions == 1:
+                    %if object.permissions == 1:
                         %continue
                     %end
                     

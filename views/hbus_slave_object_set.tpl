@@ -89,7 +89,7 @@
                     
                     %object = slave.hbusSlaveObjects[objectNumber]
                     
-                    %if object.objectPermissions == 2:
+                    %if object.permissions == 2:
                         %canRead = False
                     %else:
                         %canRead = True

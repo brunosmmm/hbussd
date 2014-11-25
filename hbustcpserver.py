@@ -200,7 +200,7 @@ class HBUSTCP(LineReceiver):
             
             devAddr = string.split(param[0],':')
             
-            self.sendLine(self.hbusMaster.detectedSlaveList[int(hbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID())].hbusSlaveDescription)
+            self.sendLine(self.hbusMaster.detectedSlaveList[int(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID())].hbusSlaveDescription)
             
         except:
             
@@ -215,7 +215,7 @@ class HBUSTCP(LineReceiver):
             
             devAddr = string.split(param[0],':')
             
-            self.sendLine(str(self.hbusMaster.detectedSlaveList[int(hbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID())].hbusSlaveObjectCount))
+            self.sendLine(str(self.hbusMaster.detectedSlaveList[int(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID())].hbusSlaveObjectCount))
             
         except:
             
@@ -259,7 +259,7 @@ class HBUSTCP(LineReceiver):
                         
             else:
                 
-                device = hbusDeviceAddress(int(devAddr[0]),int(devAddr[1]))
+                device = HbusDeviceAddress(int(devAddr[0]),int(devAddr[1]))
             
             i = 1
             for slaveObject in self.hbusMaster.detectedSlaveList[device.getGlobalID()].hbusSlaveObjects.values():
@@ -268,7 +268,7 @@ class HBUSTCP(LineReceiver):
                     continue
             
                 self.sendLine(param[0]+":"+str(i)+", "+str(slaveObject.objectDescription)+", "+str(slaveObject.objectSize)+", "+
-                                        ("R" if slaveObject.objectPermissions == 1 else ("W" if slaveObject.objectPermissions == 2 else "RW")))
+                                        ("R" if slaveObject.permissions == 1 else ("W" if slaveObject.permissions == 2 else "RW")))
                 
                 i = i + 1
             
@@ -289,7 +289,7 @@ class HBUSTCP(LineReceiver):
                 self.sendLine("ADDRESS ERROR")
                 return None
             
-            self.hbusMaster.readSlaveObject(hbusDeviceAddress(int(devAddr[0]),int(devAddr[1])), int(devAddr[2]),callBack=self.readCommandEnded)
+            self.hbusMaster.readSlaveObject(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])), int(devAddr[2]),callBack=self.readCommandEnded)
             
         except:
             self.logger.warning("endereço de objeto e/ou dispositivo mal-formado ou inexistente")
@@ -344,7 +344,7 @@ class HBUSTCP(LineReceiver):
         else:
             
             objNumber = devAddr[2]
-            device = hbusDeviceAddress(int(devAddr[0]),int(devAddr[1]))
+            device = HbusDeviceAddress(int(devAddr[0]),int(devAddr[1]))
         
         byteList = []
 
@@ -386,9 +386,9 @@ class HBUSTCP(LineReceiver):
             self.logger.warning("malformed device address")
             return None
         
-        slaveObjectValue = self.hbusMaster.detectedSlaveList[hbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID()].hbusSlaveObjects[int(devAddr[2])].objectLastValue
+        slaveObjectValue = self.hbusMaster.detectedSlaveList[HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID()].hbusSlaveObjects[int(devAddr[2])].objectLastValue
         
-        self.hbusMaster.writeSlaveObject(hbusDeviceAddress(int(devAddr[0]),int(devAddr[1])), int(devAddr[2]), incrementByteList(slaveObjectValue))
+        self.hbusMaster.writeSlaveObject(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])), int(devAddr[2]), incrementByteList(slaveObjectValue))
 
 ##TCP server instance
 class HBUSTCPFactory(Factory):

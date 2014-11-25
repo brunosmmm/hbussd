@@ -6,7 +6,7 @@
 
 from plugins.hbussd_vdevs import hbusVirtualDevice
 from hbusslaves import HbusDeviceObject, HbusObjDataType, HbusObjLevel
-from hbus_constants import hbusSlaveObjectPermissions as op
+from hbus_constants import HbusObjectPermissions as op
 
 value_zero = [0]
 
@@ -35,7 +35,7 @@ def getVirtualDevices():
     device_zero.device.hbusSlaveObjectCount = 2
     object_zero = HbusDeviceObject()
     
-    object_zero.objectPermissions = op.hbusSlaveObjectReadWrite
+    object_zero.permissions = op.hbusSlaveObjectReadWrite
     object_zero.objectDescription = "dummy object"
     object_zero.objectSize = 1
     object_zero.objectDataType = HbusObjDataType.dataTypeUnsignedInt

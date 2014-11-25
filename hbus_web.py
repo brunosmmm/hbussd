@@ -106,7 +106,7 @@ class HBUSWEB:
         if addr != None:
             
             devAddr = string.split(addr,":")
-            device = hbusDeviceAddress(int(devAddr[0]),int(devAddr[1]))
+            device = HbusDeviceAddress(int(devAddr[0]),int(devAddr[1]))
             
             s = self.hbusMaster.detectedSlaveList[device.getGlobalID()]
         elif uid != None:
@@ -143,8 +143,8 @@ class HBUSWEB:
                 
                 pass
                 
-            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
-            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
+            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x02 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
+            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x01 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
         
         return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=HbusObjDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         readObjCount=readObjectCount,writeObjCount=writeObjectCount,re=re,getNumber=getN)
@@ -222,8 +222,8 @@ class HBUSWEB:
                 #except:
                 #    pass
         
-            #writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02 and x.objectLevel > self.objectLevel])
-            #readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01 and x.objectLevel > self.objectLevel])
+            #writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x02 and x.objectLevel > self.objectLevel])
+            #readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x01 and x.objectLevel > self.objectLevel])
         
         return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=HbusObjDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         objectNumber = int(obj),re=re,percentToRange=self.percentToRange)

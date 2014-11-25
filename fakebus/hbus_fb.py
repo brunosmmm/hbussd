@@ -43,7 +43,7 @@ CONFIG_LEVEL = {0 : HbusObjLevel.level0,
                 2 : HbusObjLevel.level2,
                 3 : HbusObjLevel.level3}
 
-FAKEBUS_MASTER_ADDRESS = hbusDeviceAddress(0, 0)
+FAKEBUS_MASTER_ADDRESS = HbusDeviceAddress(0, 0)
 
 
 class FakeBusDeviceStatus(object):
@@ -68,7 +68,7 @@ class FakeBusDevice(HbusDevice):
 
             objectInfo = (0,
                           4+len(self.hbusSlaveDescription),
-                          hbusSlaveObjectPermissions.hbusSlaveObjectRead,
+                          HbusObjectPermissions.hbusSlaveObjectRead,
                           8, 0,
                           len(self.hbusSlaveDescription),
                           self.hbusSlaveDescription)
@@ -78,7 +78,7 @@ class FakeBusDevice(HbusDevice):
         elif objnum in self.hbusSlaveObjects.keys():
             objectInfo = (objnum,
                           4+len(self.hbusSlaveObjects[objnum].objectDescription),
-                          self.hbusSlaveObjects[objnum].objectPermissions,
+                          self.hbusSlaveObjects[objnum].permissions,
                           self.hbusSlaveObjects[objnum].objectSize,
                           self.hbusSlaveObjects[objnum].objectDataTypeInfo,
                           len(self.hbusSlaveObjects[objnum].objectDescription),
@@ -229,8 +229,8 @@ class FakeBusSerialPort(Protocol):
     # @param packet packet received by state machine
     def parse_packet(self, packet):
 
-        psource = hbusDeviceAddress(ord(packet[0]), ord(packet[1]))
-        pdest = hbusDeviceAddress(ord(packet[2]), ord(packet[3]))
+        psource = HbusDeviceAddress(ord(packet[0]), ord(packet[1]))
+        pdest = HbusDeviceAddress(ord(packet[2]), ord(packet[3]))
 
         #decode packets, respond on BUS 0
         if ord(packet[2]) != 0 and ord(packet[2]) != 0xff:
@@ -248,13 +248,13 @@ class FakeBusSerialPort(Protocol):
                     #self.send_packet()
                     params = self.deviceList[self.addressingDevice].create_read_response(0)
 
-                    self.send_packet(HBUSCOMMAND_RESPONSE, FAKEBUS_MASTER_ADDRESS, hbusDeviceAddress(0, 255), params)
+                    self.send_packet(HBUSCOMMAND_RESPONSE, FAKEBUS_MASTER_ADDRESS, HbusDeviceAddress(0, 255), params)
                     self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceAddressing3
                     return
 
                 elif ord(packet[4]) == HBUSCOMMAND_SEARCH.commandByte or ord(packet[4]) == HBUSCOMMAND_KEYSET.commandByte and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing3:
                     #attribute new address and register
-                    self.deviceList[self.addressingDevice].hbusSlaveAddress = hbusDeviceAddress(ord(packet[2]), ord(packet[3]))
+                    self.deviceList[self.addressingDevice].hbusSlaveAddress = HbusDeviceAddress(ord(packet[2]), ord(packet[3]))
                     self.busAddrToUID[pdest.getGlobalID()] = self.deviceList[self.addressingDevice].hbusSlaveUniqueDeviceInfo
                     #self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceEnumerated
 
@@ -339,7 +339,7 @@ class FakeBusSerialPort(Protocol):
 
     def send_packet(self, command, dest, source, params=()):
 
-        busop = hbusOperation(hbusInstruction(command, len(params), params), dest, source)
+        busop = HbusOperation(HbusInstruction(command, len(params), params), dest, source)
 
         if command == HBUSCOMMAND_BUSLOCK:
             self.busState = hbusBusStatus.hbusBusLockedThis
@@ -361,7 +361,7 @@ class FakeBusSerialPort(Protocol):
         if self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing1:
         #do a buslock
             self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceAddressing2
-            self.send_packet(HBUSCOMMAND_BUSLOCK, FAKEBUS_MASTER_ADDRESS, hbusDeviceAddress(0, 255))
+            self.send_packet(HBUSCOMMAND_BUSLOCK, FAKEBUS_MASTER_ADDRESS, HbusDeviceAddress(0, 255))
 
             #done for now
             return
@@ -422,16 +422,16 @@ class FakeBusSerialPort(Protocol):
 
                 if can_read == True:
                     if can_write == True:
-                        obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectReadWrite
+                        obj.permissions = HbusObjectPermissions.hbusSlaveObjectReadWrite
                     else:
-                        obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectRead
+                        obj.permissions = HbusObjectPermissions.hbusSlaveObjectRead
                 elif can_write == True:
-                    obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectWrite
+                    obj.permissions = HbusObjectPermissions.hbusSlaveObjectWrite
                 else:
                     #error!
                     pass #for now
 
-                obj.objectCrypto = devconf.getboolean(section, 'is_crypto')
+                obj.is_crypto = devconf.getboolean(section, 'is_crypto')
                 obj.objectHidden = devconf.getboolean(section, 'hidden')
                 obj.objectDescription = devconf.get(section, 'descr')
                 obj.objectSize = devconf.getint(section, 'size')
