@@ -146,7 +146,7 @@ class HBUSWEB:
             writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
             readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
         
-        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+        return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=HbusObjDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         readObjCount=readObjectCount,writeObjCount=writeObjectCount,re=re,getNumber=getN)
         
     ##@todo document this
@@ -191,7 +191,7 @@ class HBUSWEB:
                 
                 pass
         
-        return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType,objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+        return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=HbusObjDataType,objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
     
     ##@todo document this
@@ -225,7 +225,7 @@ class HBUSWEB:
             #writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x02 and x.objectLevel > self.objectLevel])
             #readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.objectPermissions & 0x01 and x.objectLevel > self.objectLevel])
         
-        return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=hbusSlaveObjectDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
+        return template('hbus_slave_object_set',slave=s,hbusSlaveObjectDataType=HbusObjDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
                         #readObjCount=readObjectCount,writeObjCount=writeObjectCount)
     

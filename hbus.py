@@ -75,7 +75,7 @@ class HBUSFakeBus(ClientFactory):
 #@todo stable: incluir código para permitir edição de objetos tipo Byte, Int e Unsigned Int
 #@todo default: Implement integrated twisted http server for JSON data exchange
 #@todo default: Explore feasibility of doing an automatic data dump of all system objects when enumeration is done
-class TwistedhbusMaster(hbusMaster):
+class TwistedhbusMaster(HbusMaster):
     
     hbusSerial = None
     

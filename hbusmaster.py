@@ -23,7 +23,7 @@ from hbusslaves import *
 from hbus_datahandlers import *
 from hbusmasterobjects import *
 from fakebus import hbus_fb
-from hbussd_plugin import hbusPluginManager
+from hbussd_plugin import HbusPluginManager
 from hbussd_evt import hbusMasterEvent, hbusMasterEventType
 
 import re
@@ -143,7 +143,7 @@ class hbusMasterInformationData:
         self.activeSlaveCount = slaveCount
         self.activeBusses = activeBusses
 
-class hbusMaster:
+class HbusMaster:
     
     pluginManager = None
     
@@ -199,7 +199,7 @@ class hbusMaster:
         
         self.logger = logging.getLogger('hbussd.hbusmaster')
 
-        self.pluginManager = hbusPluginManager('./plugins',self)
+        self.pluginManager = HbusPluginManager('./plugins',self)
         self.searchAndLoadPlugins()
         
         if port == None:
@@ -214,19 +214,19 @@ class hbusMaster:
         
         #system started event
         event = hbusMasterEvent(hbusMasterEventType.eventStarted)
-        self.pluginManager.masterEventBroadcast(event)
+        self.pluginManager.m_evt_broadcast(event)
 
     ##Search and load plugins using plugin manager
     def searchAndLoadPlugins(self):
 
         self.logger.debug("scanning plugins")
 
-        self.pluginManager.scanPlugins()
+        self.pluginManager.scan_plugins()
         
-        for plugin in self.pluginManager.getAvailablePlugins():
+        for plugin in self.pluginManager.get_available_plugins():
             #try:
             #    self.logger.debug('loading plugin '+plugin)
-            self.pluginManager.loadPlugin(plugin)
+            self.pluginManager.m_load_plugin(plugin)
             #except:
             #    self.logger.debug('error loading plugin '+plugin)
 
@@ -235,7 +235,7 @@ class hbusMaster:
         
         #broadcast event to plugin system
         event = hbusMasterEvent(hbusMasterEventType.eventOperational)
-        self.pluginManager.masterEventBroadcast(event)
+        self.pluginManager.m_evt_broadcast(event)
         
         
     def getInformationData(self):
@@ -733,7 +733,7 @@ class hbusMaster:
                 return
         else:
             addr = address
-            self.detectedSlaveList[address.getGlobalID()] = hbusSlaveInfo(address)
+            self.detectedSlaveList[address.getGlobalID()] = HbusDevice(address)
         
         self.logger.info("New device registered at "+str(addr))
         self.logger.debug("New device UID is "+str(addr.getGlobalID()))
@@ -941,7 +941,7 @@ class hbusMaster:
             
             self.logger.debug("Analysing object "+str(currentObject)+", in device with ID "+str(data[0][1].getGlobalID()))
             
-            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject] = hbusSlaveObjectInfo()
+            self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject] = HbusDeviceObject()
             self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectPermissions = ord(data[1][0]) & 0x03
             
             if ord(data[1][0]) & 0x04:
@@ -951,7 +951,7 @@ class hbusMaster:
                 self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectHidden = True
                 
             if (ord(data[1][0]) & 0x30) == 0: 
-                self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataType = hbusSlaveObjectDataType.dataTypeInt
+                self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataType = HbusObjDataType.dataTypeInt
             else:
                 self.detectedSlaveList[data[0][1].getGlobalID()].hbusSlaveObjects[currentObject].objectDataType = ord(data[1][0]) & 0x30
                 
@@ -1080,7 +1080,7 @@ class hbusMaster:
         #see if this is a virtual device first
         if address.hbusAddressBusNumber == VIRTUAL_BUS:
             #read and update
-            result = self.pluginManager.readVirtualDeviceObject(address.hbusAddressDevNumber,number)
+            result = self.pluginManager.m_read_vdev_obj(address.hbusAddressDevNumber,number)
             self.virtualDeviceList[address.getGlobalID()].hbusSlaveObjects[number].objectLastValue = result
             
             if callBack != None:
@@ -1157,7 +1157,7 @@ class hbusMaster:
         #check if is virtual bus
         if address.hbusAddressBusNumber == VIRTUAL_BUS:
             self.virtualDeviceList[address.getGlobalID()].hbusSlaveObjects[number].objectLastValue = value
-            self.pluginManager.writeVirtualDeviceObject(address.hbusAddressDevNumber, number, value)
+            self.pluginManager.m_write_vdev_obj(address.hbusAddressDevNumber, number, value)
             return
         
         if self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number].objectPermissions != hbusSlaveObjectPermissions.hbusSlaveObjectRead:
@@ -1200,7 +1200,7 @@ class hbusMaster:
         else:
             obj = self.detectedSlaveList[address.getGlobalID()].hbusSlaveObjects[number]
         
-        data = hbusSlaveObjectDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](hbusSlaveObjectDataType(),data=value,extInfo=obj.objectExtendedInfo,decode=True,size=obj.objectSize)
+        data = HbusObjDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](HbusObjDataType(),data=value,extInfo=obj.objectExtendedInfo,decode=True,size=obj.objectSize)
         
         self.writeSlaveObject(address, number, data)
     

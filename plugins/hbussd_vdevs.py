@@ -4,13 +4,13 @@
    @since 24/11/2014
 """
 
-from hbusslaves import hbusSlaveInfo
+from hbusslaves import HbusDevice
 
 class hbusVirtualDevice:
-    """Container for virtual devices, add data and handles onto hbusSlaveInfo
+    """Container for virtual devices, add data and handles onto HbusDevice
     """
     def __init__(self):
-        self.device = hbusSlaveInfo(None)
+        self.device = HbusDevice(None)
         #nothing to retrieve, all information will already be present
         self.device.basicInformationRetrieved = True
         self.device.extendedInformationRetrieved = True

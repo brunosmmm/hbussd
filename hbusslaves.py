@@ -10,7 +10,7 @@ from array import array
 from math import log
 
 ##Object level identifier
-class hbusSlaveObjectLevel:
+class HbusObjLevel:
     
     ##Object has level 0
     level0  = 0x00
@@ -22,7 +22,7 @@ class hbusSlaveObjectLevel:
     level3  = 0xC0
 
 ##Object data type identifier
-class hbusSlaveObjectDataType:
+class HbusObjDataType:
     ##Byte type
     dataTypeByte        = 0x30
     ##Integer type
@@ -348,7 +348,7 @@ class hbusSlaveObjectExtendedInfo:
     objectExtendedString = None
 
 ##Device object main class
-class hbusSlaveObjectInfo:
+class HbusDeviceObject:
 
     ##Object permissions
     objectPermissions = 0
@@ -380,18 +380,18 @@ class hbusSlaveObjectInfo:
         if self.objectLastValue == None:
             return None
         
-        if self.objectDataType not in hbusSlaveObjectDataType.dataTypeOptions.keys():
+        if self.objectDataType not in HbusObjDataType.dataTypeOptions.keys():
             
             return str(self.objectLastValue) #has no explicit format
         
         #analyzes extended information
-        if type(hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType]) == dict: 
+        if type(HbusObjDataType.dataTypeOptions[self.objectDataType]) == dict: 
         
-            if self.objectDataTypeInfo not in hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType].keys():
+            if self.objectDataTypeInfo not in HbusObjDataType.dataTypeOptions[self.objectDataType].keys():
             
                 return str(self.objectLastValue) #has no explicit format
                 
-        return hbusSlaveObjectDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](hbusSlaveObjectDataType(),data=self.objectLastValue,size=self.objectSize,extInfo=self.objectExtendedInfo)
+        return HbusObjDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](HbusObjDataType(),data=self.objectLastValue,size=self.objectSize,extInfo=self.objectExtendedInfo)
         
     ##Object string representation
     #@return descriptive string for logging
@@ -430,7 +430,7 @@ class hbusSlaveInterruptInfo:
         return self.interruptDescription
 
 ##Device information main class
-class hbusSlaveInfo:
+class HbusDevice:
     
     ##Virtual devices
     hbusSlaveIsVirtual = False

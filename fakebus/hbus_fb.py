@@ -1,15 +1,15 @@
 #coding=utf-8
 
-##@package hbus_fb
-# fake bus for debugging without actual hardware connected
-# @author Bruno Morais <brunosmmm@gmail.com>
-# @since 11/17/2014
-# @todo implement fake bus device structure
-# @todo load device configuration from files
-
+"""Fake bus for debugging without actual hardware connected
+  @package hbus_fb
+  @author Bruno Morais <brunosmmm@gmail.com>
+  @since 11/17/2014
+  @todo implement fake bus device structure
+  @todo load device configuration from files
+"""
 
 from twisted.internet import reactor
-from twisted.internet.protocol import Factory, Protocol
+from twisted.internet.protocol import Protocol
 import struct
 import logging
 from hbus_base import *
@@ -21,86 +21,92 @@ import ConfigParser ##for fakebus device tree emulation
 import os
 
 ##Configuration file options equivalence
-configDataType = { 'I' : hbusSlaveObjectDataType.dataTypeInt,
-                   'U' : hbusSlaveObjectDataType.dataTypeUnsignedInt,
-                   'B' : hbusSlaveObjectDataType.dataTypeByte,
-                   'F' : hbusSlaveObjectDataType.dataTypeFixedPoint
-                 }
+CONFIG_DATA_TYPE = {'I' : HbusObjDataType.dataTypeInt,
+                    'U' : HbusObjDataType.dataTypeUnsignedInt,
+                    'B' : HbusObjDataType.dataTypeByte,
+                    'F' : HbusObjDataType.dataTypeFixedPoint}
 
-configDataTypeInfo = { 'h' : hbusSlaveObjectDataType.dataTypeByteHex,
-                       'd' : hbusSlaveObjectDataType.dataTypeByteDec,
-                       'o' : hbusSlaveObjectDataType.dataTypeByteOct,
-                       'b' : hbusSlaveObjectDataType.dataTypeByteBin,
-                       'B' : hbusSlaveObjectDataType.dataTypeByteBool,
-                       'p' : hbusSlaveObjectDataType.dataTypeUintPercent,
-                       'L' : hbusSlaveObjectDataType.dataTypeUintLinPercent,
-                       'l' : hbusSlaveObjectDataType.dataTypeUintLogPercent,
-                       't' : hbusSlaveObjectDataType.dataTypeUintTime,
-                       'D' : hbusSlaveObjectDataType.dataTypeUintDate,
-                       'u' : hbusSlaveObjectDataType.dataTypeUintNone
-                     }
+CONFIG_DATA_TYPE_INFO = {'h' : HbusObjDataType.dataTypeByteHex,
+                         'd' : HbusObjDataType.dataTypeByteDec,
+                         'o' : HbusObjDataType.dataTypeByteOct,
+                         'b' : HbusObjDataType.dataTypeByteBin,
+                         'B' : HbusObjDataType.dataTypeByteBool,
+                         'p' : HbusObjDataType.dataTypeUintPercent,
+                         'L' : HbusObjDataType.dataTypeUintLinPercent,
+                         'l' : HbusObjDataType.dataTypeUintLogPercent,
+                         't' : HbusObjDataType.dataTypeUintTime,
+                         'D' : HbusObjDataType.dataTypeUintDate,
+                         'u' : HbusObjDataType.dataTypeUintNone}
 
-configLevel = { 0 : hbusSlaveObjectLevel.level0,
-                1 : hbusSlaveObjectLevel.level1,
-                2 : hbusSlaveObjectLevel.level2,
-                3 : hbusSlaveObjectLevel.level3
-                }
+CONFIG_LEVEL = {0 : HbusObjLevel.level0,
+                1 : HbusObjLevel.level1,
+                2 : HbusObjLevel.level2,
+                3 : HbusObjLevel.level3}
 
-FakeBusMasterAddress = hbusDeviceAddress(0,0)
+FAKEBUS_MASTER_ADDRESS = hbusDeviceAddress(0, 0)
 
-##Device internal status emulation for addressing simulation
-class FakeBusDeviceStatus:
+
+class FakeBusDeviceStatus(object):
+    """Device internal status emulation for addressing simulation"""
     deviceIdle = 0
     deviceAddressing1 = 1 #first stage, device does buslock
     deviceAddressing2 = 2 #second stage, device awaits
     deviceAddressing3 = 3 #finishes addressing
     deviceEnumerated = 4
 
-##Device data structure
-# inherits hbusSlaveInfo and adds objects to emulate addressing of devices
-class FakeBusDevice(hbusSlaveInfo):
-    
+class FakeBusDevice(HbusDevice):
+    """Device data structure, inherits HbusSlaveInfo
+    and adds objects to emulate adressing"""
+
     ##Device internal status emulation
     deviceStatus = FakeBusDeviceStatus.deviceIdle
 
-    def makeQueryResponse(self,objnum):
+    def create_query_response(self, objnum):
         if objnum == 0:
             #special case
-            
             #OBJECT_INFO data
 
-            objectInfo = (0,4+len(self.hbusSlaveDescription),hbusSlaveObjectPermissions.hbusSlaveObjectRead,8,0,len(self.hbusSlaveDescription),self.hbusSlaveDescription)
+            objectInfo = (0,
+                          4+len(self.hbusSlaveDescription),
+                          hbusSlaveObjectPermissions.hbusSlaveObjectRead,
+                          8, 0,
+                          len(self.hbusSlaveDescription),
+                          self.hbusSlaveDescription)
 
             return objectInfo
 
         elif objnum in self.hbusSlaveObjects.keys():
-            objectInfo = (objnum,4+len(self.hbusSlaveObjects[objnum].objectDescription),self.hbusSlaveObjects[objnum].objectPermissions,self.hbusSlaveObjects[objnum].objectSize,self.hbusSlaveObjects[objnum].objectDataTypeInfo,len(self.hbusSlaveObjects[objnum].objectDescription),self.hbusSlaveObjects[objnum].objectDescription)
-            
+            objectInfo = (objnum,
+                          4+len(self.hbusSlaveObjects[objnum].objectDescription),
+                          self.hbusSlaveObjects[objnum].objectPermissions,
+                          self.hbusSlaveObjects[objnum].objectSize,
+                          self.hbusSlaveObjects[objnum].objectDataTypeInfo,
+                          len(self.hbusSlaveObjects[objnum].objectDescription),
+                          self.hbusSlaveObjects[objnum].objectDescription)
             return objectInfo
         else:
             #object does not exist
             return None
 
-    def makeReadResponse(self,objnum):
+    def create_read_response(self, objnum):
         if objnum == 0:
 
-            uid = struct.pack('i',self.hbusSlaveUniqueDeviceInfo)
+            uid = struct.pack('i', self.hbusSlaveUniqueDeviceInfo)
 
-            objectListInfo = (0,8,self.hbusSlaveObjectCount,self.hbusSlaveEndpointCount,self.hbusSlaveInterruptCount,self.hbusSlaveCapabilities,uid)
+            objectListInfo = (0, 8, self.hbusSlaveObjectCount, self.hbusSlaveEndpointCount, self.hbusSlaveInterruptCount, self.hbusSlaveCapabilities,uid)
 
             return objectListInfo
         elif objnum in self.hbusSlaveObjects.keys():
 
             ##@todo generate proper object size!
-            objectRead = (0,self.hbusSlaveObjects[objnum].objectSize,self.hbusSlaveObjects[objnum].objectLastValue)
-            
+            objectRead = (0, self.hbusSlaveObjects[objnum].objectSize, self.hbusSlaveObjects[objnum].objectLastValue)
+
             return objectRead
         else:
             return None
-    
 
-##Fake bus main class
 class FakeBusSerialPort(Protocol):
+    """Fake bus main class"""
 
     ##Constructor, initializes
     def __init__(self):
@@ -112,7 +118,7 @@ class FakeBusSerialPort(Protocol):
         self.deviceList = {}
         try:
             self.config.read('fakebus/fakebus.config')
-            self.buildBus()
+            self.build_bus()
         except:
             self.logger.debug("no configuration file found")
 
@@ -127,44 +133,44 @@ class FakeBusSerialPort(Protocol):
 
     ##Data reception state machine, similar to master's
     # @param data data chunk received
-    def dataReceived(self,data):
-        
+    def dataReceived(self, data):
+
         #make state machine work byte by byte
-        for d in data:
-            
+        for byte in data:
+
             if self.rxState == hbusMasterRxState.hbusRXSBID:
-                self.dataBuffer.append(d)
+                self.dataBuffer.append(byte)
                 self.rxState = hbusMasterRxState.hbusRXSDID
             elif self.rxState == hbusMasterRxState.hbusRXSDID:
-                self.dataBuffer.append(d)
+                self.dataBuffer.append(byte)
                 self.rxState = hbusMasterRxState.hbusRXTBID
             elif self.rxState == hbusMasterRxState.hbusRXTBID:
-                self.dataBuffer.append(d)
+                self.dataBuffer.append(byte)
                 self.rxState = hbusMasterRxState.hbusRXTDID
             elif self.rxState == hbusMasterRxState.hbusRXTDID:
-                self.dataBuffer.append(d)
+                self.dataBuffer.append(byte)
                 self.rxState = hbusMasterRxState.hbusRXCMD
             elif self.rxState == hbusMasterRxState.hbusRXCMD:
-                self.dataBuffer.append(d)
-                if ord(d) in HBUS_SCMDBYTELIST:
+                self.dataBuffer.append(byte)
+                if ord(byte) in HBUS_SCMDBYTELIST:
                     self.rxState = hbusMasterRxState.hbusRXSTP
-                elif ord(d) == HBUSCOMMAND_SOFTRESET.commandByte: #softreset is different, doesnt specify addr field
+                elif ord(byte) == HBUSCOMMAND_SOFTRESET.commandByte: #softreset is different, doesnt specify addr field
                     self.rxState = hbusMasterRxState.hbusRXPSZ
                 else:
                     self.rxState = hbusMasterRxState.hbusRXADDR
             elif self.rxState == hbusMasterRxState.hbusRXADDR:
-                self.dataBuffer.append(d)
+                self.dataBuffer.append(byte)
                 if ord(self.dataBuffer[4]) in HBUS_SACMDBYTELIST:
                     self.rxState = hbusMasterRxState.hbusRXSTP
                 else:
                     self.rxState = hbusMasterRxState.hbusRXPSZ
             elif self.rxState == hbusMasterRxState.hbusRXPSZ:
-                self.lastParamSize = ord(d)
-                self.dataBuffer.append(d)
+                self.lastParamSize = ord(byte)
+                self.dataBuffer.append(byte)
                 if ord(self.dataBuffer[4]) == HBUSCOMMAND_STREAMW.commandByte or ord(self.dataBuffer[4]) == HBUSCOMMAND_STREAMR.commandByte:
                     self.rxState = hbusMasterRxState.hbusRXSTP
                 else:
-                    if ord(d) > 0:
+                    if ord(byte) > 0:
                         self.rxState = hbusMasterRxState.hbusRXPRM
                     else:
                         self.rxState = hbusMasterRxState.hbusRXSTP
@@ -179,36 +185,36 @@ class FakeBusSerialPort(Protocol):
                     count = 6
                 if len(self.dataBuffer) <= (count + self.lastParamSize):
                 #end hack
-                    self.dataBuffer.append(d)
+                    self.dataBuffer.append(byte)
                 else:
-                    if ord(d) == 0xFF:
-                        self.dataBuffer.append(d)
+                    if ord(byte) == 0xFF:
+                        self.dataBuffer.append(byte)
                         #finished Packet
 
                         self.rxState = hbusMasterRxState.hbusRXSBID
-                        self.parsePacket(self.dataBuffer)
+                        self.parse_packet(self.dataBuffer)
                         self.dataBuffer = []
                         return
                     else:
                         #malformed packet, ignore
                         self.rxState = hbusMasterRxState.hbusRXSBID
                         self.logger.debug("ignored malformed packet from master")
-                        self.logger.debug("packet size %d, dump: %s",len(self.dataBuffer),[hex(ord(x)) for x in self.dataBuffer])
+                        self.logger.debug("packet size %d, dump: %s", len(self.dataBuffer), [hex(ord(x)) for x in self.dataBuffer])
                         self.dataBuffer = []
                         return
             elif self.rxState == hbusMasterRxState.hbusRXSTP:
-                self.dataBuffer.append(d)
-                if ord(d) == 0xFF:
+                self.dataBuffer.append(byte)
+                if ord(byte) == 0xFF:
                     #finished
                     self.rxState = hbusMasterRxState.hbusRXSBID
-                    self.parsePacket(self.dataBuffer)
+                    self.parse_packet(self.dataBuffer)
                     self.dataBuffer = []
                     return
                 else:
                     #malformed packet, ignore
                     self.rxState = hbusMasterRxState.hbusRXSBID
                     self.logger.debug("ignored malformed packet from master")
-                    self.logger.debug("packet size %d dump: %s",len(self.dataBuffer),[hex(ord(x)) for x in self.dataBuffer])
+                    self.logger.debug("packet size %d dump: %s", len(self.dataBuffer), [hex(ord(x)) for x in self.dataBuffer])
                     self.dataBuffer = []
                     return
             else:
@@ -221,15 +227,15 @@ class FakeBusSerialPort(Protocol):
 
     ##Parse a complete packet
     # @param packet packet received by state machine
-    def parsePacket(self,packet):
+    def parse_packet(self, packet):
 
-        pSource = hbusDeviceAddress(ord(packet[0]),ord(packet[1]))
-        pDest = hbusDeviceAddress(ord(packet[2]),ord(packet[3]))
-        
+        psource = hbusDeviceAddress(ord(packet[0]), ord(packet[1]))
+        pdest = hbusDeviceAddress(ord(packet[2]), ord(packet[3]))
+
         #decode packets, respond on BUS 0
         if ord(packet[2]) != 0 and ord(packet[2]) != 0xff:
             return
-        
+
         #check if bus is locked
         if self.busState == hbusBusStatus.hbusBusLockedOther:
             return #locked with others, we do nothing
@@ -239,21 +245,21 @@ class FakeBusSerialPort(Protocol):
                 if ord(packet[4]) == HBUSCOMMAND_GETCH.commandByte and ord(packet[5]) == 0 and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing2:
                     #send object 0 to master
                     ##@todo MAKE object 0 from internal info
-                    #self.sendPacket()
-                    params = self.deviceList[self.addressingDevice].makeReadResponse(0)
+                    #self.send_packet()
+                    params = self.deviceList[self.addressingDevice].create_read_response(0)
 
-                    self.sendPacket(HBUSCOMMAND_RESPONSE,FakeBusMasterAddress,hbusDeviceAddress(0,255),params)
+                    self.send_packet(HBUSCOMMAND_RESPONSE, FAKEBUS_MASTER_ADDRESS, hbusDeviceAddress(0, 255), params)
                     self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceAddressing3
                     return
-                    
+
                 elif ord(packet[4]) == HBUSCOMMAND_SEARCH.commandByte or ord(packet[4]) == HBUSCOMMAND_KEYSET.commandByte and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing3:
                     #attribute new address and register
-                    self.deviceList[self.addressingDevice].hbusSlaveAddress = hbusDeviceAddress(ord(packet[2]),ord(packet[3]))
-                    self.busAddrToUID[pDest.getGlobalID()] = self.deviceList[self.addressingDevice].hbusSlaveUniqueDeviceInfo
+                    self.deviceList[self.addressingDevice].hbusSlaveAddress = hbusDeviceAddress(ord(packet[2]), ord(packet[3]))
+                    self.busAddrToUID[pdest.getGlobalID()] = self.deviceList[self.addressingDevice].hbusSlaveUniqueDeviceInfo
                     #self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceEnumerated
-                    
+
                     #addressing will finish when device sends a busunlock
-                    self.addressNextDevice()
+                    self.address_next_dev()
                     return
                 else:
                     #makes no sense
@@ -261,218 +267,216 @@ class FakeBusSerialPort(Protocol):
 
         #detect buslock commands globally
         if ord(packet[4]) == HBUSCOMMAND_BUSLOCK.commandByte:
-            if pDest.getGlobalID() in self.busAddrToUID.keys():
+            if pdest.getGlobalID() in self.busAddrToUID.keys():
                 #locking with one of the fake devices
                 self.busState = hbusBusStatus.hbusBusLockedThis
             else:
                 self.busState = hbusBusStatus.hbusBusLockedOther
             return
-        
+
         #detect busunlock commands
         if ord(packet[4]) == HBUSCOMMAND_BUSUNLOCK.commandByte:
             self.busState = hbusBusStatus.hbusBusFree
             return
-        
+
         #detect broadcast messages
         if ord(packet[3]) == 0xff:
             #this is a broadcast message
-            
+
             if ord(packet[4]) == HBUSCOMMAND_SEARCH.commandByte:
-                #this is a SEARCH command, see if there are slaves that were not enumerated and starts addressing
+                #this is a SEARCH command, see if there are slaves
+                #that were not enumerated and starts addressing
                 for device in self.deviceList.values():
                     if device.deviceStatus == FakeBusDeviceStatus.deviceIdle:
                         #start addressing
                         device.deviceStatus = FakeBusDeviceStatus.deviceAddressing1
                         #queue for addressing
                         self.addressingQueue.appendleft(device.hbusSlaveUniqueDeviceInfo)
-                
-                self.addressNextDevice()
+
+                self.address_next_dev()
                 #done
                 return
             elif ord(packet[4]) == HBUSCOMMAND_SOFTRESET.commandByte:
                 #reset command
                 return #ignore for now, nothing to do
-            elif ord(packet[4]) == HBUSCOMMAND_SETKEY.commandByte:
+            elif ord(packet[4]) == HBUSCOMMAND_KEYSET.commandByte:
                 #this is quite uncharted territory yet
                 return
-            elif ord(packet[4]) == HBUSCOMMAND_RESETKEY.commandByte:
+            elif ord(packet[4]) == HBUSCOMMAND_KEYRESET.commandByte:
                 return
             elif ord(packet[4]) == HBUSCOMMAND_SETCH.commandByte:
                 #might be a broadcast object, this is not really implemented yet
                 return
             else:
                 return #other commands cannot be used on broadcast
-        
+
         try:
-            targetUID = self.busAddrToUID[pDest.getGlobalID()]
+            target_uid = self.busAddrToUID[pdest.getGlobalID()]
         except:
             #device is not enumerated in this bus
             return
-        
+
         if ord(packet[4]) == HBUSCOMMAND_SEARCH.commandByte:
             #ping some device
-            self.sendPacket(HBUSCOMMAND_ACK,FakeBusMasterAddress,self.deviceList[targetUID].hbusSlaveAddress)
+            self.send_packet(HBUSCOMMAND_ACK, FAKEBUS_MASTER_ADDRESS, self.deviceList[target_uid].hbusSlaveAddress)
             return
         elif ord(packet[4]) == HBUSCOMMAND_QUERY.commandByte:
             #querying some object
-            params = self.deviceList[targetUID].makeQueryResponse(ord(packet[5]))
+            params = self.deviceList[target_uid].create_query_response(ord(packet[5]))
             if params == None:
                 #problem retrieving object, ignore
                 return
-            self.sendPacket(HBUSCOMMAND_QUERY_RESP,FakeBusMasterAddress,self.deviceList[targetUID].hbusSlaveAddress,params)
+            self.send_packet(HBUSCOMMAND_QUERY_RESP, FAKEBUS_MASTER_ADDRESS, self.deviceList[target_uid].hbusSlaveAddress, params)
             return
         elif ord(packet[4]) == HBUSCOMMAND_GETCH.commandByte:
             #reading some object
-            params = self.deviceList[targetUID].makeReadResponse(ord(packet[5]))
+            params = self.deviceList[target_uid].create_read_response(ord(packet[5]))
             if params == None:
                 #problem retrieving object, ignore
                 return
-            self.sendPacket(HBUSCOMMAND_RESPONSE,FakeBusMasterAddress,self.deviceList[targetUID].hbusSlaveAddress,params)
+            self.send_packet(HBUSCOMMAND_RESPONSE, FAKEBUS_MASTER_ADDRESS, self.deviceList[target_uid].hbusSlaveAddress, params)
             return
 
-    def sendPacket(self,command, dest, source, params=()):
-        
-        busOp = hbusOperation(hbusInstruction(command,len(params),params),dest,source)
+    def send_packet(self, command, dest, source, params=()):
+
+        busop = hbusOperation(hbusInstruction(command, len(params), params), dest, source)
 
         if command == HBUSCOMMAND_BUSLOCK:
             self.busState = hbusBusStatus.hbusBusLockedThis
         elif command == HBUSCOMMAND_BUSUNLOCK:
             self.busState = hbusBusStatus.hbusBusFree
 
-        self.transport.write(busOp.getString())
-        
-            
+        self.transport.write(busop.getString())
+
     ##Process addressing of devices
-    def addressNextDevice(self):
-        
+    def address_next_dev(self):
+
         if self.addressingDevice == None:
             if len(self.addressingQueue) > 0:
                 self.addressingDevice = self.addressingQueue.pop()
             else:
                 return
-        
+
         #first stage
         if self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing1:
         #do a buslock
             self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceAddressing2
-            self.sendPacket(HBUSCOMMAND_BUSLOCK,FakeBusMasterAddress,hbusDeviceAddress(0,255))
-        
+            self.send_packet(HBUSCOMMAND_BUSLOCK, FAKEBUS_MASTER_ADDRESS, hbusDeviceAddress(0, 255))
+
             #done for now
             return
         elif self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing3:
             #do a busunlock
-            self.sendPacket(HBUSCOMMAND_BUSUNLOCK,FakeBusMasterAddress,self.deviceList[self.addressingDevice].hbusSlaveAddress)
+            self.send_packet(HBUSCOMMAND_BUSUNLOCK, FAKEBUS_MASTER_ADDRESS, self.deviceList[self.addressingDevice].hbusSlaveAddress)
             self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceEnumerated
             self.addressingDevice = None
 
             #Must immediately start processing next slave!
-            reactor.callLater(0.1,self.addressNextDevice)
-            
+            reactor.callLater(0.1, self.address_next_dev)
+
             return
 
     ##Parse configuration files and builds bus structure
-    def buildBus(self):
-        
+    def build_bus(self):
+
         self.logger.debug("start adding fake devices...")
         #get device path
-        devicePath = 'fakebus/'+self.config.get('fakebus','object_dir')
-        
-        deviceFiles = [x for x in os.listdir(devicePath) if x.endswith('.config')]
+        devpath = 'fakebus/'+self.config.get('fakebus', 'object_dir')
+
+        devfiles = [x for x in os.listdir(devpath) if x.endswith('.config')]
 
         #read device files to build tree
-        devConfig = ConfigParser.ConfigParser()
-        for devFile in deviceFiles:
+        devconf = ConfigParser.ConfigParser()
+        for devfile in devfiles:
             device = FakeBusDevice(None)
-            devConfig.read(devicePath+devFile)
-            
+            devconf.read(devpath+devfile)
+
             #start building device
             try:
-                if devConfig.getboolean('device','dont_read') == True:
+                if devconf.getboolean('device', 'dont_read') == True:
                     continue
             except:
                 pass
 
             #UID
-            device.hbusSlaveUniqueDeviceInfo = int(devConfig.get('device','uid'),16)
-            device.hbusSlaveDescription = devConfig.get('device','descr')
-            device.hbusSlaveObjectCount = devConfig.getint('device','object_count')
-            device.hbusSlaveEndpointCount = devConfig.getint('device','endpoint_count')
-            device.hbusSlaveInterruptCount = devConfig.getint('device','int_count')
-            
+            device.hbusSlaveUniqueDeviceInfo = int(devconf.get('device', 'uid'), 16)
+            device.hbusSlaveDescription = devconf.get('device', 'descr')
+            device.hbusSlaveObjectCount = devconf.getint('device', 'object_count')
+            device.hbusSlaveEndpointCount = devconf.getint('device', 'endpoint_count')
+            device.hbusSlaveInterruptCount = devconf.getint('device', 'int_count')
+
             #capabilities, must generate flags
             ##@todo generate flags for capabilities from configuration file
 
-            for section in devConfig.sections():
-                m = re.match(r"object([0-9+])",section)
+            for section in devconf.sections():
+                m = re.match(r"object([0-9+])", section)
                 if m == None:
                     continue
-                
 
-                obj = hbusSlaveObjectInfo()
-                
-                #generate flags for permissions
-                canRead = devConfig.getboolean(section,'can_read')
-                canWrite = devConfig.getboolean(section, 'can_write')
-                
-                if canRead == True:
-                    if canWrite == True:
+
+                obj = HbusDeviceObject()
+
+                #generate flags for objectPermissions
+                can_read = devconf.getboolean(section, 'can_read')
+                can_write = devconf.getboolean(section, 'can_write')
+
+                if can_read == True:
+                    if can_write == True:
                         obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectReadWrite
                     else:
                         obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectRead
-                elif canWrite == True:
+                elif can_write == True:
                     obj.objectPermissions = hbusSlaveObjectPermissions.hbusSlaveObjectWrite
                 else:
                     #error!
                     pass #for now
-                
-                obj.objectCrypto = devConfig.getboolean(section,'is_crypto')
-                obj.objectHidden = devConfig.getboolean(section,'hidden')
-                obj.objectDescription = devConfig.get(section,'descr')
-                obj.objectSize = devConfig.getint(section,'size')
-                
+
+                obj.objectCrypto = devconf.getboolean(section, 'is_crypto')
+                obj.objectHidden = devconf.getboolean(section, 'hidden')
+                obj.objectDescription = devconf.get(section, 'descr')
+                obj.objectSize = devconf.getint(section, 'size')
+
                 #must generate value from configfile
-                dataType = devConfig.get(section,'data_type')
-                dataTypeInfo = devConfig.get(section,'data_type_info')
-                level = devConfig.getint(section,'level')
-                
+                data_type = devconf.get(section, 'data_type')
+                data_type_info = devconf.get(section, 'data_type_info')
+                level = devconf.getint(section, 'level')
+
                 try:
-                    obj.objectDataType = configDataType[dataType]
-                    obj.objectDataTypeInfo = configDataTypeInfo[dataTypeInfo]
-                    obj.objectLevel = configLevel[level]
+                    obj.objectDataType = CONFIG_DATA_TYPE[data_type]
+                    obj.objectDataTypeInfo = CONFIG_DATA_TYPE_INFO[data_type_info]
+                    obj.objectLevel = CONFIG_LEVEL[level]
                 except:
                     #invalid data type
                     pass #for now
 
-                obj.objectLevel = devConfig.getint(section,'level')
-
                 #must interpret dummy return value in file
-                rawValue = devConfig.get(section,'value')
-                obj.objectLastValue = self.listValueToInt(rawValue,obj.objectDataType)
+                raw_value = devconf.get(section, 'value')
+                obj.objectLastValue = self.list_val_to_int(raw_value, obj.objectDataType)
 
                 #when finished
                 ##add to obj list
                 device.hbusSlaveObjects[int(m.group(1))] = obj
-                
+
             #when finished
             ##add to device list
             self.deviceList[device.hbusSlaveUniqueDeviceInfo] = device
             self.logger.debug('fake device "'+device.hbusSlaveDescription+'" <'+hex(device.hbusSlaveUniqueDeviceInfo)+'> added')
-        
-    def listValueToInt(self,value,valueType):
 
-        if valueType == hbusSlaveObjectDataType.dataTypeInt:
+    def list_val_to_int(self, value, valuetype):
+
+        if valuetype == HbusObjDataType.dataTypeInt:
             return int(value)
-        elif valueType == hbusSlaveObjectDataType.dataTypeByte:
+        elif valuetype == HbusObjDataType.dataTypeByte:
             value = value.split(' ')
-            intValue = 0
-            for i in range(0,len(value)):
-                intValue = intValue + int(value[i],16) << i
-                
-            return intValue
-        elif valueType == hbusSlaveObjectDataType.dataTypeFixedPoint:
+            int_value = 0
+            for i in range(0, len(value)):
+                int_value = int_value + int(value[i], 16) << i
+
+            return int_value
+        elif valuetype == HbusObjDataType.dataTypeFixedPoint:
             return 0 ##@todo fixed point parsing
-        elif valuetype == hbusSlaveObjectDataType.dataTypeUnsignedInt:
+        elif valuetype == HbusObjDataType.dataTypeUnsignedInt:
             return int(value)
         else:
             return 0
-        
+

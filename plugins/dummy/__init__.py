@@ -28,8 +28,8 @@ def register(pluginManager, pID):
     virtualDevices = plugins.dummy.devobjs.getVirtualDevices()
     
     #register devices
-    for num,vdev in virtualDevices.iteritems():
-        pluginMgr.pluginRegisterVirtualDevice(pluginID, num, vdev.device)
+    for num, vdev in virtualDevices.iteritems():
+        pluginMgr.p_register_vdev(pluginID, num, vdev.device)
 
 ##Unregister plugin from hbussd
 def unregister():
@@ -51,4 +51,4 @@ def writeVirtualDeviceObject(device, obj, value):
 ##Master event broadcast receiver
 # @param event event container
 def masterEventOccurred(event):
-    pluginMgr.pluginLog(pluginID,"I got an event!")
+    pluginMgr.p_log(pluginID,"I got an event!")
