@@ -847,7 +847,7 @@ class HbusMaster:
         obj = self.detectedSlaveList[address.global_id()].hbusSlaveHiddenObjects[objectNumber]
         slave = self.detectedSlaveList[address.global_id()]
 
-        objFunction = obj.objectDescription.split(':')
+        objFunction = obj.description.split(':')
         objList = objFunction[0].split(',')
 
         for objSel in objList:
@@ -860,13 +860,13 @@ class HbusMaster:
                     if slave.hbusSlaveObjects[rangeObj].objectExtendedInfo == None:
                         slave.hbusSlaveObjects[rangeObj].objectExtendedInfo = {}
 
-                        slave.hbusSlaveObjects[rangeObj].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
+                        slave.hbusSlaveObjects[rangeObj].objectExtendedInfo[objFunction[1]] = obj.last_value
 
             else:
                 if slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo == None:
                     slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo = {}
 
-                    slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo[objFunction[1]] = obj.objectLastValue
+                    slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo[objFunction[1]] = obj.last_value
 
     ##@todo this method is horrible
     def readBasicSlaveInformation(self,deferResult, address):
@@ -949,7 +949,7 @@ class HbusMaster:
                 self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].is_crypto = True
 
             if ord(data[1][0]) & 0x08:
-                self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].objectHidden = True
+                self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].hidden = True
 
             if (ord(data[1][0]) & 0x30) == 0:
                 self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].objectDataType = HbusObjDataType.dataTypeInt
@@ -958,11 +958,11 @@ class HbusMaster:
 
             self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].objectLevel = (ord(data[1][0]) & 0xC0)>>6;
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].objectSize = ord(data[1][1])
+            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].size = ord(data[1][1])
 
             self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].objectDataTypeInfo = ord(data[1][2])
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].objectDescription = ''.join(data[1][4::])
+            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[currentObject].description = ''.join(data[1][4::])
 
             if currentObject+1 < self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjectCount:
 
@@ -1082,7 +1082,7 @@ class HbusMaster:
         if address.bus_number == VIRTUAL_BUS:
             #read and update
             result = self.pluginManager.m_read_vdev_obj(address.dev_number,number)
-            self.virtualDeviceList[address.global_id()].hbusSlaveObjects[number].objectLastValue = result
+            self.virtualDeviceList[address.global_id()].hbusSlaveObjects[number].last_value = result
 
             if callBack != None:
                 callBack(result)
@@ -1139,7 +1139,7 @@ class HbusMaster:
 
     def receiveSlaveObjectData(self, data):
 
-        self.detectedSlaveList[data[0][0].global_id()].hbusSlaveObjects[data[0][1]].objectLastValue = [ord(d) for d in data[1]]
+        self.detectedSlaveList[data[0][0].global_id()].hbusSlaveObjects[data[0][1]].last_value = [ord(d) for d in data[1]]
 
         if data[0][2] != None:
 
@@ -1147,7 +1147,7 @@ class HbusMaster:
 
     def receiveSlaveHiddenObjectData(self, data):
 
-        self.detectedSlaveList[data[0][0].global_id()].hbusSlaveHiddenObjects[data[0][1]].objectLastValue = [ord(d) for d in data[1]]
+        self.detectedSlaveList[data[0][0].global_id()].hbusSlaveHiddenObjects[data[0][1]].last_value = [ord(d) for d in data[1]]
 
         if data[0][2] != None:
 
@@ -1157,14 +1157,14 @@ class HbusMaster:
 
         #check if is virtual bus
         if address.bus_number == VIRTUAL_BUS:
-            self.virtualDeviceList[address.global_id()].hbusSlaveObjects[number].objectLastValue = value
+            self.virtualDeviceList[address.global_id()].hbusSlaveObjects[number].last_value = value
             self.pluginManager.m_write_vdev_obj(address.dev_number, number, value)
             return
 
         if self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number].permissions != HbusObjectPermissions.READ:
 
-            self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number].objectLastValue = value
-            size = self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number].objectSize
+            self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number].last_value = value
+            size = self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number].size
 
             myParamList = [number,size]
             myParamList.extend(value)
@@ -1201,7 +1201,7 @@ class HbusMaster:
         else:
             obj = self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number]
 
-        data = HbusObjDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](HbusObjDataType(),data=value,extInfo=obj.objectExtendedInfo,decode=True,size=obj.objectSize)
+        data = HbusObjDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](HbusObjDataType(),data=value,extInfo=obj.objectExtendedInfo,decode=True,size=obj.size)
 
         self.writeSlaveObject(address, number, data)
 

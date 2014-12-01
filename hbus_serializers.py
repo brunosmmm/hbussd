@@ -43,11 +43,11 @@ class hbusObjectSerializer:
         ##Object permissions
         self.permissions = obj.permissions
         ##Object descriptor string (name)
-        self.description = obj.objectDescription
+        self.description = obj.description
         ##Object size in bytes
-        self.size = obj.objectSize
+        self.size = obj.size
         ##Object last known value
-        self.lastvalue = obj.objectLastValue
+        self.lastvalue = obj.last_value
         ##Object data type
         self.datatype = obj.objectDataType
         ##Object data type information

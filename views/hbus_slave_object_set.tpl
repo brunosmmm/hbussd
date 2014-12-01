@@ -95,16 +95,16 @@
                         %canRead = True
                     %end
                     
-                    %if object.objectDataType == hbusSlaveObjectDataType.dataTypeByte:
+                    %if object.objectDataType == hbusSlaveObjectDataType.type_byte:
                     
-                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.type_byteBool:
                         
                             <li class="boolsw">
                                 <a onclick="loadObject2({{objectNumber}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     %if canRead:                               
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -133,10 +133,10 @@
                         
                             <li class="byte">
                                 <a onclick="loadObject({{objectNumber}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -154,7 +154,7 @@
                                     
                                     <!-- checkboxes / bits -->
                                     
-                                    %for i in range(object.objectSize):
+                                    %for i in range(object.size):
                                         
                                         <div class="byteBox">
                                             
@@ -195,10 +195,10 @@
                         
                             <li class="percent">
                                 <a onclick="loadObject({{objectNumber}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -238,10 +238,10 @@
                         
                             <li class="integer">
                                 <a onclick="loadObject({{objectNumber}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -257,10 +257,10 @@
                     
                             <li class="integer">
                                 <a onclick="loadObject({{objectNumber}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -274,10 +274,10 @@
                     
                             <li class="integer">
                                 <a onclick="loadObject({{objectNumber}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}

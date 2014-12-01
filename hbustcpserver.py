@@ -264,10 +264,10 @@ class HBUSTCP(LineReceiver):
             i = 1
             for slaveObject in self.hbusMaster.detectedSlaveList[device.global_id()].hbusSlaveObjects.values():
                 
-                if slaveObject.objectHidden:
+                if slaveObject.hidden:
                     continue
             
-                self.sendLine(param[0]+":"+str(i)+", "+str(slaveObject.objectDescription)+", "+str(slaveObject.objectSize)+", "+
+                self.sendLine(param[0]+":"+str(i)+", "+str(slaveObject.description)+", "+str(slaveObject.size)+", "+
                                         ("R" if slaveObject.permissions == 1 else ("W" if slaveObject.permissions == 2 else "RW")))
                 
                 i = i + 1
@@ -386,7 +386,7 @@ class HBUSTCP(LineReceiver):
             self.logger.warning("malformed device address")
             return None
         
-        slaveObjectValue = self.hbusMaster.detectedSlaveList[HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).global_id()].hbusSlaveObjects[int(devAddr[2])].objectLastValue
+        slaveObjectValue = self.hbusMaster.detectedSlaveList[HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).global_id()].hbusSlaveObjects[int(devAddr[2])].last_value
         
         self.hbusMaster.writeSlaveObject(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])), int(devAddr[2]), incrementByteList(slaveObjectValue))
 

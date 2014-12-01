@@ -191,7 +191,7 @@
                 %for object in slave.hbusSlaveObjects.values():
                 
                     %i += 1
-                    %if object.objectHidden:
+                    %if object.hidden:
                         %continue
                     %end
                     
@@ -204,15 +204,15 @@
                     %end
                     
                     
-                    %if object.objectDataType == hbusSlaveObjectDataType.dataTypeByte:
+                    %if object.objectDataType == hbusSlaveObjectDataType.type_byte:
                     
-                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.type_byteBool:
                         
                             <li class="als-item boolsw">
                                 <a onclick="loadObject({{i}})">
-                                    <p>{{object.objectDescription}}</p>                               
+                                    <p>{{object.description}}</p>                               
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -226,9 +226,9 @@
                         
                             <li class="als-item byte">
                                 <a onclick="loadObject({{i}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -245,9 +245,9 @@
                         
                             <li class="als-item percent">
                                 <a onclick="loadObject({{i}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -260,9 +260,9 @@
                         
                             <li class="als-item integer">
                                 <a onclick="loadObject({{i}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -277,9 +277,9 @@
                     
                             <li class="als-item integer">
                                 <a onclick="loadObject({{i}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -292,9 +292,9 @@
                     
                             <li class="als-item integer">
                                 <a onclick="loadObject({{i}})">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.objectLastValue == None:
+                                        %if object.last_value == None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -332,7 +332,7 @@
                     
                     %i += 1
                     
-                    %if object.objectHidden:
+                    %if object.hidden:
                         %continue
                     %end
                     
@@ -345,13 +345,13 @@
                     %end
                     
                     
-                    %if object.objectDataType == hbusSlaveObjectDataType.dataTypeByte:
+                    %if object.objectDataType == hbusSlaveObjectDataType.type_byte:
                     
-                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.type_byteBool:
                         
                             <li class="als-item boolsw">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                 </a>
                             </li>
                             
@@ -359,7 +359,7 @@
                         
                             <li class="als-item byte">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                 </a>
                             </li>
                         
@@ -371,7 +371,7 @@
                         
                             <li class="als-item percent">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">
-                                    <p>{{object.objectDescription}}</p>
+                                    <p>{{object.description}}</p>
                                 </a>
                             </li>
                         

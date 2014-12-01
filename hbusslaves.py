@@ -25,7 +25,7 @@ class HbusObjLevel(object):
 class HbusObjDataType(object):
     """Object data type identifier"""
     ##Byte type
-    dataTypeByte        = 0x30
+    type_byte        = 0x30
     ##Integer type
     dataTypeInt         = 0x00
     ##Unsigned integer type
@@ -59,121 +59,129 @@ class HbusObjDataType(object):
     ##Raw unsigned integer
     dataTypeUintNone        = 0x00
 
-    ##Unpacks received data string
-    #@param data Data string received from device
-    #@return value parsed as unsigned integer
-    def unpack_uint(self, data):
-
+    @staticmethod
+    def unpack_uint(data):
+        """Unpacks received data string
+        @param data Data string received from device
+        @return value parsed as unsigned integer
+        """
         x = [0]
         while len(data) < 4:
             x.extend(data)
             data = x
             x = [0]
 
-        byteList = array('B', data)
+        byte_list = array('B', data)
 
-        return struct.unpack('>I', byteList)[0]
+        return struct.unpack('>I', byte_list)[0]
 
-    ##Parses data as boolean
-    #@param data received data
-    #@param extInfo dummy parameter
-    #@param size dummy parameter
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_byte_bool(self, data, extInfo, size, decode=False):
-
+    @staticmethod
+    def format_byte_bool(data, extinfo, size, decode=False):
+        """Parses data as boolean
+        @param data received data
+        @param extInfo dummy parameter
+        @param size dummy parameter
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         if decode:
             if data == "ON":
-                return [1];
+                return [1]
 
-            return [0];
+            return [0]
 
         if data[0] > 0:
             return 'ON'
         else:
             return 'OFF'
 
-    ##Parses data as a hexadecimal number
-    #@param data received data
-    #@param extInfo dummy parameter
-    #@param size data size in bytes
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_byte_hex(self, data, extInfo, size, decode=False):
-
+    @staticmethod
+    def format_byte_hex(data, extinfo, size, decode=False):
+        """Parses data as a hexadecimal number
+        @param data received data
+        @param extInfo dummy parameter
+        @param size data size in bytes
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         if decode:
             return [0*x for x in range(0, size)]
 
         return ', '.join(['%X' % x for x in data])
 
-    ##Parses data as a decimal number
-    #@param data received data
-    #@param extInfo dummy parameter
-    #@param size data size in bytes
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_byte_dec(self, data, extInfo, size, decode=False):
-
+    @staticmethod
+    def format_byte_dec(data, extinfo, size, decode=False):
+        """Parses data as a decimal number
+        @param data received data
+        @param extInfo dummy parameter
+        @param size data size in bytes
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         if decode:
             return [0*x for x in range(0, size)]
 
         return ', '.join(['%d' % x for x in data])
 
-    ##Parses data as an octal number
-    #@param data received data
-    #@param extInfo dummy parameter
-    #@param size data size in bytes
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_byte_oct(self, data, extInfo, size, decode=False):
-
+    @staticmethod
+    def format_byte_oct(data, extinfo, size, decode=False):
+        """Parses data as an octal number
+        @param data received data
+        @param extInfo dummy parameter
+        @param size data size in bytes
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         if decode:
             return [0*x for x in range(0, size)]
 
         return ', '.join(['%o' % x for x in data])
 
-    ##Parses data as a binary number
-    #@param data received data
-    #@param extInfo dummy parameter
-    #@param size data size in bytes
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_byte_bin(self, data, extInfo, size, decode=False):
-
+    @staticmethod
+    def format_byte_bin(data, extinfo, size, decode=False):
+        """Parses data as a binary number
+        @param data received data
+        @param extInfo dummy parameter
+        @param size data size in bytes
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         if decode:
             return [0*x for x in range(0, size)]
 
         return ', '.join(['0b{0:b}'.format(x) for x in data])
 
-    ##Parses data as raw unsigned integer. Allows the use of units
-    #@param data received data
-    #@param extInfo extended object property list
-    #@param size data size in bytes
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_uint(self, data, extInfo, size, decode=False):
-
+    @classmethod
+    def format_uint(cls, data, extinfo, size, decode=False):
+        """Parses data as raw unsigned integer. Allows the use of units
+        @param data received data
+        @param extInfo extended object property list
+        @param size data size in bytes
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         if decode:
             return [ord(x) for x in struct.pack('>I', data)[size:]]
 
-        value = str(self.unpack_uint(data))
+        value = str(cls.unpack_uint(data))
 
         try:
-            unit = extInfo['UNIT']
+            unit = extinfo['UNIT']
             value = str(value)+" "+HBUS_UNITS[chr(unit[0])]
         except:
             pass
 
         return value
 
-    ##Parses data as percent (0-100)
-    #@param data received data
-    #@param extInfo dummy parameter
-    #@param size dummy parameter
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_percent(self, data, extInfo, size, decode=False):
-
+    @staticmethod
+    def format_percent(data, extinfo, size, decode=False):
+        """Parses data as percent (0-100)
+        @param data received data
+        @param extInfo dummy parameter
+        @param size dummy parameter
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         if len(data) > 0:
             try:
                 data = int(data[::-1])
@@ -188,30 +196,31 @@ class HbusObjDataType(object):
 
         return "%d%%" % data
 
-    ##Parses data as a value in a linear scale
-    #@param data received data
-    #@param extInfo extended object property list
-    #@param size dummy parameter
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_lin_percent(self, data, extInfo, size, decode=False):
-
+    @classmethod
+    def format_lin_percent(cls, data, extinfo, size, decode=False):
+        """Parses data as a value in a linear scale
+        @param data received data
+        @param extInfo extended object property list
+        @param size dummy parameter
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         try:
             #Try to set the minimum value for the scale based on the presence of the hidden object MIN
-            minimumValue = self.unpack_uint(extInfo['MIN'])
+            min_val = cls.unpack_uint(extinfo['MIN'])
         except:
-            minimumValue = 0
+            min_val = 0
 
         if decode:
 
             try:
                 #Same as the minimum value, extracts maximum value from hidden object MAX if present
-                maximumValue = self.unpack_uint(extInfo['MAX'])
+                max_val = cls.unpack_uint(extinfo['MAX'])
             except:
-                maximumValue = 2**(8*size) - 1
+                max_val = 2**(8*size) - 1
 
             #Normalizes value to a percent (0-100) scale
-            value = int((float(data)/100.0)*(maximumValue-minimumValue) + minimumValue)
+            value = int((float(data)/100.0)*(max_val-min_val) + min_val)
 
             return [ord(x) for x in struct.pack('>I', value)[size:]]
 
@@ -220,38 +229,39 @@ class HbusObjDataType(object):
 
         #This is encoding, retrieve information and calculate
         try:
-            maximumValue = self.unpack_uint(extInfo['MAX'])
+            max_val = cls.unpack_uint(extinfo['MAX'])
         except:
-            maximumValue = 2**(8*len(data)) - 1
+            max_val = 2**(8*len(data)) - 1
 
-        value = self.unpack_uint(data)
+        value = cls.unpack_uint(data)
 
         #Maps a percentual value to the object native linear scale
-        return "%.2f%%" % ((float(value-minimumValue)/float(maximumValue-minimumValue))*100)
+        return "%.2f%%" % ((float(value-min_val)/float(max_val-min_val))*100)
 
-    ##Parse data as a value in a logarithmic scale
-    #@param data received data
-    #@param extInfo extended object property list
-    #@param size dummy parameter
-    #@param decode indicates if decoding or encoding data
-    #@return formatted string
-    def format_log_percent(self, data, extInfo, size, decode=False):
-
+    @classmethod
+    def format_log_percent(cls, data, extinfo, size, decode=False):
+        """Parse data as a value in a logarithmic scale
+        @param data received data
+        @param extinfo extended object property list
+        @param size dummy parameter
+        @param decode indicates if decoding or encoding data
+        @return formatted string
+        """
         #Similar to the linear scale processing
         try:
-            minimumValue = self.unpack_uint(extInfo['MIN'])
+            min_val = cls.unpack_uint(extinfo['MIN'])
         except:
-            minimumValue = 0
+            min_val = 0
 
         if decode:
 
             try:
-                maximumValue = self.unpack_uint(extInfo['MAX'])
+                max_val = cls.unpack_uint(extinfo['MAX'])
             except:
-                maximumValue = 2**(8*size) - 1
+                max_val = 2**(8*size) - 1
 
             #Maps log scale value to a percent (0-100) scale
-            value = int(10**((float(data)/100.0)*log(maximumValue-minimumValue)) + minimumValue)
+            value = int(10**((float(data)/100.0)*log(max_val-min_val)) + min_val)
 
             return [ord(x) for x in struct.pack('>I', value)[size:]]
 
@@ -260,55 +270,58 @@ class HbusObjDataType(object):
 
         #This is the encoding portion
         try:
-            maximumValue = self.unpack_uint(extInfo['MAX'])
+            max_val = cls.unpack_uint(extinfo['MAX'])
         except:
-            maximumValue = 2**(8*len(data)) - 1
+            max_val = 2**(8*len(data)) - 1
 
 
-        value = self.unpack_uint(data)
+        value = cls.unpack_uint(data)
 
         #Maps value to object native scale
         try:
-            percent = (log(float(value-minimumValue))/log(float(maximumValue-minimumValue)))*100
+            percent = (log(float(value-min_val))/log(float(max_val-min_val)))*100
         except:
             percent = 0
 
 
         return "%.2f%%" % percent
 
-    ##Parses data as time format
-    #@param data received data
-    #@param extInfo dummy parameter
-    #@param size dummy parameter
-    #@param decode indicates if encoding or decoding data
-    #@return formatted string
-    def format_time(self, data, extInfo, size, decode=False):
-
+    @staticmethod
+    def format_time(data, extinfo, size, decode=False):
+        """Parses data as time format
+        @param data received data
+        @param extinfo dummy parameter
+        @param size dummy parameter
+        @param decode indicates if encoding or decoding data
+        @return formatted string
+        """
         if decode:
             return [0*x for x in range(0, size)]
 
-        tenthSeconds = (data[3] & 0xF0)>>4
-        milliSeconds = data[3] & 0x0F
+        tenth_sec = (data[3] & 0xF0)>>4
+        milli_sec = data[3] & 0x0F
 
         seconds = data[2] & 0x0F
-        tensOfSeconds = data[2] & 0xF0
+        tens_sec = data[2] & 0xF0
 
         minutes = data[1] & 0x0F
         tens = (data[1] & 0xF0) >> 4
 
         hours24 = data[0] & 0x0F
 
-        return "%2d:%2d:%2d,%2d" % (hours24, minutes+tens*10, seconds+tensOfSeconds*10, milliSeconds+tenthSeconds*10)
+        return "%2d:%2d:%2d,%2d" % (hours24, minutes+tens*10, seconds+tens_sec*10, milli_sec+tenth_sec*10)
 
         ##@todo missing encode portion
 
-    ##Parse data as date format
-    #@param data received data
-    #@param extInfo dummy parameter
-    #@param size dummy parameter
-    #@param decode indicates if encoding or decoding data
-    #@return formatted string
-    def format_date(self, data, extInfo, size, decode=False):
+    @staticmethod
+    def format_date(data, extinfo, size, decode=False):
+        """Parse data as date format
+        @param data received data
+        @param extInfo dummy parameter
+        @param size dummy parameter
+        @param decode indicates if encoding or decoding data
+        @return formatted string
+        """
 
         ##@todo implement this parser
 
@@ -318,13 +331,13 @@ class HbusObjDataType(object):
         return "?"
 
     ##Data type and display string association dictionary
-    dataTypeNames = {dataTypeByte : 'Byte',
+    dataTypeNames = {type_byte : 'Byte',
                      dataTypeInt : 'Int',
                      dataTypeUnsignedInt : 'Unsigned Int',
                      dataTypeFixedPoint : 'Fixed point'}
 
     ##Extended data types decoding dictionary
-    dataTypeOptions = {dataTypeByte : {dataTypeByteHex : format_byte_hex,
+    dataTypeOptions = {type_byte : {dataTypeByteHex : format_byte_hex,
                                        dataTypeByteDec : format_byte_dec,
                                        dataTypeByteOct : format_byte_oct,
                                        dataTypeByteBin : format_byte_bin,
@@ -338,20 +351,20 @@ class HbusObjDataType(object):
                        dataTypeFixedPoint : hbusFixedPointHandler(),
                        dataTypeInt : hbusIntHandler()}
 
-##Devcice object extended information
-# @todo verify if this is used, I don't see it
-class hbusSlaveObjectExtendedInfo(object):
 
+class HbusDeviceObjExtInfo(object):
+    """Device object extended information"""
     ##Maximum value
-    objectMaximumValue = None
+    max_value = None
     ##Minimum value
-    objectMinimumValue = None
+    min_value = None
 
     ##Object extended string
-    objectExtendedString = None
+    ext_string = None
 
-##Device object main class
+
 class HbusDeviceObject(object):
+    """Device object main class"""
 
     ##Object permissions
     permissions = 0
@@ -359,13 +372,13 @@ class HbusDeviceObject(object):
     is_crypto = False
     ##Indicates if object is invisible
     #@todo makes no sense as invisible and visible objects are separated into two different lists
-    objectHidden = False
+    hidden = False
     ##Object descriptor string
-    objectDescription = None
+    description = None
     ##Object size in bytes
-    objectSize = 0
+    size = 0
     ##Object's last known value
-    objectLastValue = None
+    last_value = None
 
     ##Object data type
     objectDataType = 0
@@ -380,27 +393,27 @@ class HbusDeviceObject(object):
     #@return formatted string for display
     def getFormattedValue(self):
 
-        if self.objectLastValue == None:
+        if self.last_value == None:
             return None
 
         if self.objectDataType not in HbusObjDataType.dataTypeOptions.keys():
 
-            return str(self.objectLastValue) #has no explicit format
+            return str(self.last_value) #has no explicit format
 
         #analyzes extended information
         if type(HbusObjDataType.dataTypeOptions[self.objectDataType]) == dict:
 
             if self.objectDataTypeInfo not in HbusObjDataType.dataTypeOptions[self.objectDataType].keys():
 
-                return str(self.objectLastValue) #has no explicit format
+                return str(self.last_value) #has no explicit format
 
-        return HbusObjDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](HbusObjDataType(),data=self.objectLastValue,size=self.objectSize,extInfo=self.objectExtendedInfo)
+        return HbusObjDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](HbusObjDataType(),data=self.last_value,size=self.size,extInfo=self.objectExtendedInfo)
 
     ##Object string representation
     #@return descriptive string for logging
     def __repr__(self):
 
-        return self.objectDescription
+        return self.description
 
 ##Device endpoint main class
 class HbusEndpoint(object):
@@ -499,7 +512,7 @@ class HbusDevice(object):
 
         for key,val in self.hbusSlaveObjects.viewitems():
 
-            if val.objectHidden == False:
+            if val.hidden == False:
                 continue
 
             self.hbusSlaveHiddenObjects[key] = val

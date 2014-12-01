@@ -23,7 +23,7 @@ import os
 ##Configuration file options equivalence
 CONFIG_DATA_TYPE = {'I' : HbusObjDataType.dataTypeInt,
                     'U' : HbusObjDataType.dataTypeUnsignedInt,
-                    'B' : HbusObjDataType.dataTypeByte,
+                    'B' : HbusObjDataType.type_byte,
                     'F' : HbusObjDataType.dataTypeFixedPoint}
 
 CONFIG_DATA_TYPE_INFO = {'h' : HbusObjDataType.dataTypeByteHex,
@@ -80,12 +80,12 @@ class FakeBusDevice(HbusDevice):
 
         elif objnum in self.hbusSlaveObjects.keys():
             objectinfo = (objnum,
-                          4+len(self.hbusSlaveObjects[objnum].objectDescription),
+                          4+len(self.hbusSlaveObjects[objnum].description),
                           self.hbusSlaveObjects[objnum].permissions,
-                          self.hbusSlaveObjects[objnum].objectSize,
+                          self.hbusSlaveObjects[objnum].size,
                           self.hbusSlaveObjects[objnum].objectDataTypeInfo,
-                          len(self.hbusSlaveObjects[objnum].objectDescription),
-                          self.hbusSlaveObjects[objnum].objectDescription)
+                          len(self.hbusSlaveObjects[objnum].description),
+                          self.hbusSlaveObjects[objnum].description)
             return objectinfo
         else:
             #object does not exist
@@ -112,8 +112,8 @@ class FakeBusDevice(HbusDevice):
 
             ##@todo generate proper object size!
             object_read = (0,
-                           self.hbusSlaveObjects[objnum].objectSize,
-                           self.hbusSlaveObjects[objnum].objectLastValue)
+                           self.hbusSlaveObjects[objnum].size,
+                           self.hbusSlaveObjects[objnum].last_value)
 
             return object_read
         else:
@@ -446,9 +446,9 @@ class FakeBusSerialPort(Protocol):
                     pass #for now
 
                 obj.is_crypto = devconf.getboolean(section, 'is_crypto')
-                obj.objectHidden = devconf.getboolean(section, 'hidden')
-                obj.objectDescription = devconf.get(section, 'descr')
-                obj.objectSize = devconf.getint(section, 'size')
+                obj.hidden = devconf.getboolean(section, 'hidden')
+                obj.description = devconf.get(section, 'descr')
+                obj.size = devconf.getint(section, 'size')
 
                 #must generate value from configfile
                 data_type = devconf.get(section, 'data_type')
@@ -465,7 +465,7 @@ class FakeBusSerialPort(Protocol):
 
                 #must interpret dummy return value in file
                 raw_value = devconf.get(section, 'value')
-                obj.objectLastValue = self.list_val_to_int(raw_value, obj.objectDataType)
+                obj.last_value = self.list_val_to_int(raw_value, obj.objectDataType)
 
                 #when finished
                 ##add to obj list
@@ -480,7 +480,7 @@ class FakeBusSerialPort(Protocol):
 
         if valuetype == HbusObjDataType.dataTypeInt:
             return int(value)
-        elif valuetype == HbusObjDataType.dataTypeByte:
+        elif valuetype == HbusObjDataType.type_byte:
             value = value.split(' ')
             int_value = 0
             for i in range(0, len(value)):

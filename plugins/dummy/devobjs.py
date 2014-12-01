@@ -36,11 +36,11 @@ def getVirtualDevices():
     object_zero = HbusDeviceObject()
     
     object_zero.permissions = op.READ_WRITE
-    object_zero.objectDescription = "dummy object"
-    object_zero.objectSize = 1
+    object_zero.description = "dummy object"
+    object_zero.size = 1
     object_zero.objectDataType = HbusObjDataType.dataTypeUnsignedInt
     object_zero.objectDataTypeInfo = HbusObjDataType.dataTypeUintPercent
-    object_zero.objectLastValue = None
+    object_zero.last_value = None
     
     device_zero.device.hbusSlaveObjects = {}
     device_zero.device.hbusSlaveObjects[1] = object_zero

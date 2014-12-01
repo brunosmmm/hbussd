@@ -143,8 +143,8 @@ class HBUSWEB:
                 
                 pass
                 
-            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x02 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
-            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x01 and x.objectLevel >= self.objectLevel and x.objectHidden == False])
+            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x02 and x.objectLevel >= self.objectLevel and x.hidden == False])
+            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x01 and x.objectLevel >= self.objectLevel and x.hidden == False])
         
         return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=HbusObjDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         readObjCount=readObjectCount,writeObjCount=writeObjectCount,re=re,getNumber=getN)
