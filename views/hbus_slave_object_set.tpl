@@ -97,7 +97,7 @@
                     
                     %if object.objectDataType == hbusSlaveObjectDataType.type_byte:
                     
-                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.type_byteBool:
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
                         
                             <li class="boolsw">
                                 <a onclick="loadObject2({{objectNumber}})">

@@ -192,7 +192,7 @@ class HbusMaster:
     rxBytes = 0
     txBytes = 0
 
-    def __init__(self, port, baudrate=100000, busno = 0,reactor = None):
+    def __init__(self, port, baudrate=100000, busno=0):
 
         self.serialPort = port
         self.serialBaud = baudrate
@@ -200,14 +200,14 @@ class HbusMaster:
 
         self.logger = logging.getLogger('hbussd.hbusmaster')
 
-        self.pluginManager = HbusPluginManager('./plugins',self)
+        self.pluginManager = HbusPluginManager('./plugins', self)
         self.searchAndLoadPlugins()
 
         if port == None:
             #create fakebus system
             f = Factory()
             f.protocol = hbus_fb.FakeBusSerialPort
-            reactor.listenTCP(9090,f)
+            reactor.listenTCP(9090, f)
 
             self.serialCreate(fake=True)
         else:

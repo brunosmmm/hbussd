@@ -206,7 +206,7 @@
                     
                     %if object.objectDataType == hbusSlaveObjectDataType.type_byte:
                     
-                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.type_byteBool:
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
                         
                             <li class="als-item boolsw">
                                 <a onclick="loadObject({{i}})">
@@ -347,7 +347,7 @@
                     
                     %if object.objectDataType == hbusSlaveObjectDataType.type_byte:
                     
-                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.type_byteBool:
+                        %if object.objectDataTypeInfo == hbusSlaveObjectDataType.dataTypeByteBool:
                         
                             <li class="als-item boolsw">
                                 <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{i}}">

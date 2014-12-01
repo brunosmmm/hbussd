@@ -1,13 +1,16 @@
 #coding=utf-8
-##@package hbusslaves
-# Data structures and functions related to enumeration and parsing of device data
-# @author Bruno Morais <brunosmmm@gmail.com>
-# @since 18/02/2014
+
+"""Data structures and functions related to enumeration and parsing
+of device data
+@package hbusslaves
+@author Bruno Morais <brunosmmm@gmail.com>
+@since 18/02/2014
+"""
 import struct
 from array import array
 from math import log
 
-from hbus_datahandlers import *
+from hbus_datahandlers import HbusFixPHandler, HbusIntHandler
 
 
 class HbusObjLevel(object):
@@ -348,8 +351,8 @@ class HbusObjDataType(object):
                                               dataTypeUintLogPercent : format_log_percent,
                                               dataTypeUintTime : format_time,
                                               dataTypeUintDate : format_date},
-                       dataTypeFixedPoint : hbusFixedPointHandler(),
-                       dataTypeInt : hbusIntHandler()}
+                       dataTypeFixedPoint : HbusFixPHandler(),
+                       dataTypeInt : HbusIntHandler()}
 
 
 class HbusDeviceObjExtInfo(object):
