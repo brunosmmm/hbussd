@@ -8,7 +8,7 @@
 from txjsonrpc.web import jsonrpc
 import simplejson
 from hbus_serializers import *
-from hbus_base import hbusDeviceAddressFromString
+from hbus_base import hbus_address_from_string
 
 ##HTTP server for JSON connection
 class HBUSJSONServer(jsonrpc.JSONRPC):
@@ -52,7 +52,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if address == None:
             return None
         
-        slave = self.master.detectedSlaveList[address.getGlobalID()]
+        slave = self.master.detectedSlaveList[address.global_id()]
         
         return hbusSlaveSerializer(slave).getDict()
     
@@ -66,7 +66,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if address == None:
             return None
         
-        slave = self.master.detectedSlaveList[address.getGlobalID()]
+        slave = self.master.detectedSlaveList[address.global_id()]
         
         objectList = [hbusObjectSerializer(x).getDict() for x in slave.hbusSlaveObjects.values()]
         
@@ -82,7 +82,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         else:
             slaveList = []
             for slave in self.hbusMaster.detectedSlaveList.values():
-                if slave.hbusSlaveAddress.hbusAddressBusNumber == int(bus):
+                if slave.hbusSlaveAddress.bus_number == int(bus):
                     slaveList.append(slave)
                     
         returnList = [x.hbusSlaveUniqueDeviceInfo for x in slaveList]
@@ -95,14 +95,14 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@return data to be JSON structured
     def jsonrpc_readobject(self,address,number):
 
-        addr = hbusDeviceAddressFromString(address)
+        addr = hbus_address_from_string(address)
         
-        if not addr.getGlobalID() in self.master.detectedSlaveList.keys():
+        if not addr.global_id() in self.master.detectedSlaveList.keys():
             
             #device does not exist
             return
         
-        if not int(number) in self.master.detectedSlaveList[addr.getGlobalID()].hbusSlaveObjects.keys():
+        if not int(number) in self.master.detectedSlaveList[addr.global_id()].hbusSlaveObjects.keys():
             
             #object does not exist
             return
@@ -118,14 +118,14 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@return data to be JSON structured
     def jsonrpc_writeobject(self,address,number,value):
         
-        addr = hbusDeviceAddressFromString(address)
+        addr = hbus_address_from_string(address)
         
-        if not addr.getGlobalID() in self.master.detectedSlaveList.keys():
+        if not addr.global_id() in self.master.detectedSlaveList.keys():
             
             #device does not exist
             return
         
-        if not int(number) in self.master.detectedSlaveList[addr.getGlobalID()].hbusSlaveObjects.keys():
+        if not int(number) in self.master.detectedSlaveList[addr.global_id()].hbusSlaveObjects.keys():
             
             #object does not exist
             return

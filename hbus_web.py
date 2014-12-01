@@ -63,10 +63,10 @@ class HBUSWEB:
         if addr == None:
             s = None
         else:
-            if addr.hbusAddressBusNumber == 254:
-                s = self.hbusMaster.virtualDeviceList[addr.getGlobalID()]
+            if addr.bus_number == 254:
+                s = self.hbusMaster.virtualDeviceList[addr.global_id()]
             else:
-                s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                s = self.hbusMaster.detectedSlaveList[addr.global_id()]
         
         if obj != None:
             
@@ -108,7 +108,7 @@ class HBUSWEB:
             devAddr = string.split(addr,":")
             device = HbusDeviceAddress(int(devAddr[0]),int(devAddr[1]))
             
-            s = self.hbusMaster.detectedSlaveList[device.getGlobalID()]
+            s = self.hbusMaster.detectedSlaveList[device.global_id()]
         elif uid != None:
             
             m = re.match(r"0x([0-9A-Fa-f]+)L?",uid)
@@ -119,10 +119,10 @@ class HBUSWEB:
             if addr == None:
                 s = None
             else:
-                if addr.hbusAddressBusNumber == 254:
-                    s = self.hbusMaster.virtualDeviceList[addr.getGlobalID()]
+                if addr.bus_number == 254:
+                    s = self.hbusMaster.virtualDeviceList[addr.global_id()]
                 else:
-                    s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                    s = self.hbusMaster.detectedSlaveList[addr.global_id()]
             
             if obj != None:
                 
@@ -180,10 +180,10 @@ class HBUSWEB:
             if addr == None:
                 s = None
             else:
-                if addr.hbusAddressBusNumber == 254:
-                    s = self.hbusMaster.virtualDeviceList[addr.getGlobalID()]
+                if addr.bus_number == 254:
+                    s = self.hbusMaster.virtualDeviceList[addr.global_id()]
                 else:
-                    s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                    s = self.hbusMaster.detectedSlaveList[addr.global_id()]
                 
             if s == None:
                 
@@ -209,10 +209,10 @@ class HBUSWEB:
             if addr == None:
                 s = None
             else:
-                if addr.hbusAddressBusNumber == 254:
-                    s = self.hbusMaster.virtualDeviceList[addr.getGlobalID()]
+                if addr.bus_number == 254:
+                    s = self.hbusMaster.virtualDeviceList[addr.global_id()]
                 else:
-                    s = self.hbusMaster.detectedSlaveList[addr.getGlobalID()]
+                    s = self.hbusMaster.detectedSlaveList[addr.global_id()]
             
             if obj != None:
                 
@@ -243,7 +243,7 @@ class HBUSWEB:
         else:
             slaveList = []
             for slave in self.hbusMaster.detectedSlaveList.values():
-                if slave.hbusSlaveAddress.hbusAddressBusNumber == int(busNumber):
+                if slave.hbusSlaveAddress.bus_number == int(busNumber):
                     slaveList.append(slave)
         
         return template('hbus_slave_by_bus',slaveList=slaveList,masterStatus=self.hbusMaster.getInformationData(),busNumber=busNumber,re=re)

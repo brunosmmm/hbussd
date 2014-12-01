@@ -1,65 +1,69 @@
 #coding=utf-8
 
-##@package hbus_base
-#hbussd general purpose data structures
-#@author Bruno Morais <brunosmmm@gmail.com>
-#@date 2013
+"""hbussd general purpose data structures
+@package hbus_base
+@author Bruno Morais <brunosmmm@gmail.com>
+@date 2013
+"""
 
 import struct
 import hbus_constants as hbusconst
 import re
 
-##HBUS commands
-class HbusCommand(object):
 
-    ##Constructor
-    #@param value command identifier byte value
-    #@param minimumSize maximum command length in bytes
-    #@param maximumSize minimum command length in bytes
-    #@param descStr descriptive string
-    def __init__(self,value,minimumSize,maximumSize, descStr):
+class HbusCommand(object):
+    """HBUS commands"""
+
+    def __init__(self, value, minimumSize, maximumSize, descStr):
+        """Constructor
+        @param value command identifier byte value
+        @param minimumSize maximum command length in bytes
+        @param maximumSize minimum command length in bytes
+        @param descStr descriptive string
+        """
 
         ##byte value (ID)
-        self.commandByte = value
+        self.cmd_byte = value
         ##minimum length
-        self.minimumLength = minimumSize
+        self.min_len = minimumSize
         ##maximum length
-        self.maximumLength = maximumSize
+        self.max_len = maximumSize
         ##descriptive string
-        self.descString = descStr
+        self.desc_str = descStr
 
-    ##Command representation
-    #@return streing representation of command
     def __repr__(self):
+        """Command representation
+        @return string representation of command
+        """
+        return self.desc_str+"("+str(hex(self.cmd_byte))+")"
 
-        return self.descString+"("+str(hex(self.commandByte))+")"
-
-    ##Equal operator
-    #@return returns equal or not
     def __eq__(self, other):
+        """Equal operator
+        @return returns equal or not
+        """
         if isinstance(other, HbusCommand):
-            return self.commandByte == other.commandByte
+            return self.cmd_byte == other.cmd_byte
         return NotImplemented
 
     ##@todo check if this is being used
     def __hash__(self):
 
-        return hash(self.commandByte)
+        return hash(self.cmd_byte)
 
-##HBUS bus instructions
 class HbusInstruction(object):
+    """HBUS bus instructions (complete commands)"""
 
-    ##Constructor
-    #@param command instruction command
-    #@param paramSize parameter size in bytes
-    #@param params parameters to be sent
     def __init__(self, command, paramSize=0, params=()):
+        """Constructor
+        @param command instruction command
+        @param paramSize parameter size in bytes
+        @param params parameters to be sent
+        """
 
         ##Parameter list
         self.params = []
         ##Parameter list size
-        self.paramSize = 0
-
+        self.param_size = 0
         ##HBUS command
         self.command = command
 
@@ -67,24 +71,24 @@ class HbusInstruction(object):
             if command == None:
                 raise ValueError("Undefined error")
             else:
-                raise ValueError("Invalid command: %d" % ord(command.commandByte))
+                raise ValueError("Invalid command: %d" % ord(command.cmd_byte))
 
-        self.paramSize = paramSize
+        self.param_size = paramSize
         self.params = params
 
-        if (len(params)) > command.maximumLength:
+        if (len(params)) > command.max_len:
 
-            raise ValueError("Malformed command, "+str(len(params))+" > "+str(command.maximumLength))
+            raise ValueError("Malformed command, "+str(len(params))+" > "+str(command.max_len))
 
-        if (len(params)+1) < command.minimumLength:
+        if (len(params)+1) < command.min_len:
 
-            raise ValueError("Malformed command, "+str(len(params))+" < "+str(command.minimumLength))
+            raise ValueError("Malformed command, "+str(len(params))+" < "+str(command.min_len))
 
-    ##Instruction representation
-    #@return string representation of instruction
     def __repr__(self):
-
-        if (self.paramSize > 0):
+        """Instruction representation
+        @return string representation of instruction
+        """
+        if self.param_size > 0:
 
             try:
                 return str(self.command)+str([hex(ord(x)) for x in self.params])
@@ -93,112 +97,109 @@ class HbusInstruction(object):
         else:
             return str(self.command)
 
-##HBUS device addresses
 class HbusDeviceAddress(object):
+    """HBUS device addresses"""
 
-    ##Constructor
-    #@param busID bus number
-    #@param devID device number
     def __init__(self, busID, devID):
-
+        """Constructor
+        @param busID bus number
+        @param devID device number
+        """
         if (devID > 32) and (devID != 255):
             raise ValueError("Invalid address")
 
         ##Bus number
-        self.hbusAddressBusNumber = busID
+        self.bus_number = busID
         ##Device number in this bus
-        self.hbusAddressDevNumber = devID
+        self.dev_number = devID
 
-    ##Address representation
-    #@return string representation of address
     def __repr__(self):
+        """Address representation
+        @return string representation of address
+        """
+        return "("+str(self.bus_number)+":"+str(self.dev_number)+")"
 
-        return "("+str(self.hbusAddressBusNumber)+":"+str(self.hbusAddressDevNumber)+")"
-
-    ##Equal operator for addresses
-    #@return equal or not
     def __eq__(self, other):
+        """Equal operator for addresses
+        @return equal or not
+        """
         if isinstance(other, HbusDeviceAddress):
-            return self.hbusAddressBusNumber == other.hbusAddressBusNumber and self.hbusAddressDevNumber == other.hbusAddressDevNumber
+            return self.bus_number == other.bus_number and self.dev_number == other.dev_number
         return NotImplemented
 
-    ##Calculates a global ID for an address
-    #Global IDs are calculated by doing ID = busNumber*32 + deviceNumber
-    #@return address global ID
-    def getGlobalID(self):
+    def global_id(self):
+        """Calculates a global ID for an address
+        Global IDs are calculated by doing ID = busNumber*32 + deviceNumber
+        @return address global ID
+        """
+        return self.bus_number*32 + self.dev_number
 
-        return self.hbusAddressBusNumber*32 + self.hbusAddressDevNumber
 
-##Parse a string and create an address from it
-#
-#String format is (X:Y) where X is the bus number and Y the device number
-#@return HBUS address object
-def hbusDeviceAddressFromString(addr):
+def hbus_address_from_string(addr):
+    """Parse a string and create an address from it
+    String format is (X:Y) where X is the bus number and Y the device number
+    @return HBUS address object
+    """
+    addr_match = re.match(r'\(([0-9]+):([0-9]+)\)', addr)
 
-    p = re.compile(r'\(([0-9]+):([0-9]+)\)')
-
-    m = p.match(addr)
-
-    if m:
+    if addr_match != None:
 
         try:
-
-            return HbusDeviceAddress(int(m.group(1)),int(m.group(2)))
-
+            return HbusDeviceAddress(int(addr_match.group(1)), int(addr_match.group(2)))
         except:
             raise ValueError
-
     else:
         raise ValueError
 
-##HBUS bus operation
-#
-#Bus operations are composed of an instruction, and message source and destination
+
 class HbusOperation(object):
+    """HBUS bus operation
+    Bus operations are composed of an instruction, and message source and destination
+    """
 
-    ##Constructor
-    #@param instruction a HbusInstruction object
-    #@param destination destination device address
-    #@param source source device address
     def __init__(self, instruction, destination, source):
-
+        """Constructor
+        @param instruction a HbusInstruction object
+        @param destination destination device address
+        @param source source device address
+        """
         ##HBUS instruction
         self.instruction = instruction
 
         ##Destination address
-        self.hbusOperationDestination = destination
+        self.destination = destination
         ##Source address
-        self.hbusOperationSource = source
+        self.source = source
 
-    ##Operation representation
-    #@return string representation of operation
     def __repr__(self):
+        """Operation representation
+        @return string representation of operation
+        """
+        return "HBUSOP: "+str(self.source)+"->"+str(self.destination)+" "+str(self.instruction)
 
-        return "HBUSOP: "+str(self.hbusOperationSource)+"->"+str(self.hbusOperationDestination)+" "+str(self.instruction)
+    def get_string(self):
+        """Generates data string to be sent by master
+        @return data string to be sent to bus
+        @todo automatically generate parameter size field which depends on command
+        """
 
-    ##Generates data string to be sent by master
-    #@return data string to be sent to bus
-    #@todo automatically generate parameter size field which depends on command
-    def getString(self):
+        header = struct.pack('4c',
+                             chr(self.source.bus_number),
+                             chr(self.source.dev_number),
+                             chr(self.destination.bus_number),
+                             chr(self.destination.dev_number))
 
-        header = struct.pack('4c',chr(self.hbusOperationSource.hbusAddressBusNumber),chr(self.hbusOperationSource.hbusAddressDevNumber),
-                                  chr(self.hbusOperationDestination.hbusAddressBusNumber),chr(self.hbusOperationDestination.hbusAddressDevNumber))
+        instruction = struct.pack('c', chr(self.instruction.command.cmd_byte))
 
-        instruction = struct.pack('c',chr(self.instruction.command.commandByte))
+        for param in self.instruction.params:
 
-        #if self.instruction.paramSize:
-
-        #    instruction = instruction + struct.pack('c',chr(self.instruction.paramSize))
-
-        for p in self.instruction.params:
-
-            if (type(p) is str):
-                if len(p) == 1:
-                    instruction = instruction + struct.pack('c',p)
+            if type(param) is str:
+                if len(param) == 1:
+                    instruction = instruction + struct.pack('c', param)
                 else:
-                    instruction = instruction + p
+                    instruction = instruction + param
             else:
-                instruction = instruction + struct.pack('c',chr(p))
+                instruction = instruction + struct.pack('c', chr(param))
 
         terminator = '\xFF'
 

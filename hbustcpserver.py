@@ -120,7 +120,7 @@ class HBUSTCP(LineReceiver):
         
         self.logger.info("New connection made")
         
-        self.sendLine("HBUS SERVER @ "+str(self.hbusMaster.hbusMasterAddr.hbusAddressBusNumber)+":0")
+        self.sendLine("HBUS SERVER @ "+str(self.hbusMaster.hbusMasterAddr.bus_number)+":0")
     
     ##Disconnect event
     #@param reason disconnection reason
@@ -164,7 +164,7 @@ class HBUSTCP(LineReceiver):
         
         for s in self.hbusMaster.detectedSlaveList.values():
             
-            self.sendLine(str(s.hbusSlaveAddress.hbusAddressBusNumber)+":"+str(s.hbusSlaveAddress.hbusAddressDevNumber)+", "+s.hbusSlaveDescription+", "+hex(s.hbusSlaveUniqueDeviceInfo))
+            self.sendLine(str(s.hbusSlaveAddress.bus_number)+":"+str(s.hbusSlaveAddress.dev_number)+", "+s.hbusSlaveDescription+", "+hex(s.hbusSlaveUniqueDeviceInfo))
     
     ##SEARCH end callback
     def searchCommandEnded(self):
@@ -200,7 +200,7 @@ class HBUSTCP(LineReceiver):
             
             devAddr = string.split(param[0],':')
             
-            self.sendLine(self.hbusMaster.detectedSlaveList[int(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID())].hbusSlaveDescription)
+            self.sendLine(self.hbusMaster.detectedSlaveList[int(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).global_id())].hbusSlaveDescription)
             
         except:
             
@@ -215,7 +215,7 @@ class HBUSTCP(LineReceiver):
             
             devAddr = string.split(param[0],':')
             
-            self.sendLine(str(self.hbusMaster.detectedSlaveList[int(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID())].hbusSlaveObjectCount))
+            self.sendLine(str(self.hbusMaster.detectedSlaveList[int(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).global_id())].hbusSlaveObjectCount))
             
         except:
             
@@ -262,7 +262,7 @@ class HBUSTCP(LineReceiver):
                 device = HbusDeviceAddress(int(devAddr[0]),int(devAddr[1]))
             
             i = 1
-            for slaveObject in self.hbusMaster.detectedSlaveList[device.getGlobalID()].hbusSlaveObjects.values():
+            for slaveObject in self.hbusMaster.detectedSlaveList[device.global_id()].hbusSlaveObjects.values():
                 
                 if slaveObject.objectHidden:
                     continue
@@ -354,7 +354,7 @@ class HBUSTCP(LineReceiver):
             byteList.append(int (hexStr[i:i+2], 16 ) )
             
         
-        if self.hbusMaster.detectedSlaveList[device.getGlobalID()].hbusSlaveObjectCount < int(objNumber):
+        if self.hbusMaster.detectedSlaveList[device.global_id()].hbusSlaveObjectCount < int(objNumber):
             
             self.logger.warning("specified object does not exist")
             self.sendLine("UNKNOWN OBJECT")
@@ -371,7 +371,7 @@ class HBUSTCP(LineReceiver):
         
         if address != None:
         
-            self.sendLine(str(address.hbusAddressBusNumber)+":"+str(address.hbusAddressDevNumber))
+            self.sendLine(str(address.bus_number)+":"+str(address.dev_number))
         else:
             self.sendLine("ERROR")
             
@@ -386,7 +386,7 @@ class HBUSTCP(LineReceiver):
             self.logger.warning("malformed device address")
             return None
         
-        slaveObjectValue = self.hbusMaster.detectedSlaveList[HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).getGlobalID()].hbusSlaveObjects[int(devAddr[2])].objectLastValue
+        slaveObjectValue = self.hbusMaster.detectedSlaveList[HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])).global_id()].hbusSlaveObjects[int(devAddr[2])].objectLastValue
         
         self.hbusMaster.writeSlaveObject(HbusDeviceAddress(int(devAddr[0]),int(devAddr[1])), int(devAddr[2]), incrementByteList(slaveObjectValue))
 

@@ -163,14 +163,14 @@
             </div>
             
             <div class="hbusStatus">
-                <div class="statusText"><a href="/bus/{{slave.hbusSlaveAddress.hbusAddressBusNumber}}">BUS {{slave.hbusSlaveAddress.hbusAddressBusNumber}}</a></div>
+                <div class="statusText"><a href="/bus/{{slave.hbusSlaveAddress.bus_number}}">BUS {{slave.hbusSlaveAddress.bus_number}}</a></div>
             </div>
         </aside>
     </header>
     
     <section class="hbusDeviceDescription">
         <a class="left">{{slave.hbusSlaveDescription}}</a>
-        <div class="right">&lt;{{hex(slave.hbusSlaveUniqueDeviceInfo)}}&gt; @ {{slave.hbusSlaveAddress.hbusAddressBusNumber}}:{{slave.hbusSlaveAddress.hbusAddressDevNumber}}</div>
+        <div class="right">&lt;{{hex(slave.hbusSlaveUniqueDeviceInfo)}}&gt; @ {{slave.hbusSlaveAddress.bus_number}}:{{slave.hbusSlaveAddress.dev_number}}</div>
     </section>
 
 </div>

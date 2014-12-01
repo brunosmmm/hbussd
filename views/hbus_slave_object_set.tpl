@@ -71,7 +71,7 @@
             </div>
             
             <div class="hbusStatus">
-                <div class="statusText"><a href="/bus/{{slave.hbusSlaveAddress.hbusAddressBusNumber}}">BUS {{slave.hbusSlaveAddress.hbusAddressBusNumber}}</a></div>
+                <div class="statusText"><a href="/bus/{{slave.hbusSlaveAddress.bus_number}}">BUS {{slave.hbusSlaveAddress.bus_number}}</a></div>
             </div>
         </aside>
     </header>
