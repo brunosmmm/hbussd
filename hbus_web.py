@@ -11,17 +11,18 @@ import string
 from bottle import route, run, template, static_file, request
 import re
 
-##Web server class
-class HBUSWEB:
+class HBUSWEB(object):
+    """HBUS Web server class"""
 
     ##wait for asynchronous operations
     wait = False
 
-    ##Constructor
-    #@param port HTTP port
-    #@param hbusMaster main master object reference for direct manipulation
     #@todo decouple master object
     def __init__(self,port,hbusMaster):
+        """Class constructor
+           @param port HTTP port
+           @param hbusMaster main master object reference for manipulation
+           """
         
         ##Server port
         self.port = port
@@ -29,26 +30,24 @@ class HBUSWEB:
         self.hbusMaster = hbusMaster
         ##Minimum object level visible on web interface
         self.objectLevel = 0
-
-    ##Templates main page
-    #@return template HTML
+        
     def index(self):
+        """Generates main page template
+           @return template HTML"""
         
         return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values(),masterStatus=self.hbusMaster.getInformationData(),re=re)
     
-    ##Favorite icon for web browser
-    #@return icon file
     def favicon(self):
+        """Favorite icon for web browser
+           @return icon file"""
         
         return static_file('favicon.ico',root='web_static') 
     
-    ##Reads an object's value and displays it
-    #
-    #returns a formatted value for AJAX use
-    #@param uid device UID
-    #@param obj object number
-    #@return requested data
     def readSlaveObject(self,uid=None,obj=None):
+        """Reads an object value and displays it
+           @param uid device UID
+           @param obj object number
+           @return requested data"""
         
         self.wait = False
         def waitForSlaveRead(dummy):
@@ -89,12 +88,13 @@ class HBUSWEB:
             
         return (data)
     
-    ##Templates a page with device information
-    #@param addr device address
-    #@param uid device UID
-    #@param obj object number
-    #@return template HTML
+
     def slaveInfo(self,addr=None,uid=None,obj=None):
+        """Templates a page with device information
+           @param addr device address
+           @param uid device UID
+           @param obj object number
+           @return template HTML"""
         
         getN = 0
         
@@ -149,8 +149,9 @@ class HBUSWEB:
         return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=HbusObjDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         readObjCount=readObjectCount,writeObjCount=writeObjectCount,re=re,getNumber=getN)
         
-    ##@todo document this
+    ##@todo document this properly
     def busList(self):
+        """Generates a bus list"""
         
         from bottle import response
         from json import dumps
@@ -162,13 +163,12 @@ class HBUSWEB:
         
         response.content_type = 'application/json'
         return dumps(rv)
-    
-    ##Writes value to device object
-    #@param uid device UID
-    #@param obj object number
-    #@return template HTML with updated data
+     
     def slaveWriteObject(self,uid=None,obj=None):
-        
+        """Writes value to device object
+           @param uid device UID
+           @param obj object number
+           @return template HTML with updated data"""
 
         if uid != None:
             
@@ -229,10 +229,10 @@ class HBUSWEB:
                         objectNumber = int(obj),re=re,percentToRange=self.percentToRange)
                         #readObjCount=readObjectCount,writeObjCount=writeObjectCount)
     
-    ##Generates page with devices in a bus
-    #@param busNumber bus number
-    #@return template HTML
     def slavesByBus(self,busNumber=None):
+        """Generates page with devices from a bus
+           @param busNumber bus number
+           @return template HTML"""
         
         if int(busNumber) == 255:
             slaveList = self.hbusMaster.detectedSlaveList.values()
@@ -248,9 +248,9 @@ class HBUSWEB:
         
         return template('hbus_slave_by_bus',slaveList=slaveList,masterStatus=self.hbusMaster.getInformationData(),busNumber=busNumber,re=re)
     
-    ##Sets minimum object level for showing on web interface
-    #@param level minimum level
     def setLevel(self,level=None):
+        """Sets level filter for visible objects on web interface
+           @param level minimum level"""
         
         if level == None:
             return
@@ -260,17 +260,17 @@ class HBUSWEB:
         finally:
             return
     
-    ##Fetches static files
-    #@param filename name of file to be fetched
-    #@return file
     def staticFiles(self,filename):
+        """Fetches static files
+           @param filename name of file to be fetched
+           @return file"""
         
         return static_file(filename,root='web_static')
     
-    ##Converts percent values to scaled
-    #@param percentStr percent string
-    #@return value
     def percentToRange(self,percentStr):
+        """Converts percent values to scaled
+           @param percentStr percent string
+           @return value"""
         
         if percentStr == "?" or percentStr == None:
             return "0"
@@ -279,8 +279,8 @@ class HBUSWEB:
         
         return s
     
-    ##pyBottle main loop
     def run(self):
+        """pyBottle main loop"""
         
         #creates routes
         route("/")(self.index)
