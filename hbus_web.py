@@ -1,10 +1,10 @@
 #coding=utf-8
 
-##@package hbus_web
-# Integrated web server for control, using pyBottle
-# @author Bruno Morais <brunosmmm@gmail.com>
-# @date 2013-2014
-# @todo better documentation
+"""Integrated web server for control, using pyBottle
+  @package hbus_web
+  @author Bruno Morais <brunosmmm@gmail.com>
+  @date 2013-2015
+  @todo better documentation"""
 
 from hbusmaster import *
 import string
