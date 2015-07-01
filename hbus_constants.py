@@ -24,7 +24,7 @@ HBUS_SIGNATURE_SIZE = 192
 #<tr>
 #<td> <b> Command ID </b> </td>
 #<td> <b> Minimum length </b> </td>
-#<td> <b> Maximum lenght </b> </td>
+#<td> <b> Maximum length </b> </td>
 #<td> <b> Command name </b> </td>
 #</tr>
 #<tr>
