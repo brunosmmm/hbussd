@@ -82,7 +82,7 @@ class HbusObjDataType(object):
     def format_byte_bool(data, extinfo, size, decode=False):
         """Parses data as boolean
         @param data received data
-        @param extInfo dummy parameter
+        @param extinfo dummy parameter
         @param size dummy parameter
         @param decode indicates if decoding or encoding data
         @return formatted string
@@ -102,7 +102,7 @@ class HbusObjDataType(object):
     def format_byte_hex(data, extinfo, size, decode=False):
         """Parses data as a hexadecimal number
         @param data received data
-        @param extInfo dummy parameter
+        @param extinfo dummy parameter
         @param size data size in bytes
         @param decode indicates if decoding or encoding data
         @return formatted string
@@ -116,7 +116,7 @@ class HbusObjDataType(object):
     def format_byte_dec(data, extinfo, size, decode=False):
         """Parses data as a decimal number
         @param data received data
-        @param extInfo dummy parameter
+        @param extinfo dummy parameter
         @param size data size in bytes
         @param decode indicates if decoding or encoding data
         @return formatted string
@@ -130,7 +130,7 @@ class HbusObjDataType(object):
     def format_byte_oct(data, extinfo, size, decode=False):
         """Parses data as an octal number
         @param data received data
-        @param extInfo dummy parameter
+        @param extinfo dummy parameter
         @param size data size in bytes
         @param decode indicates if decoding or encoding data
         @return formatted string
@@ -144,7 +144,7 @@ class HbusObjDataType(object):
     def format_byte_bin(data, extinfo, size, decode=False):
         """Parses data as a binary number
         @param data received data
-        @param extInfo dummy parameter
+        @param extinfo dummy parameter
         @param size data size in bytes
         @param decode indicates if decoding or encoding data
         @return formatted string
@@ -158,7 +158,7 @@ class HbusObjDataType(object):
     def format_uint(cls, data, extinfo, size, decode=False):
         """Parses data as raw unsigned integer. Allows the use of units
         @param data received data
-        @param extInfo extended object property list
+        @param extinfo extended object property list
         @param size data size in bytes
         @param decode indicates if decoding or encoding data
         @return formatted string
@@ -180,7 +180,7 @@ class HbusObjDataType(object):
     def format_percent(data, extinfo, size, decode=False):
         """Parses data as percent (0-100)
         @param data received data
-        @param extInfo dummy parameter
+        @param extinfo dummy parameter
         @param size dummy parameter
         @param decode indicates if decoding or encoding data
         @return formatted string
@@ -203,7 +203,7 @@ class HbusObjDataType(object):
     def format_lin_percent(cls, data, extinfo, size, decode=False):
         """Parses data as a value in a linear scale
         @param data received data
-        @param extInfo extended object property list
+        @param extinfo extended object property list
         @param size dummy parameter
         @param decode indicates if decoding or encoding data
         @return formatted string
@@ -320,7 +320,7 @@ class HbusObjDataType(object):
     def format_date(data, extinfo, size, decode=False):
         """Parse data as date format
         @param data received data
-        @param extInfo dummy parameter
+        @param extinfo dummy parameter
         @param size dummy parameter
         @param decode indicates if encoding or decoding data
         @return formatted string
@@ -410,7 +410,7 @@ class HbusDeviceObject(object):
 
                 return str(self.last_value) #has no explicit format
 
-        return HbusObjDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](HbusObjDataType(),data=self.last_value,size=self.size,extInfo=self.objectExtendedInfo)
+        return HbusObjDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](HbusObjDataType(),data=self.last_value,size=self.size,extinfo=self.objectExtendedInfo)
 
     ##Object string representation
     #@return descriptive string for logging

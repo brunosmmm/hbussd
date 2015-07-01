@@ -1191,7 +1191,7 @@ class HbusMaster:
         else:
             obj = self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number]
 
-        data = HbusObjDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](HbusObjDataType(),data=value,extInfo=obj.objectExtendedInfo,decode=True,size=obj.size)
+        data = HbusObjDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](HbusObjDataType(),data=value,extinfo=obj.objectExtendedInfo,decode=True,size=obj.size)
 
         self.writeSlaveObject(address, number, data)
 
