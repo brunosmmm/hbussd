@@ -10,6 +10,8 @@ from hbusmaster import *
 import string
 from bottle import route, run, template, static_file, request
 import re
+import logging
+from hbusslaves import HbusDeviceObject
 
 class HBUSWEB(object):
     """HBUS Web server class"""
@@ -30,6 +32,9 @@ class HBUSWEB(object):
         self.hbusMaster = hbusMaster
         ##Minimum object level visible on web interface
         self.objectLevel = 0
+
+        #get logger
+        self.logger = logging.getLogger('hbussd.hbusweb')
         
     def index(self):
         """Generates main page template
@@ -79,7 +84,11 @@ class HBUSWEB(object):
                 self.logger.debug('error reading device object!!')
             
         if s != None:
-            data = s.hbusSlaveObjects[int(obj)].getFormattedValue()
+            try:
+                data = s.hbusSlaveObjects[int(obj)].getFormattedValue()
+            except TypeError:
+                data = '?'
+                raise
         else:
             data = "?"
             
