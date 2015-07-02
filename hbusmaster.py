@@ -190,7 +190,6 @@ class HbusMaster:
         self.hbusMasterAddr = HbusDeviceAddress(busno, 0)
 
         self.logger = logging.getLogger('hbussd.hbusmaster')
-
         self.pluginManager = HbusPluginManager('./plugins', self)
         self.searchAndLoadPlugins()
 
@@ -1191,7 +1190,7 @@ class HbusMaster:
         else:
             obj = self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number]
 
-        data = HbusObjDataType.dataTypeOptions[obj.objectDataType][obj.objectDataTypeInfo](HbusObjDataType(),data=value,extinfo=obj.objectExtendedInfo,decode=True,size=obj.size)
+        data = HBUS_DTYPE_OPTIONS[obj.objectDataType][obj.objectDataTypeInfo](data=value,extinfo=obj.objectExtendedInfo,decode=True,size=obj.size)
 
         self.writeSlaveObject(address, number, data)
 

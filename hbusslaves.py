@@ -333,26 +333,28 @@ class HbusObjDataType(object):
 
         return "?"
 
-    ##Data type and display string association dictionary
-    dataTypeNames = {type_byte : 'Byte',
-                     dataTypeInt : 'Int',
-                     dataTypeUnsignedInt : 'Unsigned Int',
-                     dataTypeFixedPoint : 'Fixed point'}
+##Data type and display string association dictionary
+HBUS_DTYPE_NAMES = {HbusObjDataType.type_byte : 'Byte',
+                    HbusObjDataType.dataTypeInt : 'Int',
+                    HbusObjDataType.dataTypeUnsignedInt : 'Unsigned Int',
+                    HbusObjDataType.dataTypeFixedPoint : 'Fixed point'}
 
-    ##Extended data types decoding dictionary
-    dataTypeOptions = {type_byte : {dataTypeByteHex : format_byte_hex,
-                                       dataTypeByteDec : format_byte_dec,
-                                       dataTypeByteOct : format_byte_oct,
-                                       dataTypeByteBin : format_byte_bin,
-                                       dataTypeByteBool : format_byte_bool},
-                       dataTypeUnsignedInt : {dataTypeUintNone : format_uint,
-                                              dataTypeUintPercent : format_percent,
-                                              dataTypeUintLinPercent : format_lin_percent,
-                                              dataTypeUintLogPercent : format_log_percent,
-                                              dataTypeUintTime : format_time,
-                                              dataTypeUintDate : format_date},
-                       dataTypeFixedPoint : HbusFixPHandler(),
-                       dataTypeInt : HbusIntHandler()}
+##Extended data types decoding dictionary
+HBUS_DTYPE_OPTIONS = {HbusObjDataType.type_byte :
+                      {HbusObjDataType.dataTypeByteHex :  HbusObjDataType.format_byte_hex,
+                       HbusObjDataType.dataTypeByteDec :  HbusObjDataType.format_byte_dec,
+                       HbusObjDataType.dataTypeByteOct :  HbusObjDataType.format_byte_oct,
+                       HbusObjDataType.dataTypeByteBin :  HbusObjDataType.format_byte_bin,
+                       HbusObjDataType.dataTypeByteBool : HbusObjDataType.format_byte_bool},
+                      HbusObjDataType.dataTypeUnsignedInt :
+                      {HbusObjDataType.dataTypeUintNone :       HbusObjDataType.format_uint,
+                       HbusObjDataType.dataTypeUintPercent :    HbusObjDataType.format_percent,
+                       HbusObjDataType.dataTypeUintLinPercent : HbusObjDataType.format_lin_percent,
+                       HbusObjDataType.dataTypeUintLogPercent : HbusObjDataType.format_log_percent,
+                       HbusObjDataType.dataTypeUintTime :       HbusObjDataType.format_time,
+                       HbusObjDataType.dataTypeUintDate :       HbusObjDataType.format_date},
+                      HbusObjDataType.dataTypeFixedPoint : HbusFixPHandler(),
+                      HbusObjDataType.dataTypeInt : HbusIntHandler()}
 
 
 class HbusDeviceObjExtInfo(object):
@@ -399,18 +401,18 @@ class HbusDeviceObject(object):
         if self.last_value == None:
             return None
 
-        if self.objectDataType not in HbusObjDataType.dataTypeOptions.keys():
+        if self.objectDataType not in HBUS_DTYPE_OPTIONS.keys():
 
             return str(self.last_value) #has no explicit format
 
         #analyzes extended information
-        if type(HbusObjDataType.dataTypeOptions[self.objectDataType]) == dict:
+        if type(HBUS_DTYPE_OPTIONS[self.objectDataType]) == dict:
 
-            if self.objectDataTypeInfo not in HbusObjDataType.dataTypeOptions[self.objectDataType].keys():
+            if self.objectDataTypeInfo not in HBUS_DTYPE_OPTIONS[self.objectDataType].keys():
 
                 return str(self.last_value) #has no explicit format
 
-        return HbusObjDataType.dataTypeOptions[self.objectDataType][self.objectDataTypeInfo](HbusObjDataType(),data=self.last_value,size=self.size,extinfo=self.objectExtendedInfo)
+        return HBUS_DTYPE_OPTIONS[self.objectDataType][self.objectDataTypeInfo](data=self.last_value,size=self.size,extinfo=self.objectExtendedInfo)
 
     ##Object string representation
     #@return descriptive string for logging
