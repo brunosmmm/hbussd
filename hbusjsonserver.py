@@ -28,13 +28,13 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     ##Gets a list of the busses currently active
     #@return data to be JSON structured
     def jsonrpc_activebusses(self):
-        return self.master.getInformationData().activeBusses
+        return {'status': 'ok',  'list': self.master.getInformationData().activeBusses}
     
     ##Gets the current active device count
     #@return data to be JSON structured
     def jsonrpc_activeslavecount(self):
         
-        return self.master.getInformationData().activeSlaveCount
+        return {'status': 'ok', 'list': self.master.getInformationData().activeSlaveCount}
     
 
     ##Gets a list of the UIDs from all currently active devices
@@ -43,7 +43,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         slaveList = [x.hbusSlaveUniqueDeviceInfo for x in self.master.detectedSlaveList.values()]
         
-        return slaveList
+        return {'status': 'ok', 'list': slaveList}
     
 
     ##Gets detailed information from a device
@@ -54,11 +54,15 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         address = self.master.findDeviceByUID(uid)
         
         if address == None:
-            return []
+            return {'status': 'error',
+                    'error': 'invalid_uid'}
         
         slave = self.master.detectedSlaveList[address.global_id()]
         
-        return hbusSlaveSerializer(slave).getDict()
+        ret = hbusSlaveSerializer(slave).getDict()
+        ret['status'] = 'ok'
+
+        return ret
     
     ##Gets a list of a device's objects
     #@param slaveuid device's UID
@@ -68,13 +72,14 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         address = self.master.findDeviceByUID(slaveuid)
         
         if address == None:
-            return []
+            return {'status': 'error',
+                    'error': 'invalid_uid'}
         
         slave = self.master.detectedSlaveList[address.global_id()]
         
         objectList = [hbusObjectSerializer(x).getDict() for x in slave.hbusSlaveObjects.values()]
         
-        return objectList
+        return {'status': 'ok', 'list': objectList}
     
     ##Gets a list of all active devices UIDs in a bus
     #@param bus bus number
@@ -91,7 +96,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
                     
         returnList = [x.hbusSlaveUniqueDeviceInfo for x in slaveList]
         
-        return returnList
+        return {'status': 'ok', 'list': returnList}
     
     ##Reads value from an object
     #@param address device address
