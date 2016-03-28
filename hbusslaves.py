@@ -185,6 +185,9 @@ class HbusObjDataType(object):
         @param decode indicates if decoding or encoding data
         @return formatted string
         """
+
+        #print 'format_percent size = ',size
+        
         if len(data) > 0:
             try:
                 data = int(data[::-1])
@@ -195,6 +198,7 @@ class HbusObjDataType(object):
             data = 100
 
         if decode:
+            ##@todo this is very wrong!
             return [ord(x) for x in struct.pack('>I', data)[size:]]
 
         return "%d%%" % data

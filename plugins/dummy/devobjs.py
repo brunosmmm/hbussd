@@ -16,6 +16,7 @@ def read_zero(objnum):
 
 def write_zero(objnum, value):
     global value_zero
+    print 'write_zero, write = ', value
     value_zero = value
 
 
@@ -42,9 +43,7 @@ def getVirtualDevices():
     object_zero.objectDataTypeInfo = HbusObjDataType.dataTypeUintPercent
     object_zero.last_value = None
     
-    device_zero.device.hbusSlaveObjects = {}
-    device_zero.device.hbusSlaveObjects[1] = object_zero
-
+    device_zero.device.hbusSlaveObjects = {1: object_zero}
 
     devices = {0: device_zero}
 
