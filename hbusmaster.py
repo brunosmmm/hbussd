@@ -1148,7 +1148,7 @@ class HbusMaster:
         if address.bus_number == VIRTUAL_BUS:
             self.virtualDeviceList[address.global_id()].hbusSlaveObjects[number].last_value = value
             self.pluginManager.m_write_vdev_obj(address.dev_number, number, value)
-            return
+            return True
 
         if self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number].permissions != HbusObjectPermissions.READ:
 
@@ -1179,12 +1179,14 @@ class HbusMaster:
             self.pushCommand(HBUSCOMMAND_SETCH,address,params=myParamList)
 
         else:
-
+            return False
             self.logger.warning("attempted to write to a read-only object")
+
+        return True
 
     def writeFormattedSlaveObject(self,address,number,value):
 
-        #decodifica formatação e realiza escrita no objeto
+        #decode formatting and write data to object
         if address.bus_number == VIRTUAL_BUS:
             obj = self.virtualDeviceList[address.global_id()].hbusSlaveObjects[number]
         else:
