@@ -11,6 +11,7 @@ from hbusmaster import *
 from hbustcpserver import *
 from hbus_web import *
 import argparse
+from announce.zeroconf import ZeroconfService
 
 from twisted.internet import reactor
 from twisted.internet.serialport import SerialPort
@@ -166,19 +167,26 @@ def main():
     #web server start
     ##@todo start server only after enumeration
 
+    webif_announcer = None
     if args['w'] == True:
         #integrated web server
         logger.info('Integrated web server enabled')
+        webif_announcer = ZeroconfService(name='HBUS Server', port=args['wp'])
         hbusWeb = HBUSWEB(args['wp'], hbusMaster)
         reactor.callInThread(hbusWeb.run) #@UndefinedVariable
-
-    if args['t'] == True:
-        reactor.listenTCP(args['tp'], HBUSTCPFactory(hbusMaster)) #@UndefinedVariable
+        webif_announcer.publish()
 
     #JSON SERVER
+    rpc_announcer = ZeroconfService(name='HBUS Server RPC', port=7080, stype='_hbusrpc._tcp')
     reactor.listenTCP(7080, server.Site(HBUSJSONServer(hbusMaster))) #@UndefinedVariable
+    rpc_announcer.publish()
 
     reactor.run() #@UndefinedVariable
+
+    #cleanup
+    rpc_announcer.unpublish()
+    if webif_announcer:
+        webif_announcer.unpublish()
 
 ##Main function
 if __name__ == '__main__':
