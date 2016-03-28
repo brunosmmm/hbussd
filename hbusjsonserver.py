@@ -20,6 +20,10 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         
         ##Master object reference
         self.master = master
+
+        self.read_data = None
+        self.waiting_for_read = False
+        self.read_finished = True
     
     ##Gets a list of the busses currently active
     #@return data to be JSON structured
@@ -50,7 +54,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         address = self.master.findDeviceByUID(uid)
         
         if address == None:
-            return None
+            return []
         
         slave = self.master.detectedSlaveList[address.global_id()]
         
@@ -64,7 +68,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         address = self.master.findDeviceByUID(slaveuid)
         
         if address == None:
-            return None
+            return []
         
         slave = self.master.detectedSlaveList[address.global_id()]
         
@@ -95,21 +99,68 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@return data to be JSON structured
     def jsonrpc_readobject(self,address,number):
 
+        #for now, make sure that we are not doing anything else (waiting)
+        if self.read_finished == False:
+            return {'status': 'error',
+                    'error': 'busy'}
+
         addr = hbus_address_from_string(address)
         
         if not addr.global_id() in self.master.detectedSlaveList.keys():
             
             #device does not exist
-            return
+            return {'status': 'error',
+                    'error': 'invalid_device'}
         
         if not int(number) in self.master.detectedSlaveList[addr.global_id()].hbusSlaveObjects.keys():
             
             #object does not exist
-            return
-        
-        #deferred?
-        
-        ##@todo use deferreds to return data
+            return {'status': 'error',
+                    'error': 'invalid_object'}
+
+        self.master.readSlaveObject(addr,
+                                    int(number),
+                                    self._read_object_callback,
+                                    self._read_object_timeout_callback)
+        self.waiting_for_read = True
+        self.read_finished = False
+        return {'status': 'deferred'} ##deffered, use readfinished and retrievelastdata to receive
+
+
+    ##Check if last read request has been finished
+    ##@return error or value
+    def jsonrpc_readfinished(self):
+        if self.waiting_for_read == False:
+            return {'status': 'error',
+                    'error': 'not_waiting'}
+
+        return {'status': 'ok', 'value': self.read_finished}
+
+    ##Retrieve last data read from slave, if avaiable
+    ##@return error or data
+    def jsonrpc_retrievelastdata(self):
+        if self.waiting_for_read == False:
+            return {'status': 'error',
+                    'error': 'no_request'}
+
+        if self.read_finished == False:
+            return {'status': 'error',
+                    'error': 'waiting_read'}
+
+        self.waiting_for_read = False
+        #this is raw data!
+        return {'status': 'ok', 'value': self.read_data}
+
+    ##Data read finished callback
+    def _read_object_callback(self, data):
+        self.read_finished = True
+        self.read_data = data
+
+    ##Data read timeout callback
+    def _read_object_timeout_callback(self, data):
+        self.read_finished = True
+        self.read_data =  {'status': 'error',
+                           'error': 'read_timeout'}
         
     ##Writes a value to an object
     #@param address device address
@@ -123,14 +174,18 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if not addr.global_id() in self.master.detectedSlaveList.keys():
             
             #device does not exist
-            return
+            return {'status': 'error',
+                    'error': 'invalid_device'}
         
         if not int(number) in self.master.detectedSlaveList[addr.global_id()].hbusSlaveObjects.keys():
             
             #object does not exist
-            return
+            return {'status': 'error',
+                    'error': 'invalid_object'}
         
         #value formatting
-        self.master.writeSlaveObject(addr,int(number),int(value))
-        
-        return 'OK'
+        if self.master.writeSlaveObject(addr,int(number),int(value)):
+            return {'status': 'ok'}
+
+        return {'status': 'error',
+                'error': 'read_only'}
