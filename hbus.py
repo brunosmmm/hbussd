@@ -10,7 +10,6 @@ import logging
 from hbusmaster import *
 from hbus_web import *
 import argparse
-from announce.zeroconf import ZeroconfService
 
 from twisted.internet import reactor
 from twisted.internet.serialport import SerialPort
@@ -174,6 +173,7 @@ def main():
 
     #JSON SERVER
     if args['no_announce'] is False:
+        from announce.zeroconf import ZeroconfService
         rpc_announcer = ZeroconfService(name='HBUS Server RPC', port=7080, stype='_hbusrpc._tcp')
         rpc_announcer.publish()
 
