@@ -8,7 +8,6 @@
 
 import logging
 from hbusmaster import *
-from hbustcpserver import *
 from hbus_web import *
 import argparse
 from announce.zeroconf import ZeroconfService
@@ -127,11 +126,8 @@ def main():
     mutexArgs.add_argument('-f', help='Enable fake bus for debugging without actual hardware', action='store_true')
     parser.add_argument('-w', help='Enables integrated web server', action='store_true')
     parser.add_argument('-wp', help='Integrated web server port', default=8000, type=int)
-
-    parser.add_argument('-t', help='Enables TCP server', action='store_true')
-    parser.add_argument('-tp', help='TCP server port', default=8123, type=int)
-
     parser.add_argument('-c', help='Slave polling interval in seconds', default=300, type=int)
+    parser.add_argument('--no-announce', help='Do not announce service', action='store_true')
 
     args = vars(parser.parse_args())
 
@@ -177,16 +173,19 @@ def main():
         webif_announcer.publish()
 
     #JSON SERVER
-    rpc_announcer = ZeroconfService(name='HBUS Server RPC', port=7080, stype='_hbusrpc._tcp')
+    if args['no_announce'] is False:
+        rpc_announcer = ZeroconfService(name='HBUS Server RPC', port=7080, stype='_hbusrpc._tcp')
+        rpc_announcer.publish()
+
     reactor.listenTCP(7080, server.Site(HBUSJSONServer(hbusMaster))) #@UndefinedVariable
-    rpc_announcer.publish()
 
     reactor.run() #@UndefinedVariable
 
     #cleanup
-    rpc_announcer.unpublish()
-    if webif_announcer:
-        webif_announcer.unpublish()
+    if args['no_announce'] is False:
+       rpc_announcer.unpublish()
+       if webif_announcer:
+           webif_announcer.unpublish()
 
 ##Main function
 if __name__ == '__main__':
