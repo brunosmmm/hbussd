@@ -12,6 +12,7 @@ from datetime import datetime
 import logging
 from collections import deque
 import hbus_crypto
+import json
 
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Factory
@@ -183,7 +184,7 @@ class HbusMaster:
     rxBytes = 0
     txBytes = 0
 
-    def __init__(self, port, baudrate=100000, busno=0):
+    def __init__(self, port, baudrate=100000, busno=0, conf_file=None):
 
         self.serialPort = port
         self.serialBaud = baudrate
@@ -203,9 +204,35 @@ class HbusMaster:
         else:
             self.serialCreate(fake=False)
 
+        #configuration parameters
+        self.conf_param = {}
+        self._load_configuration(conf_file)
+
         #system started event
         event = hbusMasterEvent(hbusMasterEventType.eventStarted)
         self.pluginManager.m_evt_broadcast(event)
+
+    def _load_configuration(self, conf_file):
+
+        if conf_file is None:
+            return
+
+        try:
+            with open(conf_file, 'r') as f:
+                self.conf_param = json.load(f)
+        except IOError:
+            return # for now
+
+        #process some configuration params
+        if 'staticSlaveList' in self.conf_param:
+            for addr in self.conf_param['staticSlaveList']:
+                if 'busNum' not in addr:
+                    continue
+                if 'devNum' not in addr:
+                    continue
+
+                self.staticSlaveList.append(HbusDeviceAddress(int(addr['busNum']), int(addr['devNum'])))
+
 
     ##Search and load plugins using plugin manager
     def searchAndLoadPlugins(self):

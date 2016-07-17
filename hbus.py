@@ -127,6 +127,7 @@ def main():
     parser.add_argument('-wp', help='Integrated web server port', default=8000, type=int)
     parser.add_argument('-c', help='Slave polling interval in seconds', default=300, type=int)
     parser.add_argument('--no-announce', help='Do not announce service', action='store_true')
+    parser.add_argument('--conf', help='Load configuration file', default='hbussd.json', type=str)
 
     args = vars(parser.parse_args())
 
@@ -151,7 +152,7 @@ def main():
     signal.signal(signal.SIGTERM, SignalHandler)
     signal.signal(signal.SIGINT, SignalHandler)
 
-    hbusMaster = TwistedhbusMaster(args['s'], baudrate=100000)
+    hbusMaster = TwistedhbusMaster(args['s'], baudrate=100000, conf_file=args['conf'])
 
     hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
     hbusMasterPeriodicTask.start(1)
