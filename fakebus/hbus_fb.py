@@ -418,7 +418,6 @@ class FakeBusSerialPort(Protocol):
             static_addr = None
             try:
                 static_addr = devconf.get('device', 'static_addr')
-                print static_addr
             except:
                 pass
 
@@ -453,7 +452,7 @@ class FakeBusSerialPort(Protocol):
                 self.busAddrToUID[static_addr.global_id()] = device.hbusSlaveUniqueDeviceInfo
 
             for section in devconf.sections():
-                m = re.match(r"object([0-9+])", section)
+                m = re.match(r"object([0-9]+)", section)
                 if m == None:
                     continue
 
