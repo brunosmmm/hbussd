@@ -1183,7 +1183,10 @@ class HbusMaster:
             size = self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number].size
 
             myParamList = [number,size]
-            myParamList.extend(value)
+            if isinstance(value, list):
+                myParamList.extend(value)
+            else:
+                myParamList.append(value)
 
             if (self.detectedSlaveList[address.global_id()].hbusSlaveCapabilities & HbusDeviceCapabilities.AUTHSUP):
 
