@@ -86,9 +86,15 @@ class FakeBusDevice(HbusDevice):
             return objectinfo
 
         elif objnum in self.hbusSlaveObjects.keys():
+            # why is different from the standard implementation?
+
+            object_flags = self.hbusSlaveObjects[objnum].permissions +\
+                           self.hbusSlaveObjects[objnum].objectLevel +\
+                           self.hbusSlaveObjects[objnum].objectDataType
+
             objectinfo = (objnum,
                           4+len(self.hbusSlaveObjects[objnum].description),
-                          self.hbusSlaveObjects[objnum].permissions,
+                          object_flags,
                           self.hbusSlaveObjects[objnum].size,
                           self.hbusSlaveObjects[objnum].objectDataTypeInfo,
                           len(self.hbusSlaveObjects[objnum].description),
@@ -490,7 +496,7 @@ class FakeBusSerialPort(Protocol):
                     if obj.objectDataType != HbusObjDataType.dataTypeFixedPoint:
                         obj.objectDataTypeInfo = CONFIG_DATA_TYPE_INFO[data_type_info]
                     else:
-                        obj.objectDataTypeInfo = data_type_info
+                        obj.objectDataTypeInfo = int(data_type_info)
                     obj.objectLevel = CONFIG_LEVEL[level]
                 except:
                     #invalid data type
