@@ -16,6 +16,7 @@ from hbus_base import *
 from hbus_constants import *
 from hbusslaves import *
 from collections import deque
+import re
 
 import ConfigParser ##for fakebus device tree emulation
 import os
@@ -58,8 +59,14 @@ class FakeBusDevice(HbusDevice):
     """Device data structure, inherits HbusSlaveInfo
     and adds objects to emulate adressing"""
 
-    ##Device internal status emulation
-    deviceStatus = FakeBusDeviceStatus.deviceIdle
+    def __init__(self, static_address=None):
+        super(FakeBusDevice, self).__init__(static_address)
+
+        ##Device internal status emulation
+        self.deviceStatus = FakeBusDeviceStatus.deviceIdle
+
+        if static_address is not None:
+            self.deviceStatus = FakeBusDeviceStatus.deviceEnumerated
 
     def create_query_response(self, objnum):
         """Creates a response to a QUERY command sent by the master
@@ -130,13 +137,14 @@ class FakeBusSerialPort(Protocol):
         self.rxState = HbusRXState.SBID
         self.config = ConfigParser.ConfigParser()
         self.deviceList = {}
+        self.busAddrToUID = {}
         try:
             self.config.read('fakebus/fakebus.config')
             self.build_bus()
         except:
-            self.logger.debug("no configuration file found")
+            #self.logger.debug("no configuration file found")
+            raise
 
-        self.busAddrToUID = {}
         self.busState = HbusBusState.FREE
         self.addressingDevice = None
         self.addressingQueue = deque()
@@ -400,10 +408,28 @@ class FakeBusSerialPort(Protocol):
         devfiles = [x for x in os.listdir(devpath) if x.endswith('.config')]
 
         #read device files to build tree
-        devconf = ConfigParser.ConfigParser()
         for devfile in devfiles:
-            device = FakeBusDevice(None)
+
+            #read config
+            devconf = ConfigParser.ConfigParser()
             devconf.read(devpath+devfile)
+
+            #detect static addressed device
+            static_addr = None
+            try:
+                static_addr = devconf.get('device', 'static_addr')
+                print static_addr
+            except:
+                pass
+
+            if static_addr is not None:
+                m = re.match(r'([0-9]+):([0-9]+)', static_addr.strip())
+
+                if m is not None:
+                    static_addr = HbusDeviceAddress(int(m.group(1)), int(m.group(2)))
+
+            
+            device = FakeBusDevice(static_addr)
 
             #start building device
             try:
@@ -421,6 +447,10 @@ class FakeBusSerialPort(Protocol):
 
             #capabilities, must generate flags
             ##@todo generate flags for capabilities from configuration file
+
+            #store addr->id correlation
+            if static_addr is not None:
+                self.busAddrToUID[static_addr.global_id()] = device.hbusSlaveUniqueDeviceInfo
 
             for section in devconf.sections():
                 m = re.match(r"object([0-9+])", section)
