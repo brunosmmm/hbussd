@@ -173,8 +173,12 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@param value value to be written
     #@return data to be JSON structured
     def jsonrpc_writeobject(self,address,number,value):
-        
-        addr = hbus_address_from_string(address)
+
+        try:
+            addr = hbus_address_from_string(address)
+        except ValueError:
+            return {'status' : 'error',
+                    'error' : 'malformed address'}
         
         if not addr.global_id() in self.master.detectedSlaveList.keys():
             
