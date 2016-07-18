@@ -368,6 +368,7 @@ class FakeBusSerialPort(Protocol):
         elif command == HBUSCOMMAND_BUSUNLOCK:
             self.busState = HbusBusState.FREE
 
+        #self.logger.debug('writing: {}'.format(busop.get_string()))
         self.transport.write(busop.get_string())
 
     ##Process addressing of devices
@@ -433,6 +434,7 @@ class FakeBusSerialPort(Protocol):
             #start building device
             try:
                 if devconf.getboolean('device', 'dont_read') == True:
+                    self.logger.debug('ignored device description in {}'.format(devfile))
                     continue
             except:
                 pass
@@ -455,7 +457,6 @@ class FakeBusSerialPort(Protocol):
                 m = re.match(r"object([0-9]+)", section)
                 if m == None:
                     continue
-
 
                 obj = HbusDeviceObject()
 
@@ -486,7 +487,10 @@ class FakeBusSerialPort(Protocol):
 
                 try:
                     obj.objectDataType = CONFIG_DATA_TYPE[data_type]
-                    obj.objectDataTypeInfo = CONFIG_DATA_TYPE_INFO[data_type_info]
+                    if obj.objectDataType != HbusObjDataType.dataTypeFixedPoint:
+                        obj.objectDataTypeInfo = CONFIG_DATA_TYPE_INFO[data_type_info]
+                    else:
+                        obj.objectDataTypeInfo = data_type_info
                     obj.objectLevel = CONFIG_LEVEL[level]
                 except:
                     #invalid data type
