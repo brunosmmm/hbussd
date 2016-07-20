@@ -186,22 +186,23 @@ class HbusObjDataType(object):
         @return formatted string
         """
 
-        #print 'format_percent size = ',size
-        
-        if len(data) > 0:
-            try:
-                data = int(data[::-1])
-            except:
-                data = 0
-
-        if data > 100:
-            data = 100
-
         if decode:
-            ##@todo this is very wrong!
-            return [ord(x) for x in struct.pack('>I', data)[size:]]
 
-        return "%d%%" % data
+            data = int(data)
+            if data > 100:
+                data = 100
+
+            output = []
+            for i in range(0, size):
+                output.append((data & (0xff << i*8)) >> i*8)
+
+            return output
+
+        #basically ignore size because a percentual value is 0 < val < 100, which only needs one byte
+        if isinstance(data, list):
+            data = data[0]
+
+        return '{}%'.format(data)
 
     @classmethod
     def format_lin_percent(cls, data, extinfo, size, decode=False):
@@ -229,7 +230,11 @@ class HbusObjDataType(object):
             #Normalizes value to a percent (0-100) scale
             value = int((float(data)/100.0)*(max_val-min_val) + min_val)
 
-            return [ord(x) for x in struct.pack('>I', value)[size:]]
+            output = []
+            for i in range(0, size):
+                output.append((value & (0xff << i*8)) >> i*8)
+
+            return value
 
         if data == None:
             return "?"
@@ -270,7 +275,11 @@ class HbusObjDataType(object):
             #Maps log scale value to a percent (0-100) scale
             value = int(10**((float(data)/100.0)*log(max_val-min_val)) + min_val)
 
-            return [ord(x) for x in struct.pack('>I', value)[size:]]
+            output = []
+            for i in range(0, size):
+                output.append((value & (0xff << i*8)) >> i*8)
+
+            return output
 
         if data == None:
             return "?"

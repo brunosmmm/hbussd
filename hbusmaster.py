@@ -1184,6 +1184,10 @@ class HbusMaster:
 
             myParamList = [number,size]
             if isinstance(value, list):
+                #truncate value passed to length
+                if len(value) > size:
+                    self.logger.warning('writeSlaveObject: passed a value with incorrect length of {}, truncating'.format(len(value)))
+                    value = value[0:size]
                 myParamList.extend(value)
             else:
                 myParamList.append(value)
