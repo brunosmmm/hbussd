@@ -17,7 +17,7 @@ class HbusFixPHandler(object):
 
     point_loc = None
 
-    def format_fixed_point(self, dummy, data, extinfo, size, decode=False):
+    def format_fixed_point(self, data, extinfo, size, decode=False):
 
         x = [0]
         while len(data) < 4:
@@ -48,7 +48,7 @@ class HbusFixPHandler(object):
 class HbusIntHandler(object):
     """Integer type formatting"""
 
-    def format_int(self, dummy, data, extinfo, size, decode=False):
+    def format_int(self, data, extinfo, size, decode=False):
 
         value = BitArray(bytes=''.join([chr(x) for x in data])).int
 
