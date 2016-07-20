@@ -124,9 +124,14 @@ class FakeBusDevice(HbusDevice):
         elif objnum in self.hbusSlaveObjects.keys():
 
             ##@todo generate proper object size!
-            object_read = (0,
-                           self.hbusSlaveObjects[objnum].size,
-                           self.hbusSlaveObjects[objnum].last_value)
+            value_list = []
+            last_value = self.hbusSlaveObjects[objnum].last_value
+            for i in range(0, self.hbusSlaveObjects[objnum].size):
+                value_list.append((last_value & (0xff << i*8)) >> i*8)
+
+            object_read = [0,
+                           self.hbusSlaveObjects[objnum].size]
+            object_read.extend(value_list)
 
             return object_read
         else:
