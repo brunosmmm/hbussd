@@ -231,7 +231,8 @@ class FakeBusSerialPort(Protocol):
                     else:
                         #malformed packet, ignore
                         self.rxState = HbusRXState.SBID
-                        self.logger.debug("ignored malformed packet from master")
+                        self.logger.debug("ignored malformed packet from master @PRM")
+                        self.logger.debug("info: expected to have received {} bytes".format(count+self.lastParamSize))
                         self.logger.debug("packet size %d, dump: %s", len(self.dataBuffer), [hex(ord(x)) for x in self.dataBuffer])
                         self.dataBuffer = []
                         return
@@ -246,7 +247,7 @@ class FakeBusSerialPort(Protocol):
                 else:
                     #malformed packet, ignore
                     self.rxState = HbusRXState.SBID
-                    self.logger.debug("ignored malformed packet from master")
+                    self.logger.debug("ignored malformed packet from master @STP")
                     self.logger.debug("packet size %d dump: %s", len(self.dataBuffer), [hex(ord(x)) for x in self.dataBuffer])
                     self.dataBuffer = []
                     return
