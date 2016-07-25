@@ -9,6 +9,7 @@ from txjsonrpc.web import jsonrpc
 import simplejson
 from hbus_serializers import *
 from hbus_base import hbus_address_from_string
+import line_profiler
 
 ##HTTP server for JSON connection
 class HBUSJSONServer(jsonrpc.JSONRPC):
@@ -27,11 +28,13 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     
     ##Gets a list of the busses currently active
     #@return data to be JSON structured
+    @profile
     def jsonrpc_activebusses(self):
         return {'status': 'ok',  'list': self.master.getInformationData().activeBusses}
     
     ##Gets the current active device count
     #@return data to be JSON structured
+    @profile
     def jsonrpc_activeslavecount(self):
         
         return {'status': 'ok', 'list': self.master.getInformationData().activeSlaveCount}
@@ -39,6 +42,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
     ##Gets a list of the UIDs from all currently active devices
     #@return data to be JSON structured
+    @profile
     def jsonrpc_activeslavelist(self):
 
         slaveList = [x.hbusSlaveUniqueDeviceInfo for x in self.master.detectedSlaveList.values()]
@@ -48,7 +52,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
     ##Gets detailed information from a device
     #@param uid device's UID
-    #@return data to be JSON structured   
+    #@return data to be JSON structured
+    @profile
     def jsonrpc_slaveinformation(self,uid):
 
         address = self.master.findDeviceByUID(uid)
@@ -67,6 +72,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     ##Gets a list of a device's objects
     #@param slaveuid device's UID
     #@return data to be JSON structured
+    @profile
     def jsonrpc_slaveobjectlist(self,slaveuid):
         
         address = self.master.findDeviceByUID(slaveuid)
@@ -84,6 +90,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     ##Gets a list of all active devices UIDs in a bus
     #@param bus bus number
     #@return data to be JSON structured
+    @profile
     def jsonrpc_activeslavesbybus(self,bus):
         
         if int(bus) == 255:
@@ -102,6 +109,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@param address device address
     #@param number object number
     #@return data to be JSON structured
+    @profile
     def jsonrpc_readobject(self,address,number):
 
         #for now, make sure that we are not doing anything else (waiting)
@@ -134,6 +142,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
     ##Check if last read request has been finished
     ##@return error or value
+    @profile
     def jsonrpc_readfinished(self):
         if self.waiting_for_read == False:
             return {'status': 'error',
@@ -143,6 +152,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
     ##Retrieve last data read from slave, if avaiable
     ##@return error or data
+    @profile
     def jsonrpc_retrievelastdata(self):
         if self.waiting_for_read == False:
             return {'status': 'error',
@@ -157,11 +167,13 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         return {'status': 'ok', 'value': self.read_data}
 
     ##Data read finished callback
+    @profile
     def _read_object_callback(self, data):
         self.read_finished = True
         self.read_data = data
 
     ##Data read timeout callback
+    @profile
     def _read_object_timeout_callback(self, data):
         self.read_finished = True
         self.read_data =  {'status': 'error',
@@ -172,6 +184,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@param number object number
     #@param value value to be written
     #@return data to be JSON structured
+    @profile
     def jsonrpc_writeobject(self,address,number,value):
 
         try:
