@@ -588,7 +588,8 @@ class HbusMaster:
             self.logger.debug("Illegal packet ignored: reserved addres")
             return
 
-        self.logger.debug(busOp)
+        # very slow!!!
+        #self.logger.debug(busOp)
         #print busOp
 
         if busOp.destination == self.hbusMasterAddr:
@@ -698,7 +699,8 @@ class HbusMaster:
 
         busOp = HbusOperation(HbusInstruction(command, len(params), params),dest,self.hbusMasterAddr)
 
-        self.logger.debug(busOp)
+        # very slow!!
+        #self.logger.debug(busOp)
 
         if command == HBUSCOMMAND_BUSLOCK:
 
