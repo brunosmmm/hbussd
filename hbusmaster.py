@@ -28,6 +28,7 @@ from hbussd_plugin import HbusPluginManager
 from hbussd_evt import hbusMasterEvent, hbusMasterEventType
 
 import re
+import time
 
 BROADCAST_BUS = 255
 VIRTUAL_BUS = 254
@@ -39,12 +40,12 @@ def getMillis(td):
 
     return (td.days * 24 * 60 * 60 + td.seconds) * 1000 + td.microseconds / 1000.0
 
-def nonBlockingDelay(td):
+def blockingDelay(td):
 
     now = datetime.now()
 
     while getMillis(datetime.now() - now) < td:
-        pass
+        time.sleep(0.01)
 
 ##HBUS security key set
 ##@todo this is not useful at all currently
@@ -687,7 +688,7 @@ class HbusMaster:
         #warning: blocking
         if block:
             while self.hbusRxState != 0:
-                pass
+                time.sleep(0.01)
 
         busOp = HbusOperation(HbusInstruction(command, len(params), params),dest,self.hbusMasterAddr)
 
