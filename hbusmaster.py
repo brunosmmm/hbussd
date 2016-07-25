@@ -327,7 +327,6 @@ class HbusMaster:
             d.callback(None)
 
 
-    @profile
     def serialNewData(self,data):
 
         for d in data:
@@ -565,7 +564,7 @@ class HbusMaster:
 
         self.masterState = hbusMasterState.hbusMasterSearching
 
-    @profile
+
     def parseReceivedData(self,data):
 
         selectedR = None
@@ -657,7 +656,7 @@ class HbusMaster:
 
                 self.onBusFree()
 
-    @profile
+
     def pushCommand(self,command,dest,params=(),callBack=None,callBackParams=None,timeout=1000,timeoutCallBack=None,timeoutCallBackParams=None,immediate=False,deferredReturn=None):
 
         d = None
@@ -689,7 +688,7 @@ class HbusMaster:
 
             return d
 
-    @profile
+
     def sendCommand(self,command, dest, params=(),block=False):
 
         #warning: blocking
@@ -1100,7 +1099,7 @@ class HbusMaster:
             #info dump
             pass
 
-    @profile
+
     def readSlaveObject(self,address,number,callBack=None,timeoutCallback=None):
 
         d = None
@@ -1181,7 +1180,7 @@ class HbusMaster:
 
             data[0][2](data[1])
 
-    @profile
+
     def writeSlaveObject(self,address,number,value):
 
         #check if is virtual bus
