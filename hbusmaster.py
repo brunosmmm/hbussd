@@ -719,11 +719,12 @@ class HbusMaster:
 
                 self.logger.debug("BUSUNLOCK error: locked with %s, tried unlocking %s" % (self.hbusBusLockedWith,dest))
 
-        self.txBytes += len(busOp.get_string())
+        op_str = busOp.get_string()
+        self.txBytes += len(op_str)
         if self.masterState == hbusMasterState.hbusMasterScanning:
-            reactor.callFromThread(self.serialWrite,busOp.get_string()) #@UndefinedVariable
+            reactor.callFromThread(self.serialWrite, op_str) #@UndefinedVariable
         else:
-            self.serialWrite(busOp.get_string())
+            self.serialWrite(op_str)
 
     def expectResponse(self, command, source, action=None, actionParameters=None, timeout=1000, timeoutAction=None, timeoutActionParameters=None):
 
@@ -1116,9 +1117,10 @@ class HbusMaster:
 
         if self.detectedSlaveList[address.global_id()].hbusSlaveObjects[number].permissions != HbusObjectPermissions.WRITE:
 
-            #self.expectResponse(HBUSCOMMAND_RESPONSE,address,self.receiveSlaveObjectData,actionParameters=(address,number,callBack),timeoutAction=timeoutCallback)
-            #self.pushCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)],callBack=self.receiveSlaveObjectData,callBackParams=(address,number,callBack))
-            d = self.pushCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)],callBack=self.receiveSlaveObjectData,callBackParams=(address,number,callBack),
+            d = self.pushCommand(HBUSCOMMAND_GETCH,address,
+                                 params=[chr(number)],
+                                 callBack=self.receiveSlaveObjectData,
+                                 callBackParams=(address,number,callBack),
                                  timeoutCallBack=timeoutCallback)
 
         else:
