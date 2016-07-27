@@ -150,7 +150,6 @@ class HbusMaster:
     communicationBuffer = []
     SearchTimer = None
 
-    receivedMessages = []
     expectedResponseQueue = deque()
 
     awaitingFreeBus = deque()
@@ -590,8 +589,6 @@ class HbusMaster:
         #print busOp
 
         if busOp.destination == self.hbusMasterAddr:
-
-            self.receivedMessages.append(busOp)
 
             if busOp.instruction.command == HBUSCOMMAND_BUSLOCK:
                 self.hbusBusState = HbusBusState.LOCKED_THIS
