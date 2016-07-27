@@ -30,8 +30,6 @@ from hbussd_evt import hbusMasterEvent, hbusMasterEventType
 import re
 import time
 
-import line_profiler
-
 BROADCAST_BUS = 255
 VIRTUAL_BUS = 254
 

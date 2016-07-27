@@ -9,7 +9,6 @@ from txjsonrpc.web import jsonrpc
 import simplejson
 from hbus_serializers import *
 from hbus_base import hbus_address_from_string
-import line_profiler
 
 ##HTTP server for JSON connection
 class HBUSJSONServer(jsonrpc.JSONRPC):
