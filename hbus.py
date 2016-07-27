@@ -6,7 +6,6 @@
 #@date 2012-2014
 
 from mem_top import mem_top
-import pdb; pdb.set_trace()
 
 import logging
 from hbusmaster import *
