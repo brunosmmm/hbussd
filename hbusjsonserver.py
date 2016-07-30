@@ -24,6 +24,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         self.logger = logging.getLogger('hbussd.jsonsrv')
         self.read_data = None
         self.waiting_for_read = False
+        self.read_slave_addr = None
+        self.read_slave_object = None
         self.read_finished = True
     
     ##Gets a list of the busses currently active
@@ -136,6 +138,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
                                     self._read_object_callback,
                                     self._read_object_timeout_callback)
         self.waiting_for_read = True
+        self.read_slave_addr = addr
+        self.read_slave_object = number
         self.read_finished = False
         return {'status': 'deferred'} ##deffered, use readfinished and retrievelastdata to receive
 
@@ -163,8 +167,15 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
                     'error': 'waiting_read'}
 
         self.waiting_for_read = False
-        #this is raw data!
-        return {'status': 'ok', 'value': self.read_data}
+
+        #get slave
+        if self.read_slave_addr.bus_number == 254:
+            s = self.master.virtualDeviceList[addr.global_id()]
+        else:
+            s = self.master.detectedSlaveList[add.global_id()]
+
+        #send formatted data
+        return {'status': 'ok', 'value': s.hbusSlaveObjects[int(self.read_slave_object)].getFormattedValue()}
 
     ##Data read finished callback
 
