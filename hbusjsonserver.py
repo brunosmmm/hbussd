@@ -157,7 +157,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     ##Retrieve last data read from slave, if avaiable
     ##@return error or data
 
-    def jsonrpc_retrievelastdata(self):
+    def jsonrpc_retrievelastdata(self, formatted=True):
         if self.waiting_for_read == False:
             return {'status': 'error',
                     'error': 'no_request'}
@@ -168,15 +168,20 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         self.waiting_for_read = False
 
-        #get slave
-        addr = self.read_slave_addr
-        if addr.bus_number == 254:
-            s = self.master.virtualDeviceList[addr.global_id()]
-        else:
-            s = self.master.detectedSlaveList[addr.global_id()]
+        if formatted:
+            #get slave
+            addr = self.read_slave_addr
+            if addr.bus_number == 254:
+                s = self.master.virtualDeviceList[addr.global_id()]
+            else:
+                s = self.master.detectedSlaveList[addr.global_id()]
 
-        #send formatted data
-        return {'status': 'ok', 'value': s.hbusSlaveObjects[int(self.read_slave_object)].getFormattedValue()}
+            #send formatted data
+            ret_data = s.hbusSlaveObjects[int(self.read_slave_object)].getFormattedValue()
+        else:
+            ret_data = [ord(x) for x in self.read_data]
+
+        return {'status': 'ok', 'value': ret_data}
 
     ##Data read finished callback
 
