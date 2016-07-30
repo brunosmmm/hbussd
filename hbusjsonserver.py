@@ -172,7 +172,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if self.read_slave_addr.bus_number == 254:
             s = self.master.virtualDeviceList[addr.global_id()]
         else:
-            s = self.master.detectedSlaveList[add.global_id()]
+            s = self.master.detectedSlaveList[addr.global_id()]
 
         #send formatted data
         return {'status': 'ok', 'value': s.hbusSlaveObjects[int(self.read_slave_object)].getFormattedValue()}
