@@ -169,7 +169,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         self.waiting_for_read = False
 
         #get slave
-        if self.read_slave_addr.bus_number == 254:
+        addr = self.read_slave_addr
+        if addr.bus_number == 254:
             s = self.master.virtualDeviceList[addr.global_id()]
         else:
             s = self.master.detectedSlaveList[addr.global_id()]
@@ -181,7 +182,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
     def _read_object_callback(self, data):
         self.read_finished = True
-        self.logger.debug('got: {}'.format(data))
+        #self.logger.debug('got: {}'.format(data))
         self.read_data = data
 
     ##Data read timeout callback
