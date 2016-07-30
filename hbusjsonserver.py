@@ -9,6 +9,7 @@ from txjsonrpc.web import jsonrpc
 import simplejson
 from hbus_serializers import *
 from hbus_base import hbus_address_from_string
+import logging
 
 ##HTTP server for JSON connection
 class HBUSJSONServer(jsonrpc.JSONRPC):
@@ -20,7 +21,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         
         ##Master object reference
         self.master = master
-
+        self.logger = logging.getLogger('hbussd.jsonsrv')
         self.read_data = None
         self.waiting_for_read = False
         self.read_finished = True
@@ -169,6 +170,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
     def _read_object_callback(self, data):
         self.read_finished = True
+        self.logger.debug('got: {}'.format(data))
         self.read_data = data
 
     ##Data read timeout callback
