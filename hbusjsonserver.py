@@ -228,3 +228,6 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         return {'status': 'error',
                 'error': 'read_only'}
+
+    def jsonrpc_checkslaves(self):
+        self.master.checkSlaves()
