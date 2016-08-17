@@ -122,6 +122,7 @@ def main():
     mutexArgs = parser.add_mutually_exclusive_group()
     mutexArgs.add_argument('-s', help='Serial port path')
     mutexArgs.add_argument('-f', help='Enable fake bus for debugging without actual hardware', action='store_true')
+    parser.add_argument('-b', help='Bus baud rate', default=100000, type=int)
     parser.add_argument('-w', help='Enables integrated web server', action='store_true')
     parser.add_argument('-wp', help='Integrated web server port', default=8000, type=int)
     parser.add_argument('-c', help='Slave polling interval in seconds', default=300, type=int)
@@ -151,7 +152,7 @@ def main():
     signal.signal(signal.SIGTERM, SignalHandler)
     signal.signal(signal.SIGINT, SignalHandler)
 
-    hbusMaster = TwistedhbusMaster(args['s'], baudrate=100000, conf_file=args['conf'])
+    hbusMaster = TwistedhbusMaster(args['s'], baudrate=args['b'], conf_file=args['conf'])
 
     hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
     hbusMasterPeriodicTask.start(1)
