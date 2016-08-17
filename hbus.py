@@ -5,8 +5,6 @@
 #@author Bruno Morais <brunosmmm@gmail.com>
 #@date 2012-2014
 
-from mem_top import mem_top
-
 import logging
 from hbusmaster import *
 from hbus_web import *
@@ -160,13 +158,6 @@ def main():
 
     hbusSlaveChecker = LoopingCall(hbusMaster.checkSlaves)
     hbusSlaveChecker.start(args['c'], False)
-
-    #debug memory leak
-    def dump_mem_top():
-        logger.debug(mem_top())
-
-    memTopTask = LoopingCall(dump_mem_top)
-    memTopTask.start(600)
 
     #web server start
     ##@todo start server only after enumeration
