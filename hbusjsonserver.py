@@ -252,4 +252,4 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         self.master.checkSlaves()
 
     def jsonrpc_masterstate(self):
-        return self.master.masterState
+        return {'status': 'ok', 'value': self.master.masterState}
