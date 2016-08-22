@@ -248,8 +248,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
             return {'status': 'error',
                     'error': 'invalid_object'}
         
-        #value formatting
-        if self.master.writeSlaveObject(addr,int(number),int(value)):
+        #value formatting IS MISSING
+        if self.master.writeSlaveObject(addr,int(number), int(value)):
             return {'status': 'ok'}
 
         return {'status': 'error',

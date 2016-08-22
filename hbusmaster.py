@@ -1201,7 +1201,11 @@ class HbusMaster:
                     value = value[0:size]
                 myParamList.extend(value)
             else:
-                myParamList.append(value)
+                #extend integer value up to object's size
+                byte_list = []
+                for i in range(0, size):
+                    byte_list.append((value & (0xFF)<<(8*i))>>8*i)
+                myParamList.append(byte_list[::-1])
 
             if (self.detectedSlaveList[address.global_id()].hbusSlaveCapabilities & HbusDeviceCapabilities.AUTHSUP):
 
