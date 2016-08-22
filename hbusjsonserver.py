@@ -250,3 +250,6 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if self._is_operational() is False:
             return {'status': 'error', 'error': 'not_available'}
         self.master.checkSlaves()
+
+    def jsonrpc_masterstate(self):
+        return self.master.masterState
