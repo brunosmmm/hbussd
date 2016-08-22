@@ -27,7 +27,7 @@ class HbusFixPHandler(object):
 
         byte_list = array('B', data)
 
-        value = float(struct.unpack('<i', byte_list)[0])/(10**float(self.point_loc))
+        value = float(struct.unpack('>i', byte_list)[0])/(10**float(self.point_loc))
 
         try:
             unit = extinfo['UNIT']
