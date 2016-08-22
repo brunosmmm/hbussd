@@ -773,7 +773,10 @@ class HbusMaster:
 
     def slaveReadStart(self):
 
-        self.slaveReadDeferred.callback(None)
+        try:
+            self.slaveReadDeferred.callback(None)
+        except defer.AlreadyCalledError:
+            pass
 
     def slaveReadEnded(self,callBackResult):
 
