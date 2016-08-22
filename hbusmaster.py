@@ -1124,6 +1124,7 @@ class HbusMaster:
 
             self.logger.warning("Write-only object read attempted")
             self.logger.debug("Tried reading object %d of slave with address %s",number,address)
+            raise IOError('cannot read write-only object')
 
             if callBack != None:
 

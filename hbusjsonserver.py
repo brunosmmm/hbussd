@@ -150,10 +150,14 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
             return {'status': 'error',
                     'error': 'invalid_object'}
 
-        self.master.readSlaveObject(addr,
-                                    int(number),
-                                    self._read_object_callback,
-                                    self._read_object_timeout_callback)
+        try:
+            self.master.readSlaveObject(addr,
+                                        int(number),
+                                        self._read_object_callback,
+                                        self._read_object_timeout_callback)
+        except IOError:
+            return {'status': 'write_only'}
+
         self.waiting_for_read = True
         self.read_slave_addr = addr
         self.read_slave_object = number
