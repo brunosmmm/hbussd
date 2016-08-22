@@ -31,7 +31,12 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         self.read_finished = True
 
     def _is_operational(self):
-        return self.master.masterState != hbusMasterState.hbusMasterStarting
+
+        state = self.master.masterState != hbusMasterState.hbusMasterStarting
+        if state is False:
+            self.logger.warning('master not operational')
+
+        return state
 
     ##Gets a list of the busses currently active
     #@return data to be JSON structured
