@@ -9,7 +9,9 @@ from txjsonrpc.web import jsonrpc
 import simplejson
 from hbus_serializers import *
 from hbus_base import hbus_address_from_string
+from hbusmaster import hbusMasterState
 import logging
+
 
 ##HTTP server for JSON connection
 class HBUSJSONServer(jsonrpc.JSONRPC):
@@ -27,18 +29,23 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         self.read_slave_addr = None
         self.read_slave_object = None
         self.read_finished = True
-    
+
+    def _is_operational(self):
+        return self.master.masterState == hbusMasterState.hbusMasterOperational
+
     ##Gets a list of the busses currently active
     #@return data to be JSON structured
-
     def jsonrpc_activebusses(self):
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         return {'status': 'ok',  'list': self.master.getInformationData().activeBusses}
     
     ##Gets the current active device count
     #@return data to be JSON structured
 
     def jsonrpc_activeslavecount(self):
-        
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         return {'status': 'ok', 'list': self.master.getInformationData().activeSlaveCount}
     
 
@@ -46,7 +53,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@return data to be JSON structured
 
     def jsonrpc_activeslavelist(self):
-
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         slaveList = [x.hbusSlaveUniqueDeviceInfo for x in self.master.detectedSlaveList.values()]
         
         return {'status': 'ok', 'list': slaveList}
@@ -57,7 +65,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@return data to be JSON structured
 
     def jsonrpc_slaveinformation(self,uid):
-
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         address = self.master.findDeviceByUID(uid)
         
         if address == None:
@@ -76,7 +85,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@return data to be JSON structured
 
     def jsonrpc_slaveobjectlist(self,slaveuid):
-        
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         address = self.master.findDeviceByUID(slaveuid)
         
         if address == None:
@@ -94,7 +104,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@return data to be JSON structured
 
     def jsonrpc_activeslavesbybus(self,bus):
-        
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         if int(bus) == 255:
             slaveList = self.hbusMaster.detectedSlaveList.values()
         else:
@@ -113,7 +124,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@return data to be JSON structured
 
     def jsonrpc_readobject(self,address,number):
-
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         #for now, make sure that we are not doing anything else (waiting)
         if self.read_finished == False:
             return {'status': 'error',
@@ -148,6 +160,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     ##@return error or value
 
     def jsonrpc_readfinished(self):
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         if self.waiting_for_read == False:
             return {'status': 'error',
                     'error': 'not_waiting'}
@@ -158,6 +172,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     ##@return error or data
 
     def jsonrpc_retrievelastdata(self, formatted=True):
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         if self.waiting_for_read == False:
             return {'status': 'error',
                     'error': 'no_request'}
@@ -203,7 +219,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     #@param value value to be written
     #@return data to be JSON structured
     def jsonrpc_writeobject(self,address,number,value):
-
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         try:
             addr = hbus_address_from_string(address)
         except ValueError:
@@ -230,4 +247,6 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
                 'error': 'read_only'}
 
     def jsonrpc_checkslaves(self):
+        if self._is_operational() is False:
+            return {'status': 'error', 'error': 'not_available'}
         self.master.checkSlaves()
