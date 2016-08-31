@@ -773,7 +773,10 @@ class HbusMaster:
 
     def slaveReadStart(self):
 
-        self.slaveReadDeferred.callback(None)
+        try:
+            self.slaveReadDeferred.callback(None)
+        except defer.AlreadyCalledError:
+            pass
 
     def slaveReadEnded(self,callBackResult):
 
@@ -1121,6 +1124,7 @@ class HbusMaster:
 
             self.logger.warning("Write-only object read attempted")
             self.logger.debug("Tried reading object %d of slave with address %s",number,address)
+            raise IOError('cannot read write-only object')
 
             if callBack != None:
 
@@ -1197,7 +1201,11 @@ class HbusMaster:
                     value = value[0:size]
                 myParamList.extend(value)
             else:
-                myParamList.append(value)
+                #extend integer value up to object's size
+                byte_list = []
+                for i in range(0, size):
+                    byte_list.append((value & (0xFF)<<(8*i))>>8*i)
+                myParamList.extend(byte_list)
 
             if (self.detectedSlaveList[address.global_id()].hbusSlaveCapabilities & HbusDeviceCapabilities.AUTHSUP):
 

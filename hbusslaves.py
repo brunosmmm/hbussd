@@ -76,7 +76,7 @@ class HbusObjDataType(object):
 
         byte_list = array('B', data)
 
-        return struct.unpack('>I', byte_list)[0]
+        return struct.unpack('<I', byte_list)[0]
 
     @staticmethod
     def format_byte_bool(data, extinfo, size, decode=False):

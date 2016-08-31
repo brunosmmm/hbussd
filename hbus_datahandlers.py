@@ -19,6 +19,10 @@ class HbusFixPHandler(object):
 
     def format_fixed_point(self, data, extinfo, size, decode=False):
 
+	#currently the working/testing device is sending data in BIG endian format
+	#because of this, invert data here before any other operations
+	data = data[::-1]
+
         x = [0]
         while len(data) < 4:
             x.extend(data)
