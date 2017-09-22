@@ -6,8 +6,8 @@
 #@date 2012-2014
 
 import logging
-from master.master import *
-from master.web import *
+from hbussd.master.master import *
+from hbussd.master.web import *
 import argparse
 
 from twisted.internet import reactor
@@ -20,7 +20,7 @@ from twisted.internet.task import LoopingCall
 
 from twisted.web import server
 
-from master.jsonserver import *
+from hbussd.master.jsonserver import *
 
 import signal
 

@@ -5,7 +5,7 @@
 # @author Bruno Morais <brunosmmm@gmail.com>
 # @since 11/23/2014
 
-from hbus.evt import *
+from hbussd.hbus.evt import *
 import logging
 #import our things
 import plugins.dummy.devobjs

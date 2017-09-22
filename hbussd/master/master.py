@@ -11,21 +11,21 @@ import struct
 from datetime import datetime
 import logging
 from collections import deque
-import hbus.crypto
+import hbussd.hbus.crypto
 import json
 
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Factory
 
-from hbus.constants import *
-from hbus.base import *
-from hbus.exceptions import *
-from hbus.slaves import *
-from hbus.datahandlers import *
+from ..hbus.constants import *
+from ..hbus.base import *
+from ..hbus.exceptions import *
+from ..hbus.slaves import *
+from ..hbus.datahandlers import *
 from .masterobjects import *
-from fakebus import hbus_fb
-from plugins import HbusPluginManager
-from hbus.evt import hbusMasterEvent, hbusMasterEventType
+from ..fakebus import hbus_fb
+from ..plugins import HbusPluginManager
+from ..hbus.evt import hbusMasterEvent, hbusMasterEventType
 
 import re
 import time
@@ -289,10 +289,10 @@ class HbusMaster:
                           bytes([HBUSCOMMAND_SOFTRESET.cmd_byte]),
                           bytes([size]))
 
-        sig = hbus.crypto.RabinWilliamsSign(msg,
-                                            HBUS_ASYMMETRIC_KEYS.privatep,
-                                            HBUS_ASYMMETRIC_KEYS.privateq,
-                                            HBUS_SIGNATURE_SIZE)
+        sig = hbussd.hbus.crypto.RabinWilliamsSign(msg,
+                                                   HBUS_ASYMMETRIC_KEYS.privatep,
+                                                   HBUS_ASYMMETRIC_KEYS.privateq,
+                                                   HBUS_SIGNATURE_SIZE)
 
         myParamList.extend(sig.getByteString())
 

@@ -11,7 +11,7 @@ import string
 from bottle import route, run, template, static_file, request, ServerAdapter
 import re
 import logging
-from hbus.slaves import HbusDeviceObject
+from ..hbus.slaves import HbusDeviceObject
 
 class AttachToTwisted(ServerAdapter):
     """Attach to existing reactor."""

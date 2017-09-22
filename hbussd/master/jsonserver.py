@@ -8,7 +8,7 @@
 from txjsonrpc.web import jsonrpc
 import simplejson
 from .serializers import *
-from hbus.base import hbus_address_from_string
+from ..hbus.base import hbus_address_from_string
 from .master import hbusMasterState
 import logging
 
