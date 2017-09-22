@@ -1,5 +1,9 @@
-import dbus
-import avahi
+try:
+    import dbus
+    import avahi
+    ZEROCONF_ABLE = True
+except ImportError:
+    ZEROCONF_ABLE = False
 
 class ZeroconfService(object):
     """A simple class to publish a network service with zeroconf using
