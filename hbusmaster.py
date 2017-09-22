@@ -24,7 +24,7 @@ from hbusslaves import *
 from hbus_datahandlers import *
 from hbusmasterobjects import *
 from fakebus import hbus_fb
-from hbussd_plugin import HbusPluginManager
+from plugins import HbusPluginManager
 from hbussd_evt import hbusMasterEvent, hbusMasterEventType
 
 import re
