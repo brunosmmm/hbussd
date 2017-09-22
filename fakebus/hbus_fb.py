@@ -12,9 +12,9 @@ from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 import struct
 import logging
-from hbus_base import *
-from hbus_constants import *
-from hbusslaves import *
+from hbus.base import *
+from hbus.constants import *
+from hbus.slaves import *
 from collections import deque
 import re
 

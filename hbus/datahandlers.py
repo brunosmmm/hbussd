@@ -8,7 +8,7 @@
 
 from array import array
 import struct
-from hbus_constants import HBUS_UNITS
+from hbus.constants import HBUS_UNITS
 from bitstring import BitArray
 
 

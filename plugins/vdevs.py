@@ -4,7 +4,7 @@
    @since 24/11/2014
 """
 
-from hbusslaves import HbusDevice
+from hbus.slaves import HbusDevice
 
 class hbusVirtualDevice:
     """Container for virtual devices, add data and handles onto HbusDevice

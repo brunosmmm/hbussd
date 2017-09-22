@@ -7,7 +7,7 @@
 """
 
 import struct
-import hbus_constants as hbusconst
+import constants as hbusconst
 import re
 
 

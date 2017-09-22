@@ -10,7 +10,7 @@ import struct
 from array import array
 from math import log
 
-from hbus_datahandlers import HbusFixPHandler, HbusIntHandler
+from datahandlers import HbusFixPHandler, HbusIntHandler
 
 
 class HbusObjLevel(object):

@@ -4,9 +4,9 @@
     @since 24/11/2014
 """
 
-from plugins.hbussd_vdevs import hbusVirtualDevice
-from hbusslaves import HbusDeviceObject, HbusObjDataType, HbusObjLevel
-from hbus_constants import HbusObjectPermissions as op
+from plugins.vdevs import hbusVirtualDevice
+from hbus.slaves import HbusDeviceObject, HbusObjDataType, HbusObjLevel
+from hbus.constants import HbusObjectPermissions as op
 
 value_zero = [0]
 

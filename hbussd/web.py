@@ -6,12 +6,12 @@
   @date 2013-2015
   @todo better documentation"""
 
-from hbusmaster import *
+from master import *
 import string
 from bottle import route, run, template, static_file, request, ServerAdapter
 import re
 import logging
-from hbusslaves import HbusDeviceObject
+from hbus.slaves import HbusDeviceObject
 
 class AttachToTwisted(ServerAdapter):
     """Attach to existing reactor."""
