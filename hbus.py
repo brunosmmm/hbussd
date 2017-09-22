@@ -168,7 +168,7 @@ def main():
         #integrated web server
         logger.info('Integrated web server enabled')
         hbusWeb = HBUSWEB(args['wp'], hbusMaster)
-        reactor.callInThread(hbusWeb.run) #@UndefinedVariable
+        hbusWeb.run()
         if args['no_announce'] is False:
             webif_announcer = ZeroconfService(name='HBUS Server', port=args['wp'])
             webif_announcer.publish()

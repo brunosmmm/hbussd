@@ -8,10 +8,23 @@
 
 from hbusmaster import *
 import string
-from bottle import route, run, template, static_file, request
+from bottle import route, run, template, static_file, request, ServerAdapter
 import re
 import logging
 from hbusslaves import HbusDeviceObject
+
+class AttachToTwisted(ServerAdapter):
+    """Attach to existing reactor."""
+
+    def run(self, handler):
+        from twisted.web import server, wsgi
+        from twisted.python.threadpool import ThreadPool
+        from twisted.internet import reactor
+        thread_pool = ThreadPool()
+        thread_pool.start()
+        reactor.addSystemEventTrigger('after', 'shutdown', thread_pool.stop)
+        factory = server.Site(wsgi.WSGIResource(reactor, thread_pool, handler))
+        reactor.listenTCP(self.port, factory, interface=self.host)
 
 class HBUSWEB(object):
     """HBUS Web server class"""
@@ -312,4 +325,4 @@ class HBUSWEB(object):
         #hidden options
         route ("/set-level/<level>")(self.setLevel)
         
-        run(host='127.0.0.1',port=self.port)
+        run(host='127.0.0.1',port=self.port, server=AttachToTwisted)
