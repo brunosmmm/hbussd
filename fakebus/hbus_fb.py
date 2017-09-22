@@ -150,7 +150,7 @@ class FakeBusSerialPort(Protocol):
         self.deviceList = {}
         self.busAddrToUID = {}
         try:
-            self.config.read('fakebus/fakebus.config')
+            self.config.read('config/fakebus/fakebus.config')
             self.build_bus()
         except:
             #self.logger.debug("no configuration file found")
@@ -416,7 +416,7 @@ class FakeBusSerialPort(Protocol):
 
         self.logger.debug("start adding fake devices...")
         #get device path
-        devpath = 'fakebus/'+self.config.get('fakebus', 'object_dir')
+        devpath = 'config/fakebus/'+self.config.get('fakebus', 'object_dir')
 
         devfiles = [x for x in os.listdir(devpath) if x.endswith('.config')]
 
