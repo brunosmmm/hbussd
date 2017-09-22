@@ -46,7 +46,7 @@ class HBUSWEB(object):
         """Favorite icon for web browser
            @return icon file"""
         
-        return static_file('favicon.ico',root='web_static') 
+        return static_file('favicon.ico',root='data/web_static')
     
     def readSlaveObject(self,uid=None,obj=None):
         """Reads an object value and displays it
@@ -274,7 +274,7 @@ class HBUSWEB(object):
            @param filename name of file to be fetched
            @return file"""
         
-        return static_file(filename,root='web_static')
+        return static_file(filename,root='data/web_static')
     
     def percentToRange(self,percentStr):
         """Converts percent values to scaled
