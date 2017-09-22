@@ -47,14 +47,14 @@ class HbusPluginManager(object):
 
     def get_available_plugins(self):
         """Return list of plugins found by scan"""
-        return self.plugins.keys()
+        return list(self.plugins.keys())
 
     def m_load_plugin(self, plugin):
         """Loads and activates plugin
         @param plugin plugin id
         """
 
-        if plugin not in self.plugins.keys():
+        if plugin not in list(self.plugins.keys()):
             raise UserWarning("plugin is not available")
 
         if self.plugins[plugin].active == True:
@@ -73,7 +73,7 @@ class HbusPluginManager(object):
         @param plugin plugin id
         """
 
-        if plugin not in self.plugins.keys():
+        if plugin not in list(self.plugins.keys()):
             raise UserWarning("plugin is not available")
 
         if self.plugins[plugin].active == False:
@@ -86,7 +86,7 @@ class HbusPluginManager(object):
         """Event broadcasts
         @param event event container
         """
-        for plugin in self.plugins.keys():
+        for plugin in list(self.plugins.keys()):
             if self.plugins[plugin].active == True:
                 self.plugins[plugin].module.masterEventOccurred(event)
 
@@ -96,7 +96,7 @@ class HbusPluginManager(object):
         @param objNum object number in device
         """
 
-        if devicenum not in self.vdevtranslator.keys():
+        if devicenum not in list(self.vdevtranslator.keys()):
             raise UserWarning("virtual device not found")
 
         uid, plugin, dnum = self.vdevtranslator[devicenum]
@@ -110,7 +110,7 @@ class HbusPluginManager(object):
         @param value value written
         """
 
-        if devicenum not in self.vdevtranslator.keys():
+        if devicenum not in list(self.vdevtranslator.keys()):
             raise UserWarning("virtual device not found")
 
         uid, plugin, dnum = self.vdevtranslator[devicenum]
@@ -145,7 +145,7 @@ class HbusPluginManager(object):
         """
 
         devaddr = None
-        for key, uid, pid, num in self.vdevtranslator.iteritems():
+        for key, uid, pid, num in self.vdevtranslator.items():
             if pid == plugin and num == devicenum:
                 #found
                 devaddr = key
@@ -170,7 +170,7 @@ class HbusPluginManager(object):
         @param msg message to log
         @param level logging level
         """
-        if pluginid not in self.plugins.keys():
+        if pluginid not in list(self.plugins.keys()):
             self.logger.debug('plugin '+pluginid+' not activated!')
             return
 

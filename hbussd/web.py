@@ -6,7 +6,7 @@
   @date 2013-2015
   @todo better documentation"""
 
-from master import *
+from .master import *
 import string
 from bottle import route, run, template, static_file, request, ServerAdapter
 import re
@@ -53,7 +53,7 @@ class HBUSWEB(object):
         """Generates main page template
            @return template HTML"""
         
-        return template('hbus_index',slaves=self.hbusMaster.detectedSlaveList.values(),masterStatus=self.hbusMaster.getInformationData(),re=re)
+        return template('hbus_index',slaves=list(self.hbusMaster.detectedSlaveList.values()),masterStatus=self.hbusMaster.getInformationData(),re=re)
     
     def favicon(self):
         """Favorite icon for web browser
@@ -165,8 +165,8 @@ class HBUSWEB(object):
                 
                 pass
                 
-            writeObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x02 and x.objectLevel >= self.objectLevel and x.hidden == False])
-            readObjectCount = len([x for x in s.hbusSlaveObjects.values() if x.permissions & 0x01 and x.objectLevel >= self.objectLevel and x.hidden == False])
+            writeObjectCount = len([x for x in list(s.hbusSlaveObjects.values()) if x.permissions & 0x02 and x.objectLevel >= self.objectLevel and x.hidden == False])
+            readObjectCount = len([x for x in list(s.hbusSlaveObjects.values()) if x.permissions & 0x01 and x.objectLevel >= self.objectLevel and x.hidden == False])
         
         return template('hbus_slave_info',slave=s,hbusSlaveObjectDataType=HbusObjDataType(),objectLevel=self.objectLevel,masterStatus=self.hbusMaster.getInformationData(),
                         readObjCount=readObjectCount,writeObjCount=writeObjectCount,re=re,getNumber=getN)
@@ -257,14 +257,14 @@ class HBUSWEB(object):
            @return template HTML"""
         
         if int(busNumber) == 255:
-            slaveList = self.hbusMaster.detectedSlaveList.values()
-            slaveList.extend(self.hbusMaster.virtualDeviceList.values())
+            slaveList = list(self.hbusMaster.detectedSlaveList.values())
+            slaveList.extend(list(self.hbusMaster.virtualDeviceList.values()))
         elif int(busNumber) == 254:
             #virtual device bus
-            slaveList = self.hbusMaster.virtualDeviceList.values()
+            slaveList = list(self.hbusMaster.virtualDeviceList.values())
         else:
             slaveList = []
-            for slave in self.hbusMaster.detectedSlaveList.values():
+            for slave in list(self.hbusMaster.detectedSlaveList.values()):
                 if slave.hbusSlaveAddress.bus_number == int(busNumber):
                     slaveList.append(slave)
         

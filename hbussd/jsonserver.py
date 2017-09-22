@@ -7,9 +7,9 @@
 
 from txjsonrpc.web import jsonrpc
 import simplejson
-from serializers import *
+from .serializers import *
 from hbus.base import hbus_address_from_string
-from master import hbusMasterState
+from .master import hbusMasterState
 import logging
 
 
@@ -60,7 +60,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     def jsonrpc_activeslavelist(self):
         if self._is_operational() is False:
             return {'status': 'error', 'error': 'not_available'}
-        slaveList = [x.hbusSlaveUniqueDeviceInfo for x in self.master.detectedSlaveList.values()]
+        slaveList = [x.hbusSlaveUniqueDeviceInfo for x in list(self.master.detectedSlaveList.values())]
         
         return {'status': 'ok', 'list': slaveList}
     
@@ -100,7 +100,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         
         slave = self.master.detectedSlaveList[address.global_id()]
         
-        objectList = [hbusObjectSerializer(x).getDict() for x in slave.hbusSlaveObjects.values()]
+        objectList = [hbusObjectSerializer(x).getDict() for x in list(slave.hbusSlaveObjects.values())]
         
         return {'status': 'ok', 'list': objectList}
     
@@ -112,10 +112,10 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if self._is_operational() is False:
             return {'status': 'error', 'error': 'not_available'}
         if int(bus) == 255:
-            slaveList = self.hbusMaster.detectedSlaveList.values()
+            slaveList = list(self.hbusMaster.detectedSlaveList.values())
         else:
             slaveList = []
-            for slave in self.hbusMaster.detectedSlaveList.values():
+            for slave in list(self.hbusMaster.detectedSlaveList.values()):
                 if slave.hbusSlaveAddress.bus_number == int(bus):
                     slaveList.append(slave)
                     
@@ -138,13 +138,13 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         addr = hbus_address_from_string(address)
         
-        if not addr.global_id() in self.master.detectedSlaveList.keys():
+        if not addr.global_id() in list(self.master.detectedSlaveList.keys()):
             
             #device does not exist
             return {'status': 'error',
                     'error': 'invalid_device'}
         
-        if not int(number) in self.master.detectedSlaveList[addr.global_id()].hbusSlaveObjects.keys():
+        if not int(number) in list(self.master.detectedSlaveList[addr.global_id()].hbusSlaveObjects.keys()):
             
             #object does not exist
             return {'status': 'error',
@@ -236,13 +236,13 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
             return {'status' : 'error',
                     'error' : 'malformed address'}
         
-        if not addr.global_id() in self.master.detectedSlaveList.keys():
+        if not addr.global_id() in list(self.master.detectedSlaveList.keys()):
             
             #device does not exist
             return {'status': 'error',
                     'error': 'invalid_device'}
         
-        if not int(number) in self.master.detectedSlaveList[addr.global_id()].hbusSlaveObjects.keys():
+        if not int(number) in list(self.master.detectedSlaveList[addr.global_id()].hbusSlaveObjects.keys()):
             
             #object does not exist
             return {'status': 'error',

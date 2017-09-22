@@ -18,7 +18,7 @@ from hbus.slaves import *
 from collections import deque
 import re
 
-import ConfigParser ##for fakebus device tree emulation
+import configparser ##for fakebus device tree emulation
 import os
 
 ##Configuration file options equivalence
@@ -85,7 +85,7 @@ class FakeBusDevice(HbusDevice):
 
             return objectinfo
 
-        elif objnum in self.hbusSlaveObjects.keys():
+        elif objnum in list(self.hbusSlaveObjects.keys()):
             # why is different from the standard implementation?
 
             object_flags = self.hbusSlaveObjects[objnum].permissions +\
@@ -121,7 +121,7 @@ class FakeBusDevice(HbusDevice):
 
             return obj_list_info
 
-        elif objnum in self.hbusSlaveObjects.keys():
+        elif objnum in list(self.hbusSlaveObjects.keys()):
 
             ##@todo generate proper object size!
             value_list = []
@@ -146,7 +146,7 @@ class FakeBusSerialPort(Protocol):
         self.logger.debug("fakebus active")
         self.dataBuffer = []
         self.rxState = HbusRXState.SBID
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         self.deviceList = {}
         self.busAddrToUID = {}
         try:
@@ -301,7 +301,7 @@ class FakeBusSerialPort(Protocol):
 
         #detect buslock commands globally
         if ord(packet[4]) == HBUSCOMMAND_BUSLOCK.cmd_byte:
-            if pdest.global_id() in self.busAddrToUID.keys():
+            if pdest.global_id() in list(self.busAddrToUID.keys()):
                 #locking with one of the fake devices
                 self.busState = HbusBusState.LOCKED_THIS
             else:
@@ -320,7 +320,7 @@ class FakeBusSerialPort(Protocol):
             if ord(packet[4]) == HBUSCOMMAND_SEARCH.cmd_byte:
                 #this is a SEARCH command, see if there are slaves
                 #that were not enumerated and starts addressing
-                for device in self.deviceList.values():
+                for device in list(self.deviceList.values()):
                     if device.deviceStatus == FakeBusDeviceStatus.deviceIdle:
                         #start addressing
                         device.deviceStatus = FakeBusDeviceStatus.deviceAddressing1
@@ -424,7 +424,7 @@ class FakeBusSerialPort(Protocol):
         for devfile in devfiles:
 
             #read config
-            devconf = ConfigParser.ConfigParser()
+            devconf = configparser.ConfigParser()
             devconf.read(devpath+devfile)
 
             #detect static addressed device
