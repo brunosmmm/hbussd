@@ -3,3 +3,4 @@ html/
 latex/
 doxygen_*
 hbussd.log
+venv/
