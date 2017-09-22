@@ -18,7 +18,7 @@ from hbus.slaves import *
 from collections import deque
 import re
 
-import ConfigParser ##for fakebus device tree emulation
+import configparser ##for fakebus device tree emulation
 import os
 
 ##Configuration file options equivalence
@@ -85,7 +85,7 @@ class FakeBusDevice(HbusDevice):
 
             return objectinfo
 
-        elif objnum in self.hbusSlaveObjects.keys():
+        elif objnum in list(self.hbusSlaveObjects.keys()):
             # why is different from the standard implementation?
 
             object_flags = self.hbusSlaveObjects[objnum].permissions +\
@@ -121,7 +121,7 @@ class FakeBusDevice(HbusDevice):
 
             return obj_list_info
 
-        elif objnum in self.hbusSlaveObjects.keys():
+        elif objnum in list(self.hbusSlaveObjects.keys()):
 
             ##@todo generate proper object size!
             value_list = []
@@ -146,7 +146,7 @@ class FakeBusSerialPort(Protocol):
         self.logger.debug("fakebus active")
         self.dataBuffer = []
         self.rxState = HbusRXState.SBID
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         self.deviceList = {}
         self.busAddrToUID = {}
         try:
@@ -185,25 +185,25 @@ class FakeBusSerialPort(Protocol):
                 self.rxState = HbusRXState.CMD
             elif self.rxState == HbusRXState.CMD:
                 self.dataBuffer.append(byte)
-                if ord(byte) in HBUS_SCMDBYTELIST:
+                if byte in HBUS_SCMDBYTELIST:
                     self.rxState = HbusRXState.STP
-                elif ord(byte) == HBUSCOMMAND_SOFTRESET.cmd_byte: #softreset is different, doesnt specify addr field
+                elif byte == HBUSCOMMAND_SOFTRESET.cmd_byte: #softreset is different, doesnt specify addr field
                     self.rxState = HbusRXState.PSZ
                 else:
                     self.rxState = HbusRXState.ADDR
             elif self.rxState == HbusRXState.ADDR:
                 self.dataBuffer.append(byte)
-                if ord(self.dataBuffer[4]) in HBUS_SACMDBYTELIST:
+                if self.dataBuffer[4] in HBUS_SACMDBYTELIST:
                     self.rxState = HbusRXState.STP
                 else:
                     self.rxState = HbusRXState.PSZ
             elif self.rxState == HbusRXState.PSZ:
-                self.lastParamSize = ord(byte)
+                self.lastParamSize = byte
                 self.dataBuffer.append(byte)
-                if ord(self.dataBuffer[4]) == HBUSCOMMAND_STREAMW.cmd_byte or ord(self.dataBuffer[4]) == HBUSCOMMAND_STREAMR.cmd_byte:
+                if self.dataBuffer[4] == HBUSCOMMAND_STREAMW.cmd_byte or self.dataBuffer[4] == HBUSCOMMAND_STREAMR.cmd_byte:
                     self.rxState = HbusRXState.STP
                 else:
-                    if ord(byte) > 0:
+                    if byte > 0:
                         self.rxState = HbusRXState.PRM
                     else:
                         self.rxState = HbusRXState.STP
@@ -212,7 +212,7 @@ class FakeBusSerialPort(Protocol):
                 ##@todo must update whole specification and force softreset command to have an addr field to avoid further problems
                 ##@todo undo this hack when modification is done
                 #start hack
-                if ord(self.dataBuffer[4]) == HBUSCOMMAND_SOFTRESET.cmd_byte:
+                if self.dataBuffer[4] == HBUSCOMMAND_SOFTRESET.cmd_byte:
                     count = 5
                 else:
                     count = 6
@@ -220,7 +220,7 @@ class FakeBusSerialPort(Protocol):
                 #end hack
                     self.dataBuffer.append(byte)
                 else:
-                    if ord(byte) == 0xFF:
+                    if byte == 0xFF:
                         self.dataBuffer.append(byte)
                         #finished Packet
 
@@ -238,7 +238,7 @@ class FakeBusSerialPort(Protocol):
                         return
             elif self.rxState == HbusRXState.STP:
                 self.dataBuffer.append(byte)
-                if ord(byte) == 0xFF:
+                if byte == 0xFF:
                     #finished
                     self.rxState = HbusRXState.SBID
                     self.parse_packet(self.dataBuffer)
@@ -263,11 +263,11 @@ class FakeBusSerialPort(Protocol):
     # @param packet packet received by state machine
     def parse_packet(self, packet):
 
-        psource = HbusDeviceAddress(ord(packet[0]), ord(packet[1]))
-        pdest = HbusDeviceAddress(ord(packet[2]), ord(packet[3]))
+        psource = HbusDeviceAddress(packet[0], packet[1])
+        pdest = HbusDeviceAddress(packet[2], packet[3])
 
         #decode packets, respond on BUS 0
-        if ord(packet[2]) != 0 and ord(packet[2]) != 0xff:
+        if packet[2] != 0 and packet[2] != 0xff:
             return
 
         #check if bus is locked
@@ -276,7 +276,7 @@ class FakeBusSerialPort(Protocol):
         elif self.busState == HbusBusState.LOCKED_THIS:
             #look for special cases such as when receiving SEARCH or KEYSET commands indicating attribution of an address
             if self.addressingDevice != None:
-                if ord(packet[4]) == HBUSCOMMAND_GETCH.cmd_byte and ord(packet[5]) == 0 and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing2:
+                if packet[4] == HBUSCOMMAND_GETCH.cmd_byte and packet[5] == 0 and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing2:
                     #send object 0 to master
                     ##@todo MAKE object 0 from internal info
                     #self.send_packet()
@@ -286,7 +286,7 @@ class FakeBusSerialPort(Protocol):
                     self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceAddressing3
                     return
 
-                elif ord(packet[4]) == HBUSCOMMAND_SEARCH.cmd_byte or ord(packet[4]) == HBUSCOMMAND_KEYSET.cmd_byte and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing3:
+                elif packet[4] == HBUSCOMMAND_SEARCH.cmd_byte or packet[4] == HBUSCOMMAND_KEYSET.cmd_byte and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing3:
                     #attribute new address and register
                     self.deviceList[self.addressingDevice].hbusSlaveAddress = HbusDeviceAddress(ord(packet[2]), ord(packet[3]))
                     self.busAddrToUID[pdest.global_id()] = self.deviceList[self.addressingDevice].hbusSlaveUniqueDeviceInfo
@@ -300,8 +300,8 @@ class FakeBusSerialPort(Protocol):
                     return
 
         #detect buslock commands globally
-        if ord(packet[4]) == HBUSCOMMAND_BUSLOCK.cmd_byte:
-            if pdest.global_id() in self.busAddrToUID.keys():
+        if packet[4] == HBUSCOMMAND_BUSLOCK.cmd_byte:
+            if pdest.global_id() in list(self.busAddrToUID.keys()):
                 #locking with one of the fake devices
                 self.busState = HbusBusState.LOCKED_THIS
             else:
@@ -309,18 +309,18 @@ class FakeBusSerialPort(Protocol):
             return
 
         #detect busunlock commands
-        if ord(packet[4]) == HBUSCOMMAND_BUSUNLOCK.cmd_byte:
+        if packet[4] == HBUSCOMMAND_BUSUNLOCK.cmd_byte:
             self.busState = HbusBusState.FREE
             return
 
         #detect broadcast messages
-        if ord(packet[3]) == 0xff:
+        if packet[3] == 0xff:
             #this is a broadcast message
 
-            if ord(packet[4]) == HBUSCOMMAND_SEARCH.cmd_byte:
+            if packet[4] == HBUSCOMMAND_SEARCH.cmd_byte:
                 #this is a SEARCH command, see if there are slaves
                 #that were not enumerated and starts addressing
-                for device in self.deviceList.values():
+                for device in list(self.deviceList.values()):
                     if device.deviceStatus == FakeBusDeviceStatus.deviceIdle:
                         #start addressing
                         device.deviceStatus = FakeBusDeviceStatus.deviceAddressing1
@@ -330,15 +330,15 @@ class FakeBusSerialPort(Protocol):
                 self.address_next_dev()
                 #done
                 return
-            elif ord(packet[4]) == HBUSCOMMAND_SOFTRESET.cmd_byte:
+            elif packet[4] == HBUSCOMMAND_SOFTRESET.cmd_byte:
                 #reset command
                 return #ignore for now, nothing to do
-            elif ord(packet[4]) == HBUSCOMMAND_KEYSET.cmd_byte:
+            elif packet[4] == HBUSCOMMAND_KEYSET.cmd_byte:
                 #this is quite uncharted territory yet
                 return
-            elif ord(packet[4]) == HBUSCOMMAND_KEYRESET.cmd_byte:
+            elif packet[4] == HBUSCOMMAND_KEYRESET.cmd_byte:
                 return
-            elif ord(packet[4]) == HBUSCOMMAND_SETCH.cmd_byte:
+            elif packet[4] == HBUSCOMMAND_SETCH.cmd_byte:
                 #might be a broadcast object, this is not really implemented yet
                 return
             else:
@@ -350,21 +350,21 @@ class FakeBusSerialPort(Protocol):
             #device is not enumerated in this bus
             return
 
-        if ord(packet[4]) == HBUSCOMMAND_SEARCH.cmd_byte:
+        if packet[4] == HBUSCOMMAND_SEARCH.cmd_byte:
             #ping some device
             self.send_packet(HBUSCOMMAND_ACK, FAKEBUS_MASTER_ADDRESS, self.deviceList[target_uid].hbusSlaveAddress)
             return
-        elif ord(packet[4]) == HBUSCOMMAND_QUERY.cmd_byte:
+        elif packet[4] == HBUSCOMMAND_QUERY.cmd_byte:
             #querying some object
-            params = self.deviceList[target_uid].create_query_response(ord(packet[5]))
+            params = self.deviceList[target_uid].create_query_response(packet[5])
             if params == None:
                 #problem retrieving object, ignore
                 return
             self.send_packet(HBUSCOMMAND_QUERY_RESP, FAKEBUS_MASTER_ADDRESS, self.deviceList[target_uid].hbusSlaveAddress, params)
             return
-        elif ord(packet[4]) == HBUSCOMMAND_GETCH.cmd_byte:
+        elif packet[4] == HBUSCOMMAND_GETCH.cmd_byte:
             #reading some object
-            params = self.deviceList[target_uid].create_read_response(ord(packet[5]))
+            params = self.deviceList[target_uid].create_read_response(packet[5])
             if params == None:
                 #problem retrieving object, ignore
                 return
@@ -424,7 +424,7 @@ class FakeBusSerialPort(Protocol):
         for devfile in devfiles:
 
             #read config
-            devconf = ConfigParser.ConfigParser()
+            devconf = configparser.ConfigParser()
             devconf.read(devpath+devfile)
 
             #detect static addressed device

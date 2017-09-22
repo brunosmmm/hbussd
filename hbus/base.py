@@ -7,7 +7,7 @@
 """
 
 import struct
-import constants as hbusconst
+from . import constants as hbusconst
 import re
 
 
@@ -184,23 +184,29 @@ class HbusOperation(object):
         """
 
         header = struct.pack('4c',
-                             chr(self.source.bus_number),
-                             chr(self.source.dev_number),
-                             chr(self.destination.bus_number),
-                             chr(self.destination.dev_number))
+                             bytes([self.source.bus_number]),
+                             bytes([self.source.dev_number]),
+                             bytes([self.destination.bus_number]),
+                             bytes([self.destination.dev_number]))
 
-        instruction = struct.pack('c', chr(self.instruction.command.cmd_byte))
+        instruction = struct.pack('c',
+                                  bytes([self.instruction.command.cmd_byte]))
+
+        terminator = b'\xFF'
+        if isinstance(self.instruction.params, bytes):
+            return header+instruction+self.instruction.params+terminator
 
         for param in self.instruction.params:
 
-            if type(param) is str:
+            if isinstance(param, str):
                 if len(param) == 1:
-                    instruction = instruction + struct.pack('c', param)
+                    instruction = instruction + struct.pack('c',
+                                                            param)
                 else:
                     instruction = instruction + param
+            elif isinstance(param, int):
+                instruction = instruction + struct.pack('c', bytes([param]))
             else:
-                instruction = instruction + struct.pack('c', chr(param))
-
-        terminator = '\xFF'
+                instruction = instruction + struct.pack('c', param)
 
         return header+instruction+terminator

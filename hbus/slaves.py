@@ -10,7 +10,7 @@ import struct
 from array import array
 from math import log
 
-from datahandlers import HbusFixPHandler, HbusIntHandler
+from .datahandlers import HbusFixPHandler, HbusIntHandler
 
 
 class HbusObjLevel(object):
@@ -414,14 +414,14 @@ class HbusDeviceObject(object):
         if self.last_value == None:
             return None
 
-        if self.objectDataType not in HBUS_DTYPE_OPTIONS.keys():
+        if self.objectDataType not in list(HBUS_DTYPE_OPTIONS.keys()):
 
             return str(self.last_value) #has no explicit format
 
         #analyzes extended information
         if type(HBUS_DTYPE_OPTIONS[self.objectDataType]) == dict:
 
-            if self.objectDataTypeInfo not in HBUS_DTYPE_OPTIONS[self.objectDataType].keys():
+            if self.objectDataTypeInfo not in list(HBUS_DTYPE_OPTIONS[self.objectDataType].keys()):
 
                 return str(self.last_value) #has no explicit format
 
@@ -528,14 +528,14 @@ class HbusDevice(object):
 
         self.hbusSlaveHiddenObjects = {}
 
-        for key,val in self.hbusSlaveObjects.viewitems():
+        for key,val in self.hbusSlaveObjects.items():
 
             if val.hidden == False:
                 continue
 
             self.hbusSlaveHiddenObjects[key] = val
 
-        for key in self.hbusSlaveHiddenObjects.keys():
+        for key in list(self.hbusSlaveHiddenObjects.keys()):
 
             if key in self.hbusSlaveObjects:
                 self.hbusSlaveObjects.pop(key)

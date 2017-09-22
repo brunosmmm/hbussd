@@ -22,7 +22,7 @@ from hbus.base import *
 from hbus.exceptions import *
 from hbus.slaves import *
 from hbus.datahandlers import *
-from masterobjects import *
+from .masterobjects import *
 from fakebus import hbus_fb
 from plugins import HbusPluginManager
 from hbus.evt import hbusMasterEvent, hbusMasterEventType
@@ -258,7 +258,7 @@ class HbusMaster:
 
     def getInformationData(self):
 
-        busses = list(set([slave.hbusSlaveAddress.bus_number for slave in self.detectedSlaveList.values() if slave.basicInformationRetrieved == True]))
+        busses = list(set([slave.hbusSlaveAddress.bus_number for slave in list(self.detectedSlaveList.values()) if slave.basicInformationRetrieved == True]))
 
         if len(self.virtualDeviceList) > 0:
             busses.append(VIRTUAL_BUS)
@@ -279,12 +279,20 @@ class HbusMaster:
 
         size = HBUS_SIGNATURE_SIZE+1
 
-        myParamList = [chr(size)]
+        myParamList = [bytes([size])]
 
-        msg = struct.pack('cccccc',chr(self.hbusMasterAddr.bus_number),chr(self.hbusMasterAddr.dev_number),chr(address.bus_number),
-                                chr(address.dev_number),chr(HBUSCOMMAND_SOFTRESET.cmd_byte),myParamList[0])
+        msg = struct.pack('cccccc',
+                          bytes([self.hbusMasterAddr.bus_number]),
+                          bytes([self.hbusMasterAddr.dev_number]),
+                          bytes([address.bus_number]),
+                          bytes([address.dev_number]),
+                          bytes([HBUSCOMMAND_SOFTRESET.cmd_byte]),
+                          bytes([size]))
 
-        sig = hbus.crypto.hbusCrypto_RabinWilliamsSign(msg, HBUS_ASYMMETRIC_KEYS.privatep, HBUS_ASYMMETRIC_KEYS.privateq,HBUS_SIGNATURE_SIZE)
+        sig = hbus.crypto.RabinWilliamsSign(msg,
+                                            HBUS_ASYMMETRIC_KEYS.privatep,
+                                            HBUS_ASYMMETRIC_KEYS.privateq,
+                                            HBUS_SIGNATURE_SIZE)
 
         myParamList.extend(sig.getByteString())
 
@@ -504,24 +512,24 @@ class HbusMaster:
         """Get address for new slave
         @param uid slave's UID
         """
-        UIDList = [x.hbusSlaveUniqueDeviceInfo for x in self.detectedSlaveList.values()]
-        addressList = [x.hbusSlaveAddress for x in self.detectedSlaveList.values()]
+        UIDList = [x.hbusSlaveUniqueDeviceInfo for x in list(self.detectedSlaveList.values())]
+        addressList = [x.hbusSlaveAddress for x in list(self.detectedSlaveList.values())]
 
-        AddressByUID = dict(zip(UIDList, addressList))
+        AddressByUID = dict(list(zip(UIDList, addressList)))
 
         #see if already registered at some point
-        if uid in AddressByUID.keys():
+        if uid in list(AddressByUID.keys()):
             return AddressByUID[uid].dev_number
             self.logger.debug("Re-integrating device with UID %s", hex(uid))
         else:
             return self.registeredSlaveCount+1
 
     def getnewvirtualaddress(self, uid):
-        uidList = [x.hbusSlaveUniqueDeviceInfo for x in self.virtualDeviceList.values()]
-        addressList = [x.hbusSlaveAddress for x in self.virtualDeviceList.values()]
-        addressByUid = dict(zip(uidList,addressList))
+        uidList = [x.hbusSlaveUniqueDeviceInfo for x in list(self.virtualDeviceList.values())]
+        addressList = [x.hbusSlaveAddress for x in list(self.virtualDeviceList.values())]
+        addressByUid = dict(list(zip(uidList,addressList)))
 
-        if uid in addressByUid.keys():
+        if uid in list(addressByUid.keys()):
             return addressByUid[uid].dev_number
         else:
             return self.virtualSlaveCount+1
@@ -691,7 +699,11 @@ class HbusMaster:
             while self.hbusRxState != 0:
                 time.sleep(0.01)
 
-        busOp = HbusOperation(HbusInstruction(command, len(params), params),dest,self.hbusMasterAddr)
+        busOp = HbusOperation(HbusInstruction(command,
+                                              len(params),
+                                              params),
+                              dest,
+                              self.hbusMasterAddr)
 
         # very slow!!
         #self.logger.debug(busOp)
@@ -796,7 +808,7 @@ class HbusMaster:
         d = defer.Deferred()
         d.addCallback(self.readExtendedSlaveInformation)
 
-        if params[0].global_id() == self.detectedSlaveList.keys()[-1]:
+        if params[0].global_id() == list(self.detectedSlaveList.keys())[-1]:
             self.slaveReadDeferred.addCallback(self.slaveReadEnded)
 
         reactor.callLater(0.1,d.callback,*params) #@UndefinedVariable
@@ -818,7 +830,7 @@ class HbusMaster:
             self.slaveReadDeferred.addCallback(self.readBasicSlaveInformation,address)
             self.detectedSlaveList[address.global_id()].scanRetryCount += 1
         else:
-            if address.global_id() == self.detectedSlaveList.keys()[-1]:
+            if address.global_id() == list(self.detectedSlaveList.keys())[-1]:
                 self.slaveReadDeferred.addCallback(self.slaveReadEnded)
 
     def readExtendedSlaveInformationEnded(self,*params):
@@ -850,7 +862,7 @@ class HbusMaster:
 
         d = defer.Deferred()
 
-        for obj in self.detectedSlaveList[address.global_id()].hbusSlaveHiddenObjects.keys():
+        for obj in list(self.detectedSlaveList[address.global_id()].hbusSlaveHiddenObjects.keys()):
             d.addCallback(self.readSlaveHiddenObject,address,obj)
             d.addCallback(self.processHiddenObject,address,obj)
 
@@ -1277,7 +1289,7 @@ class HbusMaster:
 
         address = params[0][0]
 
-        if address.global_id() not in self.detectedSlaveList.keys():
+        if address.global_id() not in list(self.detectedSlaveList.keys()):
             if address in self.staticSlaveList:
                 self.logger.info("Device with static address present")
                 self.registerNewSlave(address)
@@ -1292,7 +1304,7 @@ class HbusMaster:
 
         address = params[0].value.args[0]
 
-        if address.global_id() in self.detectedSlaveList.keys():
+        if address.global_id() in list(self.detectedSlaveList.keys()):
 
             if self.detectedSlaveList[address.global_id()].pingRetryCount < 3:
                 self.detectedSlaveList[address.global_id()].pingRetryCount += 1
@@ -1324,7 +1336,7 @@ class HbusMaster:
         d = defer.Deferred()
 
         #enumerated devices
-        for slave in self.detectedSlaveList.values():
+        for slave in list(self.detectedSlaveList.values()):
 
             if slave.hbusSlaveAddress in self.staticSlaveList:
                 continue
@@ -1347,7 +1359,7 @@ class HbusMaster:
 
         d = defer.Deferred()
 
-        for slave in self.detectedSlaveList.values():
+        for slave in list(self.detectedSlaveList.values()):
             if slave.basicInformationRetrieved == False:
                 d.addCallback(self.readBasicSlaveInformation, slave.hbusSlaveAddress)
 

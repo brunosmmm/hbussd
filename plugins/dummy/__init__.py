@@ -28,7 +28,7 @@ def register(pluginManager, pID):
     virtualDevices = plugins.dummy.devobjs.getVirtualDevices()
     
     #register devices
-    for num, vdev in virtualDevices.iteritems():
+    for num, vdev in virtualDevices.items():
         pluginMgr.p_register_vdev(pluginID, num, vdev.device)
 
 ##Unregister plugin from hbussd

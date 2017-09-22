@@ -6,11 +6,11 @@
 #@since 08/19/2013
 #@todo Document this
 
-class HBUSDoNotRetryException(StandardError):
+class HBUSDoNotRetryException(Exception):
     
     pass
 
-class HBUSDataAlreadyReceived(StandardError):
+class HBUSDataAlreadyReceived(Exception):
     
     pass
 

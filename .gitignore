@@ -4,3 +4,4 @@ latex/
 doxygen_*
 hbussd.log
 venv/
+*.bak

@@ -132,7 +132,7 @@ def main():
     args = vars(parser.parse_args())
 
     if args['s'] == None and args['f'] == False:
-        print "error: bus connection not setup! use -f or -s"
+        print("error: bus connection not setup! use -f or -s")
         #parser.print_help()
         exit(1)
 

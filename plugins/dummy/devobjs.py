@@ -16,7 +16,7 @@ def read_zero(objnum):
 
 def write_zero(objnum, value):
     global value_zero
-    print 'write_zero, write = ', value
+    print('write_zero, write = ', value)
     value_zero = value
 
 

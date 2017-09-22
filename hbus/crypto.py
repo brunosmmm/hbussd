@@ -48,23 +48,23 @@ class hbusSignature:
             
         while (len(h) < self.sigSize*2):
             h = '00%s' % h
-            
-        h = h.decode('hex')
+
+        h = bytes.fromhex(h)
         
         myList = list(h)
-        myList.extend(chr(e_f_r))
-        
+        myList.extend([e_f_r])
+
         return myList
         
 
-def hbusCrypto_RabinWilliamsSign(msg,p,q,size):
+def RabinWilliamsSign(msg, p, q, size):
     
     while True:
-        z = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(32)) #random 256bit string
-        
-        r = int(hashlib.sha224(z.join(msg)).hexdigest()[0:1], 16)
-        
-        h = int(hashlib.sha1(chr(r)+msg).hexdigest(), 16)
+        z = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in range(32)) # random 256bit string
+
+        r = int(hashlib.sha224(z.encode('ascii') + msg).hexdigest()[0:1], 16)
+        h = int(hashlib.sha1(bytes([r])+msg).hexdigest(), 16)
         
         #calcula
         

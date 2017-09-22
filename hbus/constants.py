@@ -5,7 +5,7 @@
 @author Bruno Morais <brunosmmm@gmail.com>
 @date 2013
 """
-from base import HbusCommand
+from .base import HbusCommand
 
 ##HBUS security key size in bytes
 #@todo Make this useful
