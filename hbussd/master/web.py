@@ -6,6 +6,7 @@
   @date 2013-2015
   @todo better documentation"""
 
+from pkg_resources import Requirement, resource_filename, DistributionNotFound
 from .master import *
 import string
 from bottle import route, run, template, static_file, request, ServerAdapter
@@ -33,11 +34,19 @@ class HBUSWEB(object):
     wait = False
 
     #@todo decouple master object
-    def __init__(self,port,hbusMaster):
+    def __init__(self, port, hbusMaster):
         """Class constructor
            @param port HTTP port
            @param hbusMaster main master object reference for manipulation
            """
+
+        try:
+            index = resource_filename(Requirement.parse("hbussd"),
+                                      "index.tpl")
+            # distribution found!
+            bottle.TEMPLATE_PATH.insert(0, index)
+        except DistributionNotFound:
+            pass
         
         ##Server port
         self.port = port
