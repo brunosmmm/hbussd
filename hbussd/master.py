@@ -279,12 +279,20 @@ class HbusMaster:
 
         size = HBUS_SIGNATURE_SIZE+1
 
-        myParamList = [chr(size)]
+        myParamList = [bytes([size])]
 
-        msg = struct.pack('cccccc',chr(self.hbusMasterAddr.bus_number),chr(self.hbusMasterAddr.dev_number),chr(address.bus_number),
-                                chr(address.dev_number),chr(HBUSCOMMAND_SOFTRESET.cmd_byte),myParamList[0])
+        msg = struct.pack('cccccc',
+                          bytes([self.hbusMasterAddr.bus_number]),
+                          bytes([self.hbusMasterAddr.dev_number]),
+                          bytes([address.bus_number]),
+                          bytes([address.dev_number]),
+                          bytes([HBUSCOMMAND_SOFTRESET.cmd_byte]),
+                          bytes([size]))
 
-        sig = hbus.crypto.hbusCrypto_RabinWilliamsSign(msg, HBUS_ASYMMETRIC_KEYS.privatep, HBUS_ASYMMETRIC_KEYS.privateq,HBUS_SIGNATURE_SIZE)
+        sig = hbus.crypto.RabinWilliamsSign(msg,
+                                            HBUS_ASYMMETRIC_KEYS.privatep,
+                                            HBUS_ASYMMETRIC_KEYS.privateq,
+                                            HBUS_SIGNATURE_SIZE)
 
         myParamList.extend(sig.getByteString())
 
@@ -691,7 +699,11 @@ class HbusMaster:
             while self.hbusRxState != 0:
                 time.sleep(0.01)
 
-        busOp = HbusOperation(HbusInstruction(command, len(params), params),dest,self.hbusMasterAddr)
+        busOp = HbusOperation(HbusInstruction(command,
+                                              len(params),
+                                              params),
+                              dest,
+                              self.hbusMasterAddr)
 
         # very slow!!
         #self.logger.debug(busOp)
