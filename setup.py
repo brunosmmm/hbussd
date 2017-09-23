@@ -18,5 +18,5 @@ setup(
     author_email="brunosmmm@gmail.com",
     description="HBUS services daemon",
 
-    scripts=['hbussd'],
+    scripts=['hbusd'],
 )
