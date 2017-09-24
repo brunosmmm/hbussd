@@ -6,13 +6,54 @@
 # @since 11/23/2014
 
 from hbussd.hbus.evt import *
-import logging
-#import our things
-import plugins.dummy.devobjs
+from hbussd.plugins.vdevs import hbusVirtualDevice
+from hbussd.hbus.slaves import HbusDeviceObject, HbusObjDataType
+from hbussd.hbus.constants import HbusObjectPermissions as op
 
 virtualDevices = {}
 pluginMgr = None
 pluginID = None
+
+value_zero = [0]
+
+def read_zero(objnum):
+    global value_zero
+    return value_zero
+
+def write_zero(objnum, value):
+    global value_zero
+    print('write_zero, write = ', value)
+    value_zero = value
+
+
+def getVirtualDevices():
+    """Build virtual devices for this plugin"""
+
+    device_zero = hbusVirtualDevice()
+
+    #configure device properly
+    device_zero.readObject = read_zero
+    device_zero.writeObject = write_zero
+
+    device_zero.device.hbusSlaveIsVirtual = True
+    device_zero.device.hbusSlaveDescription = "Dummy plugin virtual device"
+
+    #add dummy object
+    device_zero.device.hbusSlaveObjectCount = 2
+    object_zero = HbusDeviceObject()
+
+    object_zero.permissions = op.READ_WRITE
+    object_zero.description = "dummy object"
+    object_zero.size = 1
+    object_zero.objectDataType = HbusObjDataType.dataTypeUnsignedInt
+    object_zero.objectDataTypeInfo = HbusObjDataType.dataTypeUintPercent
+    object_zero.last_value = None
+
+    device_zero.device.hbusSlaveObjects = {1: object_zero}
+
+    devices = {0: device_zero}
+
+    return devices
 
 ##Register plugin
 # @param pluginManager plugin manager object
@@ -25,7 +66,7 @@ def register(pluginManager, pID):
     pluginMgr = pluginManager
     pluginID = pID
     
-    virtualDevices = plugins.dummy.devobjs.getVirtualDevices()
+    virtualDevices = getVirtualDevices()
     
     #register devices
     for num, vdev in virtualDevices.items():
