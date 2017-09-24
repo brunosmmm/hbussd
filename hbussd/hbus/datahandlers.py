@@ -52,7 +52,6 @@ class HbusIntHandler(object):
 	"""Integer type formatting"""
 
 	def format_int(self, data, extinfo, size, decode=False):
-
 		value = BitArray(bytes=''.join([chr(x) for x in data])).int
 
 		try:

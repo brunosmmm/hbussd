@@ -113,7 +113,7 @@ class FakeBusDevice(HbusDevice):
 
             obj_list_info = (0,
                              8,
-                             self.hbusSlaveObjectCount,
+                             self.hbusSlaveObjectCount+1,
                              self.hbusSlaveEndpointCount,
                              self.hbusSlaveInterruptCount,
                              self.hbusSlaveCapabilities,
@@ -200,7 +200,8 @@ class FakeBusSerialPort(Protocol):
             elif self.rxState == HbusRXState.PSZ:
                 self.lastParamSize = byte
                 self.dataBuffer.append(byte)
-                if self.dataBuffer[4] == HBUSCOMMAND_STREAMW.cmd_byte or self.dataBuffer[4] == HBUSCOMMAND_STREAMR.cmd_byte:
+                if self.dataBuffer[4] == HBUSCOMMAND_STREAMW.cmd_byte or\
+                   self.dataBuffer[4] == HBUSCOMMAND_STREAMR.cmd_byte:
                     self.rxState = HbusRXState.STP
                 else:
                     if byte > 0:
@@ -276,7 +277,9 @@ class FakeBusSerialPort(Protocol):
         elif self.busState == HbusBusState.LOCKED_THIS:
             #look for special cases such as when receiving SEARCH or KEYSET commands indicating attribution of an address
             if self.addressingDevice != None:
-                if packet[4] == HBUSCOMMAND_GETCH.cmd_byte and packet[5] == 0 and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing2:
+                if packet[4] == HBUSCOMMAND_GETCH.cmd_byte and\
+                   packet[5] == 0 and\
+                   self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing2:
                     #send object 0 to master
                     ##@todo MAKE object 0 from internal info
                     #self.send_packet()
@@ -286,9 +289,12 @@ class FakeBusSerialPort(Protocol):
                     self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceAddressing3
                     return
 
-                elif packet[4] == HBUSCOMMAND_SEARCH.cmd_byte or packet[4] == HBUSCOMMAND_KEYSET.cmd_byte and self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing3:
+                elif packet[4] == HBUSCOMMAND_SEARCH.cmd_byte or\
+                     packet[4] == HBUSCOMMAND_KEYSET.cmd_byte and\
+                     self.deviceList[self.addressingDevice].deviceStatus == FakeBusDeviceStatus.deviceAddressing3:
                     #attribute new address and register
-                    self.deviceList[self.addressingDevice].hbusSlaveAddress = HbusDeviceAddress(ord(packet[2]), ord(packet[3]))
+                    self.deviceList[self.addressingDevice].hbusSlaveAddress =\
+                        HbusDeviceAddress (packet[2], packet[3])
                     self.busAddrToUID[pdest.global_id()] = self.deviceList[self.addressingDevice].hbusSlaveUniqueDeviceInfo
                     #self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceEnumerated
 
@@ -360,7 +366,10 @@ class FakeBusSerialPort(Protocol):
             if params == None:
                 #problem retrieving object, ignore
                 return
-            self.send_packet(HBUSCOMMAND_QUERY_RESP, FAKEBUS_MASTER_ADDRESS, self.deviceList[target_uid].hbusSlaveAddress, params)
+            self.send_packet(HBUSCOMMAND_QUERY_RESP,
+                             FAKEBUS_MASTER_ADDRESS,
+                             self.deviceList[target_uid].hbusSlaveAddress,
+                             params)
             return
         elif packet[4] == HBUSCOMMAND_GETCH.cmd_byte:
             #reading some object
@@ -373,7 +382,11 @@ class FakeBusSerialPort(Protocol):
 
     def send_packet(self, command, dest, source, params=()):
 
-        busop = HbusOperation(HbusInstruction(command, len(params), params), dest, source)
+        busop = HbusOperation(HbusInstruction(command,
+                                              len(params),
+                                              params),
+                              dest,
+                              source)
 
         if command == HBUSCOMMAND_BUSLOCK:
             self.busState = HbusBusState.LOCKED_THIS
@@ -490,7 +503,16 @@ class FakeBusSerialPort(Protocol):
                 obj.is_crypto = devconf.getboolean(section, 'is_crypto')
                 obj.hidden = devconf.getboolean(section, 'hidden')
                 obj.description = devconf.get(section, 'descr')
-                obj.size = devconf.getint(section, 'size')
+                size = devconf.getint(section, 'size')
+                if size < 1 or size > 4:
+                    # invalid size
+                    self.logger.warning('invalid object size detected')
+                    if size < 1:
+                        obj.size = 1
+                    elif size > 4:
+                        obj.size = 4
+                else:
+                    obj.size = size
 
                 #must generate value from configfile
                 data_type = devconf.get(section, 'data_type')
@@ -506,7 +528,8 @@ class FakeBusSerialPort(Protocol):
                     obj.objectLevel = CONFIG_LEVEL[level]
                 except:
                     #invalid data type
-                    pass #for now
+                    obj.objectDataType = CONFIG_DATA_TYPE['U']
+                    obj.objectDataTypeInfo = CONFIG_DATA_TYPE_INFO['u']
 
                 #must interpret dummy return value in file
                 raw_value = devconf.get(section, 'value')
@@ -539,6 +562,10 @@ class FakeBusSerialPort(Protocol):
         elif valuetype == HbusObjDataType.dataTypeFixedPoint:
             return 0 ##@todo fixed point parsing
         elif valuetype == HbusObjDataType.dataTypeUnsignedInt:
-            return int(value)
+            try:
+                return int(value)
+            except:
+                self.logger.warning('invalid value in virtual device config')
+                return 0
         else:
             return 0

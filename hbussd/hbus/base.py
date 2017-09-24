@@ -183,14 +183,12 @@ class HbusOperation(object):
         @todo automatically generate parameter size field which depends on command
         """
 
-        header = struct.pack('4c',
-                             bytes([self.source.bus_number]),
-                             bytes([self.source.dev_number]),
-                             bytes([self.destination.bus_number]),
-                             bytes([self.destination.dev_number]))
+        header = (bytes([self.source.bus_number]) +
+                  bytes([self.source.dev_number]) +
+                  bytes([self.destination.bus_number]) +
+                  bytes([self.destination.dev_number]))
 
-        instruction = struct.pack('c',
-                                  bytes([self.instruction.command.cmd_byte]))
+        instruction = bytes([self.instruction.command.cmd_byte])
 
         terminator = b'\xFF'
         if isinstance(self.instruction.params, bytes):
@@ -199,14 +197,12 @@ class HbusOperation(object):
         for param in self.instruction.params:
 
             if isinstance(param, str):
-                if len(param) == 1:
-                    instruction = instruction + struct.pack('c',
-                                                            param)
-                else:
-                    instruction = instruction + param
+                instruction += param.encode('ascii')
             elif isinstance(param, int):
-                instruction = instruction + struct.pack('c', bytes([param]))
+                instruction += bytes([param])
+            elif isinstance(param, bytes):
+                instruction += param
             else:
-                instruction = instruction + struct.pack('c', param)
+                raise TypeError('unsupported type: {}'.format(type(param)))
 
         return header+instruction+terminator

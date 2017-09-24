@@ -103,12 +103,16 @@ class HBUSWEB(object):
             
             try:
                 self.wait = True
-                self.hbusMaster.readSlaveObject(addr, int(obj), callBack=waitForSlaveRead,timeoutCallback=waitForSlaveRead)
+                self.hbusMaster.readSlaveObject(addr,
+                                                int(obj),
+                                                callBack=waitForSlaveRead,
+                                                timeoutCallback=waitForSlaveRead)
                 
                 while (self.wait == True):
                     pass
-            except:
-                self.logger.debug('error reading device object!!')
+            except Exception as ex:
+                self.logger.debug('error reading device object: {}'.format(ex))
+                raise
             
         if s != None:
             try:
