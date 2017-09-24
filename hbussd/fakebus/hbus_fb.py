@@ -524,7 +524,11 @@ class FakeBusSerialPort(Protocol):
     def list_val_to_int(self, value, valuetype):
 
         if valuetype == HbusObjDataType.dataTypeInt:
-            return int(value)
+            try:
+                return int(value)
+            except:
+                self.logger.warning('invalid value in config file')
+                return 0
         elif valuetype == HbusObjDataType.type_byte:
             value = value.split(' ')
             int_value = 0
