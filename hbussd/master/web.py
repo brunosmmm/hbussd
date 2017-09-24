@@ -6,10 +6,11 @@
   @date 2013-2015
   @todo better documentation"""
 
-from pkg_resources import Requirement, resource_filename, DistributionNotFound
+import pkg_resources
 from .master import *
 import string
-from bottle import route, run, template, static_file, request, ServerAdapter
+from bottle import (route, run, template, static_file, request, ServerAdapter,
+                    TEMPLATE_PATH)
 import re
 import logging
 from ..hbus.slaves import HbusDeviceObject
@@ -41,11 +42,15 @@ class HBUSWEB(object):
            """
 
         try:
-            index = resource_filename(Requirement.parse("hbussd"),
-                                      "index.tpl")
+            views = pkg_resources.resource_filename("hbussd",
+                                                    "data/views")
             # distribution found!
-            bottle.TEMPLATE_PATH.insert(0, index)
-        except DistributionNotFound:
+            TEMPLATE_PATH.insert(0, views)
+
+            self.static_file_path =\
+                pkg_resources.resource_filename("hbussd",
+                                                "data/web_static")
+        except pkg_resources.DistributionNotFound:
             pass
         
         ##Server port
@@ -68,7 +73,7 @@ class HBUSWEB(object):
         """Favorite icon for web browser
            @return icon file"""
         
-        return static_file('favicon.ico',root='data/web_static')
+        return static_file('favicon.ico',root=self.static_file_path)
     
     def readSlaveObject(self,uid=None,obj=None):
         """Reads an object value and displays it
@@ -296,7 +301,7 @@ class HBUSWEB(object):
            @param filename name of file to be fetched
            @return file"""
         
-        return static_file(filename,root='data/web_static')
+        return static_file(filename,root=self.static_file_path)
     
     def percentToRange(self,percentStr):
         """Converts percent values to scaled
