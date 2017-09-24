@@ -5,9 +5,9 @@ from setuptools import setup, find_packages
 setup(
     name="hbussd",
     version="0.1",
-    packages=find_packages('hbussd'),
-    package_dir={'': 'hbussd'},
-    package_data={'': ['data/*']},
+    packages=find_packages(),
+    package_dir={'': '.'},
+    package_data={'hbussd': ['data/views/*', 'data/web_static/*']},
 
     install_requires=['Twisted>=17.5.0',
                       'bottle>=0.12.13',
