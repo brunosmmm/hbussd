@@ -109,7 +109,7 @@ class FakeBusDevice(HbusDevice):
         @param objnum object number"""
         if objnum == 0:
 
-            uid = struct.pack('i', self.hbusSlaveUniqueDeviceInfo)
+            uid = struct.pack('I', self.hbusSlaveUniqueDeviceInfo)
 
             obj_list_info = (0,
                              8,
