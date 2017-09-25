@@ -45,6 +45,7 @@ CONFIG_LEVEL = {0 : HbusObjLevel.level0,
                 3 : HbusObjLevel.level3}
 
 FAKEBUS_MASTER_ADDRESS = HbusDeviceAddress(0, 0)
+SYS_CONFIG_FILE = '/etc/hbussd/fakebus/fakebus.config'
 
 
 class FakeBusDeviceStatus(object):
@@ -149,12 +150,16 @@ class FakeBusSerialPort(Protocol):
         self.config = configparser.ConfigParser()
         self.deviceList = {}
         self.busAddrToUID = {}
+
+        self.config_path = 'config/fakebus/fakebus.config'
         try:
-            self.config.read('config/fakebus/fakebus.config')
-            self.build_bus()
+            self.config.read(self.config_path)
         except:
-            #self.logger.debug("no configuration file found")
-            raise
+            self.logger.info("reading default configuration file")
+            self.config.read(SYS_CONFIG_FILE)
+            self.config_path = SYS_CONFIG_FILE
+
+        self.build_bus()
 
         self.busState = HbusBusState.FREE
         self.addressingDevice = None
@@ -429,7 +434,8 @@ class FakeBusSerialPort(Protocol):
 
         self.logger.debug("start adding fake devices...")
         #get device path
-        devpath = 'config/fakebus/'+self.config.get('fakebus', 'object_dir')
+        devpath = os.path.join(self.config_path,
+                               self.config.get('fakebus', 'object_dir'))
 
         devfiles = [x for x in os.listdir(devpath) if x.endswith('.config')]
 
