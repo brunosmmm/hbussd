@@ -12,6 +12,7 @@ import logging
 import uuid
 
 PLUGIN_MAIN = "__init__" #plugin main file
+PLUGIN_SYS_DIR = "/usr/lib/hbussd/plugins"
 
 class HbusPluginInfo(object):
     """Plugin manager plugin container"""
@@ -36,7 +37,12 @@ class HbusPluginManager(object):
         """Scan folder for plugins"""
         self.plugins = {}
 
-        plist = os.listdir(self.path)
+        try:
+            plist = os.listdir(self.path)
+        except:
+            self.logger.warning('specified plugin path does not exist: '
+                                '"{}", using default'.format(self.path))
+            plist = os.listdir(PLUGIN_SYS_DIR)
         for pid in plist:
             path = os.path.join(self.path, pid)
             if os.path.isdir(path) != True or PLUGIN_MAIN+'.py' not in os.listdir(path):
