@@ -184,8 +184,18 @@ class HbusMaster:
     txBytes = 0
 
     def __init__(self, port, baudrate=100000, busno=0, conf_file=None):
+        def fake_bus():
+            f = Factory()
+            f.protocol = hbus_fb.FakeBusSerialPort
+            reactor.listenTCP(9090, f)
 
-        self.serialPort = port
+            self.serialCreate(fake=True)
+
+        def system_start():
+            #system started event
+            event = hbusMasterEvent(hbusMasterEventType.eventStarted)
+            self.pluginManager.m_evt_broadcast(event)
+
         self.serialBaud = baudrate
         self.hbusMasterAddr = HbusDeviceAddress(busno, 0)
 
@@ -193,34 +203,36 @@ class HbusMaster:
         self.pluginManager = HbusPluginManager('./plugins', self)
         self.searchAndLoadPlugins()
 
-        if port == None:
-            #create fakebus system
-            f = Factory()
-            f.protocol = hbus_fb.FakeBusSerialPort
-            reactor.listenTCP(9090, f)
-
-            self.serialCreate(fake=True)
-        else:
-            self.serialCreate(fake=False)
-
         #configuration parameters
         self.conf_param = {}
         self._load_configuration(conf_file)
 
-        #system started event
-        event = hbusMasterEvent(hbusMasterEventType.eventStarted)
-        self.pluginManager.m_evt_broadcast(event)
+        if port is None and 'serial_port' not in self.conf_param:
+            #create fakebus system
+            fake_bus()
+        else:
+            if 'fakebus' in self.conf_param and\
+               self.conf_param['fakebus'] is True:
+                self.logger.warning('conflicting options in configuration'
+                                    ' file: fakebus/serial_port')
+                fake_bus()
+                system_start()
+                return
+            if port is None:
+                self.serialPort = self.conf_param['serial_port']
+            else:
+                self.serialPort = port
+            self.serialCreate(fake=False)
+
+        system_start()
+
 
     def _load_configuration(self, conf_file):
 
         if conf_file is None:
             return
 
-        try:
-            with open(conf_file, 'r') as f:
-                self.conf_param = json.load(f)
-        except IOError:
-            return # for now
+        self.conf_param = conf_file
 
         #process some configuration params
         if 'staticSlaveList' in self.conf_param:
@@ -230,7 +242,8 @@ class HbusMaster:
                 if 'devNum' not in addr:
                     continue
 
-                self.staticSlaveList.append(HbusDeviceAddress(int(addr['busNum']), int(addr['devNum'])))
+                self.staticSlaveList.append(HbusDeviceAddress(int(addr['busNum']),
+                                                              int(addr['devNum'])))
 
 
     ##Search and load plugins using plugin manager

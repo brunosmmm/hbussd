@@ -1,0 +1,6 @@
+{
+    "fakebus": true,
+    "web_if": true,
+    "announce": false,
+    "serial_port": "/dev/ttyAMA0"
+}

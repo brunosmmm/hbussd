@@ -16,6 +16,7 @@ from twisted.internet.protocol import Protocol, ClientFactory
 from twisted.internet.task import LoopingCall
 from twisted.web import server
 from hbussd.master.jsonserver import HBUSJSONServer
+import json
 
 import signal
 
@@ -26,7 +27,7 @@ BUSID = 0
 class TwistedSerialPort(Protocol):
     """Twisted protocol subclass for serial port access."""
 
-    def __init__(self,master):
+    def __init__(self, master):
         self.master = master
 
     def connectionMade(self):
@@ -42,11 +43,11 @@ class TwistedSerialPort(Protocol):
 class HBUSFakeBus(ClientFactory):
     """Fakebus client interface."""
 
-    def __init__(self,master):
+    def __init__(self, master):
         self.master = master
         self.serial = TwistedSerialPort(self.master)
 
-    def startedConnecting(self,connector):
+    def startedConnecting(self, connector):
         pass
 
     def buildProtocol(self, addr):
@@ -115,47 +116,67 @@ class TwistedhbusMaster(HbusMaster):
 def SignalHandler(signum, frame):
 
     reactor.stop()
-    #exit(0)
+    # exit(0)
 
-##Main execution loop
+
 def main():
-
-    #argparse
-    parser = argparse.ArgumentParser(description='HBUS Services Daemon')
-    mutexArgs = parser.add_mutually_exclusive_group()
-    mutexArgs.add_argument('-s', help='Serial port path')
-    mutexArgs.add_argument('-f', help='Enable fake bus for debugging without actual hardware', action='store_true')
-    parser.add_argument('-b', help='Bus baud rate', default=100000, type=int)
-    parser.add_argument('-w', help='Enables integrated web server', action='store_true')
-    parser.add_argument('-wp', help='Integrated web server port', default=8000, type=int)
-    parser.add_argument('-c', help='Slave polling interval in seconds', default=300, type=int)
-    parser.add_argument('--no-announce', help='Do not announce service', action='store_true')
-    parser.add_argument('--conf', help='Load configuration file', default='hbussd.json', type=str)
-
-    args = vars(parser.parse_args())
-
-    if args['s'] == None and args['f'] == False:
-        print("error: bus connection not setup! use -f or -s")
-        #parser.print_help()
-        exit(1)
-
+    """Execute main Loop."""
     logging.basicConfig(level=logging.DEBUG,
                         filename='hbussd.log',
                         filemode='w',
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
+                        format='%(asctime)s - %(name)s - '
+                               '%(levelname)s - %(message)s')
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
     logging.getLogger('').addHandler(console)
 
     logger = logging.getLogger('hbussd')
 
+    # argparse
+    parser = argparse.ArgumentParser(description='HBUS Services Daemon')
+    mutexArgs = parser.add_mutually_exclusive_group()
+    mutexArgs.add_argument('-s', help='Serial port path')
+    mutexArgs.add_argument('-f',
+                           help='Enable fake bus for debugging without'
+                           ' actual hardware',
+                           action='store_true')
+    parser.add_argument('-b', help='Bus baud rate', default=100000, type=int)
+    parser.add_argument('-w', help='Enables integrated web server',
+                        action='store_true')
+    parser.add_argument('-wp', help='Integrated web server port',
+                        default=8000, type=int)
+    parser.add_argument('-c', help='Slave polling interval in seconds',
+                        default=300, type=int)
+    parser.add_argument('--no-announce', help='Do not announce service',
+                        action='store_true')
+    parser.add_argument('--conf', help='Load configuration file',
+                        default=None, type=str)
+
+    args = vars(parser.parse_args())
+
+    conf = {}
+    if args['conf'] is not None:
+        try:
+            conf = json.load(open(args['conf']))
+        except:
+            logger.error('specified configuration file not found')
+            exit(1)
+
+    if args['s'] is None and args['f'] is False:
+        # check configuration file
+        if 'fakebus' not in conf and 'serial_port' not in conf:
+            print("error: bus connection not setup! use -f or -s or"
+                  " proper configuration file")
+            exit(1)
+
     logger.info("hbussd start")
 
     signal.signal(signal.SIGTERM, SignalHandler)
     signal.signal(signal.SIGINT, SignalHandler)
 
-    hbusMaster = TwistedhbusMaster(args['s'], baudrate=args['b'], conf_file=args['conf'])
+    hbusMaster = TwistedhbusMaster(args['s'],
+                                   baudrate=args['b'],
+                                   conf_file=conf)
 
     hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
     hbusMasterPeriodicTask.start(1)
@@ -163,35 +184,42 @@ def main():
     hbusSlaveChecker = LoopingCall(hbusMaster.checkSlaves)
     hbusSlaveChecker.start(args['c'], False)
 
-    #web server start
-    ##@todo start server only after enumeration
+    # web server start
+    # #@todo start server only after enumeration
 
     webif_announcer = None
-    if args['w'] == True:
-        #integrated web server
+    rpc_announcer = None
+    if args['w'] is True or ('web_if' in conf and conf['web_if'] is True):
+        # integrated web server
         logger.info('Integrated web server enabled')
         hbusWeb = HBUSWEB(args['wp'], hbusMaster)
         hbusWeb.run()
-        if args['no_announce'] is False:
-            webif_announcer = ZeroconfService(name='HBUS Server', port=args['wp'])
+        if args['no_announce'] is False and (('announce' in conf and
+                                              conf['announce'] is True) or
+                                             'announce' not in conf):
+            webif_announcer = ZeroconfService(name='HBUS Server',
+                                              port=args['wp'])
             webif_announcer.publish()
 
-    #JSON SERVER
-    if args['no_announce'] is False:
+    # JSON SERVER
+    if args['no_announce'] is False and (('announce' in conf and
+                                          conf['announce'] is True) or
+                                         'announce' not in conf):
         from announce.zeroconf import ZeroconfService
-        rpc_announcer = ZeroconfService(name='HBUS Server RPC', port=7080, stype='_hbusrpc._tcp')
+        rpc_announcer = ZeroconfService(name='HBUS Server RPC',
+                                        port=7080, stype='_hbusrpc._tcp')
         rpc_announcer.publish()
 
     reactor.listenTCP(7080, server.Site(HBUSJSONServer(hbusMaster)))
 
-    reactor.run() #@UndefinedVariable
+    reactor.run()
 
-    #cleanup
-    if args['no_announce'] is False:
-       rpc_announcer.unpublish()
-       if webif_announcer:
-           webif_announcer.unpublish()
+    # cleanup
+    if rpc_announcer is not None:
+        rpc_announcer.unpublish()
+    if webif_announcer is not None:
+        webif_announcer.unpublish()
 
-##Main function
+
 if __name__ == '__main__':
     main()
