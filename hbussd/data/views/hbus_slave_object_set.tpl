@@ -66,7 +66,7 @@
             <div class="hbusStatus">
                 
                 <div class = "activeSlaveCount">{{masterStatus.activeSlaveCount}}</div>
-                <div class = "statusText">Dispositivos <br /> ativos</div>
+                <div class = "statusText">Active <br /> devices</div>
                 
             </div>
             
@@ -78,7 +78,7 @@
     
     <section class="hbusDeviceDescription">
         <a class="left" href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}">{{slave.hbusSlaveDescription}}</a>
-        <div class="right">Objeto {{objectNumber}}</div>
+        <div class="right">Object {{objectNumber}}</div>
     </section>
     
 </div>
@@ -148,7 +148,7 @@
                             
                             <li class="binByte">
                                 
-                                <p class="objControlText">Controles</p>
+                                <p class="objControlText">Controls</p>
                                 
                                 <form action="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{objectNumber}}" method="post">
                                     
@@ -180,7 +180,7 @@
                                     %end
                                     
                                     <button type="submit" class="objSetButton" name="save">
-                                        Aplicar
+                                        Apply
                                     </button>
                                     
                                 </form>
@@ -210,7 +210,7 @@
                             
                             <li class="setPercent">
                               
-                                <p class = "objControlText">Controles</p>
+                                <p class = "objControlText">Controls</p>
                                 
                                 <form action="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}/set-{{objectNumber}}" method="post">
                                     
@@ -222,7 +222,7 @@
                                     <input type="range" name="value" min="0" max="100" class="slider100" 
                                         value="{{percentToRange(object.getFormattedValue())}}" onchange="updPercent(this.value)" />
                                     <button type="submit" class="objSetButton" name="save">
-                                        Aplicar
+                                        Apply
                                     </button>
                                 </form>
                                 
