@@ -82,7 +82,18 @@ class TwistedhbusMaster(HbusMaster):
 
         if fake == False:
             self.hbusSerial = TwistedSerialPort(self)
-            SerialPort(self.hbusSerial, self.serialPort, reactor, baudrate=self.serialBaud, timeout=0)
+            try:
+                SerialPort(self.hbusSerial,
+                           self.serialPort,
+                           reactor,
+                           baudrate=self.serialBaud,
+                           timeout=0)
+            except Exception as ex:
+                self.logger.error('fatal error opening serial port: {}'
+                                  .format(ex))
+                exit(1)
+
+
         else:
             #fake bus
             f = HBUSFakeBus(self)
