@@ -343,4 +343,4 @@ class HBUSWEB(object):
         #hidden options
         route ("/set-level/<level>")(self.setLevel)
         
-        run(host='127.0.0.1',port=self.port, server=AttachToTwisted)
+        run(host='0.0.0.0',port=self.port, server=AttachToTwisted)
