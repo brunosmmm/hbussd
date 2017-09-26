@@ -1,0 +1,8 @@
+[Unit]
+Description=HBUS Services Daemon
+
+[Service]
+ExecStart=/usr/bin/hbusd --conf /etc/hbussd/hbussd.json
+
+[Install]
+WantedBy=multi-user.target
