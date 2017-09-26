@@ -45,7 +45,7 @@ CONFIG_LEVEL = {0 : HbusObjLevel.level0,
                 3 : HbusObjLevel.level3}
 
 FAKEBUS_MASTER_ADDRESS = HbusDeviceAddress(0, 0)
-SYS_CONFIG_FILE = '/etc/hbussd/fakebus/fakebus.config'
+SYS_CONFIG_PATH = '/etc/hbussd/fakebus'
 
 
 class FakeBusDeviceStatus(object):
@@ -153,11 +153,12 @@ class FakeBusSerialPort(Protocol):
 
         self.config_path = 'config/fakebus/fakebus.config'
         try:
-            self.config.read(self.config_path)
+            self.config.read_file(open(self.config_path))
         except:
             self.logger.info("reading default configuration file")
-            self.config.read(SYS_CONFIG_FILE)
-            self.config_path = SYS_CONFIG_FILE
+            self.config.read_file(open(os.path.join(SYS_CONFIG_PATH,
+                                               'fakebus.config')))
+            self.config_path = SYS_CONFIG_PATH
 
         self.build_bus()
 
@@ -459,7 +460,7 @@ class FakeBusSerialPort(Protocol):
                 if m is not None:
                     static_addr = HbusDeviceAddress(int(m.group(1)), int(m.group(2)))
 
-            
+
             device = FakeBusDevice(static_addr)
 
             #start building device
