@@ -6,46 +6,41 @@
 #@date 2012-2014
 
 import logging
-from hbussd.master.master import *
-from hbussd.master.web import *
+from hbussd.master.master import HbusMaster
+from hbussd.master.web import HBUSWEB
 import argparse
 
 from twisted.internet import reactor
 from twisted.internet.serialport import SerialPort
-from twisted.internet.protocol import Factory, Protocol, ClientFactory
-from twisted.protocols.basic import LineReceiver
+from twisted.internet.protocol import Protocol, ClientFactory
 from twisted.internet.task import LoopingCall
-#from twisted.internet.defer import setDebugging
-#setDebugging(True)
-
 from twisted.web import server
-
-from hbussd.master.jsonserver import *
+from hbussd.master.jsonserver import HBUSJSONServer
 
 import signal
 
-##Main bus where master is located
+# Main bus where master is located
 BUSID = 0
 
-##Twisted protocol subclass for serial port access
+
 class TwistedSerialPort(Protocol):
+    """Twisted protocol subclass for serial port access."""
 
     def __init__(self,master):
         self.master = master
 
-    ##Function prototype for connection made event
     def connectionMade(self):
-
+        """Prototype for connection made event."""
         self.master.serialConnected()
 
-    ##Function prototype for data received event
-    #@param data received data
+    # @param data received data
     def dataReceived(self, data):
-
+        """Prototype for data received event."""
         self.master.serialNewData(data)
 
-##Fakebus client interface
+
 class HBUSFakeBus(ClientFactory):
+    """Fakebus client interface."""
 
     def __init__(self,master):
         self.master = master
@@ -80,7 +75,7 @@ class TwistedhbusMaster(HbusMaster):
     ##Serial port system initialization
     def serialCreate(self, fake=False):
 
-        if fake == False:
+        if fake is False:
             self.hbusSerial = TwistedSerialPort(self)
             try:
                 SerialPort(self.hbusSerial,
@@ -93,12 +88,14 @@ class TwistedhbusMaster(HbusMaster):
                                   .format(ex))
                 exit(1)
 
-
         else:
-            #fake bus
+            # fake bus
             f = HBUSFakeBus(self)
             self.hbusSerial = f.serial
-            reactor.connectTCP('localhost', 9090, f) #connect to ourselves!
+            reactor.connectTCP('localhost',
+                               9090,
+                               f)
+            # connect to ourselves!
 
     ##Writes data to serial port
     #@param string data string to be written
@@ -119,11 +116,6 @@ def SignalHandler(signum, frame):
 
     reactor.stop()
     #exit(0)
-
-##Master entering Operational state after initial scan of HBUS devices event
-def hbusMasterOperational():
-
-    reactor.callInThread(hbusWeb.run) #@UndefinedVariable
 
 ##Main execution loop
 def main():
@@ -190,7 +182,7 @@ def main():
         rpc_announcer = ZeroconfService(name='HBUS Server RPC', port=7080, stype='_hbusrpc._tcp')
         rpc_announcer.publish()
 
-    reactor.listenTCP(7080, server.Site(HBUSJSONServer(hbusMaster))) #@UndefinedVariable
+    reactor.listenTCP(7080, server.Site(HBUSJSONServer(hbusMaster)))
 
     reactor.run() #@UndefinedVariable
 

@@ -12,9 +12,19 @@ from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 import struct
 import logging
-from ..hbus.base import *
-from ..hbus.constants import *
-from ..hbus.slaves import *
+from ..hbus.base import HbusDeviceAddress, HbusOperation, HbusInstruction
+from ..hbus.constants import (HbusObjectPermissions, HbusRXState,
+                              HbusBusState, HBUS_SCMDBYTELIST,
+                              HBUS_SACMDBYTELIST,
+                              HBUSCOMMAND_SOFTRESET, HBUSCOMMAND_STREAMR,
+                              HBUSCOMMAND_STREAMW, HBUSCOMMAND_GETCH,
+                              HBUSCOMMAND_SETCH, HBUSCOMMAND_SEARCH,
+                              HBUSCOMMAND_KEYSET, HBUSCOMMAND_KEYRESET,
+                              HBUSCOMMAND_QUERY, HBUSCOMMAND_RESPONSE,
+                              HBUSCOMMAND_BUSLOCK, HBUSCOMMAND_BUSUNLOCK,
+                              HBUSCOMMAND_ACK, HBUSCOMMAND_QUERY_RESP)
+from ..hbus.slaves import (HbusObjDataType, HbusObjLevel, HbusDevice,
+                           HbusDeviceObject)
 from collections import deque
 import re
 
@@ -22,27 +32,27 @@ import configparser ##for fakebus device tree emulation
 import os
 
 ##Configuration file options equivalence
-CONFIG_DATA_TYPE = {'I' : HbusObjDataType.dataTypeInt,
-                    'U' : HbusObjDataType.dataTypeUnsignedInt,
-                    'B' : HbusObjDataType.type_byte,
-                    'F' : HbusObjDataType.dataTypeFixedPoint}
+CONFIG_DATA_TYPE = {'I': HbusObjDataType.dataTypeInt,
+                    'U': HbusObjDataType.dataTypeUnsignedInt,
+                    'B': HbusObjDataType.type_byte,
+                    'F': HbusObjDataType.dataTypeFixedPoint}
 
-CONFIG_DATA_TYPE_INFO = {'h' : HbusObjDataType.dataTypeByteHex,
-                         'd' : HbusObjDataType.dataTypeByteDec,
-                         'o' : HbusObjDataType.dataTypeByteOct,
-                         'b' : HbusObjDataType.dataTypeByteBin,
-                         'B' : HbusObjDataType.dataTypeByteBool,
-                         'p' : HbusObjDataType.dataTypeUintPercent,
-                         'L' : HbusObjDataType.dataTypeUintLinPercent,
-                         'l' : HbusObjDataType.dataTypeUintLogPercent,
-                         't' : HbusObjDataType.dataTypeUintTime,
-                         'D' : HbusObjDataType.dataTypeUintDate,
-                         'u' : HbusObjDataType.dataTypeUintNone}
+CONFIG_DATA_TYPE_INFO = {'h': HbusObjDataType.dataTypeByteHex,
+                         'd': HbusObjDataType.dataTypeByteDec,
+                         'o': HbusObjDataType.dataTypeByteOct,
+                         'b': HbusObjDataType.dataTypeByteBin,
+                         'B': HbusObjDataType.dataTypeByteBool,
+                         'p': HbusObjDataType.dataTypeUintPercent,
+                         'L': HbusObjDataType.dataTypeUintLinPercent,
+                         'l': HbusObjDataType.dataTypeUintLogPercent,
+                         't': HbusObjDataType.dataTypeUintTime,
+                         'D': HbusObjDataType.dataTypeUintDate,
+                         'u': HbusObjDataType.dataTypeUintNone}
 
-CONFIG_LEVEL = {0 : HbusObjLevel.level0,
-                1 : HbusObjLevel.level1,
-                2 : HbusObjLevel.level2,
-                3 : HbusObjLevel.level3}
+CONFIG_LEVEL = {0: HbusObjLevel.level0,
+                1: HbusObjLevel.level1,
+                2: HbusObjLevel.level2,
+                3: HbusObjLevel.level3}
 
 FAKEBUS_MASTER_ADDRESS = HbusDeviceAddress(0, 0)
 SYS_CONFIG_PATH = '/etc/hbussd/fakebus'
@@ -51,9 +61,9 @@ SYS_CONFIG_PATH = '/etc/hbussd/fakebus'
 class FakeBusDeviceStatus(object):
     """Device internal status emulation for addressing simulation"""
     deviceIdle = 0
-    deviceAddressing1 = 1 #first stage, device does buslock
-    deviceAddressing2 = 2 #second stage, device awaits
-    deviceAddressing3 = 3 #finishes addressing
+    deviceAddressing1 = 1  # first stage, device does buslock
+    deviceAddressing2 = 2  # second stage, device awaits
+    deviceAddressing3 = 3  # finishes addressing
     deviceEnumerated = 4
 
 class FakeBusDevice(HbusDevice):
@@ -151,13 +161,14 @@ class FakeBusSerialPort(Protocol):
         self.deviceList = {}
         self.busAddrToUID = {}
 
-        self.config_path = 'config/fakebus/fakebus.config'
+        self.config_path = 'config/fakebus'
         try:
-            self.config.read_file(open(self.config_path))
+            self.config.read_file(open(os.path.join(self.config_path,
+                                                    'fakebus.config')))
         except:
             self.logger.info("reading default configuration file")
             self.config.read_file(open(os.path.join(SYS_CONFIG_PATH,
-                                               'fakebus.config')))
+                                                    'fakebus.config')))
             self.config_path = SYS_CONFIG_PATH
 
         self.build_bus()
