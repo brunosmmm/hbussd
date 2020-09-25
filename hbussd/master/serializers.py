@@ -1,17 +1,17 @@
-#coding=utf-8
+# coding=utf-8
 
 ##@package hbus_serializers
 # Functions and classes for serialization of objects, JSON use
 # @author Bruno Morais <brunosmmm@gmail.com>
 # @since 13/02/2014
 
-##hbusSlaveInformation object type preserializer 
-class hbusSlaveSerializer:
+##hbusSlaveInformation object type preserializer
+class HbusSlaveSerializer:
 
     ##Constructor
-    #@param slave device object for information extraction
-    def __init__(self,slave):
-        
+    # @param slave device object for information extraction
+    def __init__(self, slave):
+
         ##Object's description string (device name)
         self.description = slave.hbusSlaveDescription
         ##Device's UID
@@ -22,24 +22,25 @@ class hbusSlaveSerializer:
         self.endpointcount = slave.hbusSlaveEndpointCount
         ##Device's interrupt count
         self.interruptcount = slave.hbusSlaveInterruptCount
-        
+
         ##Current device address in bus
         self.currentaddress = str(slave.hbusSlaveAddress)
         ##Device capabilities
         self.capabilities = slave.hbusSlaveCapabilities
-        
+
     ##Generates device information dictionary
-    #@return dictionary for serialization
+    # @return dictionary for serialization
     def getDict(self):
         return self.__dict__
 
+
 ##hbusSlaveInformation object type preserializer
-class hbusObjectSerializer:
-    
+class HbusObjectSerializer:
+
     ##Constructor
-    #@param obj device object object for data extraction
-    def __init__(self,obj):
-        
+    # @param obj device object object for data extraction
+    def __init__(self, obj):
+
         ##Object permissions
         self.permissions = obj.permissions
         ##Object descriptor string (name)
@@ -56,8 +57,8 @@ class hbusObjectSerializer:
         self.extendedinfo = obj.objectExtendedInfo
         ##Object level
         self.objectlevel = obj.objectLevel
-    
+
     ##Generates device object information dictionary
-    #@return dictionary for serialization
+    # @return dictionary for serialization
     def getDict(self):
         return self.__dict__

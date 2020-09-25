@@ -6,9 +6,9 @@
 # @since 13/02/2014
 
 from txjsonrpc.web import jsonrpc
-from .serializers import *
-from ..hbus.base import hbus_address_from_string
-from .master import hbusMasterState
+from hbussd.master.serializers import HbusSlaveSerializer, HbusObjectSerializer
+from hbussd.hbus.base import hbus_address_from_string
+from hbussd.master.master import hbusMasterState
 import logging
 
 
@@ -85,7 +85,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         slave = self.master.detectedSlaveList[address.global_id()]
 
-        ret = hbusSlaveSerializer(slave).getDict()
+        ret = HbusSlaveSerializer(slave).getDict()
         ret["status"] = "ok"
 
         return ret
@@ -105,7 +105,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         slave = self.master.detectedSlaveList[address.global_id()]
 
         objectList = [
-            hbusObjectSerializer(x).getDict()
+            HbusObjectSerializer(x).getDict()
             for x in list(slave.hbusSlaveObjects.values())
         ]
 
