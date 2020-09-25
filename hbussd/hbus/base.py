@@ -1,4 +1,4 @@
-#coding=utf-8
+# coding=utf-8
 
 """hbussd general purpose data structures
 @package hbus_base
@@ -7,48 +7,9 @@
 """
 
 import struct
-from . import constants as hbusconst
+import hbussd.hbus.constants as hbusconst
 import re
 
-
-class HbusCommand(object):
-    """HBUS commands"""
-
-    def __init__(self, value, minimumSize, maximumSize, descStr):
-        """Constructor
-        @param value command identifier byte value
-        @param minimumSize maximum command length in bytes
-        @param maximumSize minimum command length in bytes
-        @param descStr descriptive string
-        """
-
-        ##byte value (ID)
-        self.cmd_byte = value
-        ##minimum length
-        self.min_len = minimumSize
-        ##maximum length
-        self.max_len = maximumSize
-        ##descriptive string
-        self.desc_str = descStr
-
-    def __repr__(self):
-        """Command representation
-        @return string representation of command
-        """
-        return self.desc_str+"("+str(hex(self.cmd_byte))+")"
-
-    def __eq__(self, other):
-        """Equal operator
-        @return returns equal or not
-        """
-        if isinstance(other, HbusCommand):
-            return self.cmd_byte == other.cmd_byte
-        return NotImplemented
-
-    ##@todo check if this is being used
-    def __hash__(self):
-
-        return hash(self.cmd_byte)
 
 class HbusInstruction(object):
     """HBUS bus instructions (complete commands)"""
@@ -78,11 +39,21 @@ class HbusInstruction(object):
 
         if (len(params)) > command.max_len:
 
-            raise ValueError("Malformed command, "+str(len(params))+" > "+str(command.max_len))
+            raise ValueError(
+                "Malformed command, "
+                + str(len(params))
+                + " > "
+                + str(command.max_len)
+            )
 
-        if (len(params)+1) < command.min_len:
+        if (len(params) + 1) < command.min_len:
 
-            raise ValueError("Malformed command, "+str(len(params))+" < "+str(command.min_len))
+            raise ValueError(
+                "Malformed command, "
+                + str(len(params))
+                + " < "
+                + str(command.min_len)
+            )
 
     def __repr__(self):
         """Instruction representation
@@ -91,11 +62,14 @@ class HbusInstruction(object):
         if self.param_size > 0:
 
             try:
-                return str(self.command)+str([hex(ord(x)) for x in self.params])
+                return str(self.command) + str(
+                    [hex(ord(x)) for x in self.params]
+                )
             except TypeError:
-                return str(self.command)+str(self.params)
+                return str(self.command) + str(self.params)
         else:
             return str(self.command)
+
 
 class HbusDeviceAddress(object):
     """HBUS device addresses"""
@@ -117,14 +91,17 @@ class HbusDeviceAddress(object):
         """Address representation
         @return string representation of address
         """
-        return "("+str(self.bus_number)+":"+str(self.dev_number)+")"
+        return "(" + str(self.bus_number) + ":" + str(self.dev_number) + ")"
 
     def __eq__(self, other):
         """Equal operator for addresses
         @return equal or not
         """
         if isinstance(other, HbusDeviceAddress):
-            return self.bus_number == other.bus_number and self.dev_number == other.dev_number
+            return (
+                self.bus_number == other.bus_number
+                and self.dev_number == other.dev_number
+            )
         return NotImplemented
 
     def global_id(self):
@@ -132,7 +109,7 @@ class HbusDeviceAddress(object):
         Global IDs are calculated by doing ID = busNumber*32 + deviceNumber
         @return address global ID
         """
-        return self.bus_number*32 + self.dev_number
+        return self.bus_number * 32 + self.dev_number
 
 
 def hbus_address_from_string(addr):
@@ -140,12 +117,14 @@ def hbus_address_from_string(addr):
     String format is (X:Y) where X is the bus number and Y the device number
     @return HBUS address object
     """
-    addr_match = re.match(r'\(([0-9]+):([0-9]+)\)', addr)
+    addr_match = re.match(r"\(([0-9]+):([0-9]+)\)", addr)
 
     if addr_match != None:
 
         try:
-            return HbusDeviceAddress(int(addr_match.group(1)), int(addr_match.group(2)))
+            return HbusDeviceAddress(
+                int(addr_match.group(1)), int(addr_match.group(2))
+            )
         except:
             raise ValueError
     else:
@@ -175,7 +154,14 @@ class HbusOperation(object):
         """Operation representation
         @return string representation of operation
         """
-        return "HBUSOP: "+str(self.source)+"->"+str(self.destination)+" "+str(self.instruction)
+        return (
+            "HBUSOP: "
+            + str(self.source)
+            + "->"
+            + str(self.destination)
+            + " "
+            + str(self.instruction)
+        )
 
     def get_string(self):
         """Generates data string to be sent by master
@@ -183,26 +169,28 @@ class HbusOperation(object):
         @todo automatically generate parameter size field which depends on command
         """
 
-        header = (bytes([self.source.bus_number]) +
-                  bytes([self.source.dev_number]) +
-                  bytes([self.destination.bus_number]) +
-                  bytes([self.destination.dev_number]))
+        header = (
+            bytes([self.source.bus_number])
+            + bytes([self.source.dev_number])
+            + bytes([self.destination.bus_number])
+            + bytes([self.destination.dev_number])
+        )
 
         instruction = bytes([self.instruction.command.cmd_byte])
 
-        terminator = b'\xFF'
+        terminator = b"\xFF"
         if isinstance(self.instruction.params, bytes):
-            return header+instruction+self.instruction.params+terminator
+            return header + instruction + self.instruction.params + terminator
 
         for param in self.instruction.params:
 
             if isinstance(param, str):
-                instruction += param.encode('ascii')
+                instruction += param.encode("ascii")
             elif isinstance(param, int):
                 instruction += bytes([param])
             elif isinstance(param, bytes):
                 instruction += param
             else:
-                raise TypeError('unsupported type: {}'.format(type(param)))
+                raise TypeError("unsupported type: {}".format(type(param)))
 
-        return header+instruction+terminator
+        return header + instruction + terminator
