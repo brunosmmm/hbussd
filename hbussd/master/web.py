@@ -6,30 +6,32 @@
   @date 2013-2015
   @todo better documentation"""
 
-import pkg_resources
-from .master import *
+import logging
+import re
 import string
+
+import pkg_resources
 from bottle import (
+    TEMPLATE_PATH,
+    ServerAdapter,
+    request,
     route,
     run,
-    template,
     static_file,
-    request,
-    ServerAdapter,
-    TEMPLATE_PATH,
+    template,
 )
-import re
-import logging
+
 from ..hbus.slaves import HbusDeviceObject
+from .master import *
 
 
 class AttachToTwisted(ServerAdapter):
     """Attach to existing reactor."""
 
     def run(self, handler):
-        from twisted.web import server, wsgi
-        from twisted.python.threadpool import ThreadPool
         from twisted.internet import reactor
+        from twisted.python.threadpool import ThreadPool
+        from twisted.web import server, wsgi
 
         thread_pool = ThreadPool()
         thread_pool.start()
@@ -240,8 +242,9 @@ class HBUSWEB(object):
     def busList(self):
         """Generates a bus list"""
 
-        from bottle import response
         from json import dumps
+
+        from bottle import response
 
         rv = []
         for bus in self.hbusMaster.getInformationData().activeBusses:
