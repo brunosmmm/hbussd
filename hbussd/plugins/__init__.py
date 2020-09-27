@@ -1,4 +1,4 @@
-#coding=utf-8
+# coding=utf-8
 
 """Simple plugin management for hbussd
    @package hbussd_plugin
@@ -11,8 +11,9 @@ import os
 import logging
 import uuid
 
-PLUGIN_MAIN = "__init__" #plugin main file
+PLUGIN_MAIN = "__init__"  # plugin main file
 PLUGIN_SYS_DIR = "/usr/lib/hbussd/plugins"
+
 
 class HbusPluginInfo(object):
     """Plugin manager plugin container"""
@@ -22,6 +23,7 @@ class HbusPluginInfo(object):
         self.data = data
         self.module = None
 
+
 class HbusPluginManager(object):
     """Plugin manager"""
 
@@ -30,8 +32,8 @@ class HbusPluginManager(object):
     def __init__(self, pluginpath, master):
         self.path = pluginpath
         self.__master = master
-        self.vdevtranslator = {} #virtual device addresses translator
-        self.logger = logging.getLogger('hbussd.hbusPluginMgr')
+        self.vdevtranslator = {}  # virtual device addresses translator
+        self.logger = logging.getLogger("hbussd.hbusPluginMgr")
 
     def scan_plugins(self):
         """Scan folder for plugins"""
@@ -40,12 +42,16 @@ class HbusPluginManager(object):
         try:
             plist = os.listdir(self.path)
         except:
-            self.logger.warning('specified plugin path does not exist: '
-                                '"{}", using default'.format(self.path))
+            self.logger.warning(
+                "specified plugin path does not exist: "
+                '"{}", using default'.format(self.path)
+            )
             plist = os.listdir(PLUGIN_SYS_DIR)
         for pid in plist:
             path = os.path.join(self.path, pid)
-            if os.path.isdir(path) != True or PLUGIN_MAIN+'.py' not in os.listdir(path):
+            if os.path.isdir(
+                path
+            ) != True or PLUGIN_MAIN + ".py" not in os.listdir(path):
                 continue
 
             info = imp.find_module(PLUGIN_MAIN, [path])
@@ -66,12 +72,13 @@ class HbusPluginManager(object):
         if self.plugins[plugin].active == True:
             raise UserWarning("plugin is already loaded")
 
-
         pid = imp.load_module(PLUGIN_MAIN, *self.plugins[plugin].data)
         self.plugins[plugin].module = pid
-        #create logger for plugin
-        self.plugins[plugin].logger = logging.getLogger('hbussd.hbusPluginMgr.'+plugin)
-        pid.register(self, plugin) #plugin entry point
+        # create logger for plugin
+        self.plugins[plugin].logger = logging.getLogger(
+            "hbussd.hbusPluginMgr." + plugin
+        )
+        pid.register(self, plugin)  # plugin entry point
         self.plugins[plugin].active = True
 
     def m_unload_plugin(self, plugin):
@@ -94,7 +101,7 @@ class HbusPluginManager(object):
         """
         for plugin in list(self.plugins.keys()):
             if self.plugins[plugin].active == True:
-                self.plugins[plugin].module.masterEventOccurred(event)
+                self.plugins[plugin].module.master_event(event)
 
     def m_read_vdev_obj(self, devicenum, objnum):
         """Read an object from a virtual device
@@ -105,9 +112,9 @@ class HbusPluginManager(object):
         if devicenum not in list(self.vdevtranslator.keys()):
             raise UserWarning("virtual device not found")
 
-        uid, plugin, dnum = self.vdevtranslator[devicenum]
-        #read and return
-        return self.plugins[plugin].module.readVirtualDeviceObject(dnum, objnum)
+        uid, plugin, dnum, device = self.vdevtranslator[devicenum]
+        # read and return
+        return device.read_object(objnum)
 
     def m_write_vdev_obj(self, devicenum, objnum, value):
         """Write a value to a virtual device object
@@ -119,11 +126,11 @@ class HbusPluginManager(object):
         if devicenum not in list(self.vdevtranslator.keys()):
             raise UserWarning("virtual device not found")
 
-        uid, plugin, dnum = self.vdevtranslator[devicenum]
-        #write
-        self.plugins[plugin].module.writeVirtualDeviceObject(dnum, objnum, value)
+        uid, plugin, dnum, device = self.vdevtranslator[devicenum]
+        # write
+        device.write_object(objnum, value)
 
-    #Begin functions accessed by plugins
+    # Begin functions accessed by plugins
 
     def p_register_vdev(self, plugin, devicenum, deviceinfo):
         """Register a virtual device from a plugin
@@ -132,17 +139,16 @@ class HbusPluginManager(object):
         @param deviceInfo virtual device description
         @return uuid generated
         """
-        #generate uuid
+        # generate uuid
         uid = uuid.uuid4()
-        #register a virtual device in the master, get an address
+        # register a virtual device in the master, get an address
         devnumber = self.__master.getnewvirtualaddress(uid.int)
-        #save generated uid
-        deviceinfo.hbusSlaveUniqueDeviceInfo = uid.int
-        #add to local translator
-        self.vdevtranslator[devnumber] = (uid, plugin, devicenum)
-        self.__master.registerNewSlave(devnumber, deviceinfo)
+        # save generated uid
+        deviceinfo.device.hbusSlaveUniqueDeviceInfo = uid.int
+        # add to local translator
+        self.vdevtranslator[devnumber] = (uid, plugin, devicenum, deviceinfo)
+        self.__master.registerNewSlave(devnumber, deviceinfo.device)
         return (uid.int, devnumber)
-
 
     def p_unregister_vdev(self, plugin, devicenum):
         """Unregister a virtual device
@@ -151,24 +157,23 @@ class HbusPluginManager(object):
         """
 
         devaddr = None
-        for key, uid, pid, num in self.vdevtranslator.items():
+        for key, uid, pid, num, _ in self.vdevtranslator.items():
             if pid == plugin and num == devicenum:
-                #found
+                # found
                 devaddr = key
 
         if devaddr == None:
-            self.logger.debug('device not found')
+            self.logger.debug("device not found")
             return
 
         self.__master.unregisterSlave(devaddr, virtual=True)
-
 
     def p_interrupt(self, pluginid, interrupt):
         """Interruption from plugin
         @param pluginID plugin id
         @param interrupt interrupt container
         """
-        pass
+        raise NotImplementedError
 
     def p_log(self, pluginid, msg, level=logging.DEBUG):
         """Log output from plugin
@@ -177,7 +182,7 @@ class HbusPluginManager(object):
         @param level logging level
         """
         if pluginid not in list(self.plugins.keys()):
-            self.logger.debug('plugin '+pluginid+' not activated!')
+            self.logger.debug("plugin " + pluginid + " not activated!")
             return
 
         self.plugins[pluginid].logger.log(level, msg)

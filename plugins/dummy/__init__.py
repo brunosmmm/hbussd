@@ -1,95 +1,63 @@
-#coding=utf-8
+# coding=utf-8
 
-##@package dummy
-# @brief dummy plugin
-# @author Bruno Morais <brunosmmm@gmail.com>
-# @since 11/23/2014
-
-from hbussd.hbus.evt import *
-from hbussd.plugins.vdevs import hbusVirtualDevice
+"""Dummy plugin."""
+from hbussd.plugins.vdevs import HbusVirtualDevice, HbusPlugin
 from hbussd.hbus.slaves import HbusDeviceObject, HbusObjDataType
 from hbussd.hbus.constants import HbusObjectPermissions as op
 
-virtualDevices = {}
-pluginMgr = None
-pluginID = None
 
-value_zero = [0]
-
-def read_zero(objnum):
-    global value_zero
-    return value_zero
-
-def write_zero(objnum, value):
-    global value_zero
-    print('write_zero, write = ', value)
-    value_zero = value
+plugin = HbusPlugin()
 
 
-def getVirtualDevices():
-    """Build virtual devices for this plugin"""
+class DummyDevice(HbusVirtualDevice):
+    """Dummy device."""
 
-    device_zero = hbusVirtualDevice()
+    def __init__(self, *args):
+        """Initialize."""
+        super().__init__(*args, "Dummy plugin virtual device")
+        self._value_zero = [0]
 
-    #configure device properly
-    device_zero.readObject = read_zero
-    device_zero.writeObject = write_zero
+        object_zero = HbusDeviceObject()
+        object_zero.permissions = op.READ_WRITE
+        object_zero.description = "dummy object"
+        object_zero.size = 1
+        object_zero.objectDataType = HbusObjDataType.dataTypeUnsignedInt
+        object_zero.objectDataTypeInfo = HbusObjDataType.dataTypeUintPercent
+        object_zero.last_value = None
+        self.add_object(1, object_zero)
 
-    device_zero.device.hbusSlaveIsVirtual = True
-    device_zero.device.hbusSlaveDescription = "Dummy plugin virtual device"
+    def read_object(self, objnum):
+        """Read objects."""
+        return self._value_zero
 
-    #add dummy object
-    device_zero.device.hbusSlaveObjectCount = 2
-    object_zero = HbusDeviceObject()
+    def write_object(self, objnum, value):
+        """Write objects."""
+        self._value_zero = value
 
-    object_zero.permissions = op.READ_WRITE
-    object_zero.description = "dummy object"
-    object_zero.size = 1
-    object_zero.objectDataType = HbusObjDataType.dataTypeUnsignedInt
-    object_zero.objectDataTypeInfo = HbusObjDataType.dataTypeUintPercent
-    object_zero.last_value = None
+    def master_event(self, event):
+        """Event."""
+        print("evt received")
 
-    device_zero.device.hbusSlaveObjects = {1: object_zero}
 
-    devices = {0: device_zero}
+def register(plugin_manager, plugin_id):
+    """Register plugin."""
+    device_zero = DummyDevice(plugin_manager, plugin_id)
+    plugin.add_device(0, device_zero)
 
-    return devices
+    # save id
+    plugin.plugin_id = plugin_id
+    plugin.plugin_manager = plugin_manager
 
-##Register plugin
-# @param pluginManager plugin manager object
-# @param pID this plugin's ID
-def register(pluginManager, pID):
-    global pluginMgr
-    global pluginID
-    global virtualDevices
+    # register devices
+    plugin.register_devices()
+    plugin.log("Dummy plugin registered")
 
-    pluginMgr = pluginManager
-    pluginID = pID
-    
-    virtualDevices = getVirtualDevices()
-    
-    #register devices
-    for num, vdev in virtualDevices.items():
-        pluginMgr.p_register_vdev(pluginID, num, vdev.device)
 
-##Unregister plugin from hbussd
 def unregister():
-    pass
+    """Unregister plugin"""
+    plugin.log("Dummy plugin unregistered")
 
-##Read object from virtual device originating in this plugin
-# @param device device id
-# @param obj object number
-def readVirtualDeviceObject(device, obj):
-    return virtualDevices[device].readObject(obj)
 
-##Writes a virtual device object
-# @param device device id
-# @param obj object number
-# @param value value written
-def writeVirtualDeviceObject(device, obj, value):
-    virtualDevices[device].writeObject(obj, value)
-
-##Master event broadcast receiver
-# @param event event container
-def masterEventOccurred(event):
-    pluginMgr.p_log(pluginID,"I got an event!")
+def master_event(event):
+    """Master event occurred."""
+    plugin.log("I got an event!")
