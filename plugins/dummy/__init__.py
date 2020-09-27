@@ -1,5 +1,3 @@
-# coding=utf-8
-
 """Dummy plugin."""
 from hbussd.plugins.vdevs import HbusVirtualDevice, HbusPlugin
 from hbussd.hbus.slaves import HbusDeviceObject, HbusObjDataType
