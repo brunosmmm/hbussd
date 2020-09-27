@@ -3,6 +3,10 @@
 from hbussd.hbus.slaves import HbusDevice, HbusDeviceObject
 
 
+class VirtualDeviceError(Exception):
+    """Virtual device error."""
+
+
 class HbusVirtualDevice:
     """Container for virtual devices, add data and handles onto HbusDevice"""
 
@@ -36,14 +40,14 @@ class HbusVirtualDevice:
         """Prototype for reading virtual object
         @param objnum virtual device's object number
         """
-        pass
+        raise VirtualDeviceError("not implemented")
 
     def write_object(self, objnum, value):
         """Prototype for writing virtual object
         @param objnum virtual device's object number
         @param value value to be written
         """
-        pass
+        raise VirtualDeviceError("not implemented.")
 
     def master_event(self, event):
         """Receive event."""
