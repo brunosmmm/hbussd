@@ -1,24 +1,21 @@
-#coding=utf-8
+"""HBUS exceptions."""
 
-##@package hbus_except
-#Exception events and handling
-#@author Bruno Morais <brunosmmm@gmail.com>
-#@since 08/19/2013
-#@todo Document this
 
 class HBUSDoNotRetryException(Exception):
-    
-    pass
+    """Do not retry exception."""
+
 
 class HBUSDataAlreadyReceived(Exception):
-    
-    pass
+    """Data already received exception."""
+
 
 class HBUSTimeoutException(IOError):
-    
-    pass
+    """Timeout exception."""
+
 
 class HBUSRetryInformation:
-    
-    def __init__(self,attempts=0):
+    """Retry information."""
+
+    def __init__(self, attempts=0):
+        """Initialize."""
         self.attempts = attempts

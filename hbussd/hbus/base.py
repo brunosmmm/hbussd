@@ -6,9 +6,9 @@
 @date 2013
 """
 
-import struct
-import hbussd.hbus.constants as hbusconst
 import re
+
+import hbussd.hbus.constants as hbusconst
 
 
 class HbusInstruction(object):
@@ -21,15 +21,15 @@ class HbusInstruction(object):
         @param params parameters to be sent
         """
 
-        ##Parameter list
+        # Parameter list
         self.params = []
-        ##Parameter list size
+        # Parameter list size
         self.param_size = 0
-        ##HBUS command
+        # HBUS command
         self.command = command
 
         if command not in hbusconst.HBUS_COMMANDLIST:
-            if command == None:
+            if command is None:
                 raise ValueError("Undefined error")
             else:
                 raise ValueError("Invalid command: %d" % ord(command.cmd_byte))
@@ -82,9 +82,9 @@ class HbusDeviceAddress(object):
         if (devID > 32) and (devID != 255):
             raise ValueError("Invalid address")
 
-        ##Bus number
+        # Bus number
         self.bus_number = busID
-        ##Device number in this bus
+        # Device number in this bus
         self.dev_number = devID
 
     def __repr__(self):
@@ -119,13 +119,13 @@ def hbus_address_from_string(addr):
     """
     addr_match = re.match(r"\(([0-9]+):([0-9]+)\)", addr)
 
-    if addr_match != None:
+    if addr_match is not None:
 
         try:
             return HbusDeviceAddress(
                 int(addr_match.group(1)), int(addr_match.group(2))
             )
-        except:
+        except Exception:
             raise ValueError
     else:
         raise ValueError
@@ -133,7 +133,8 @@ def hbus_address_from_string(addr):
 
 class HbusOperation(object):
     """HBUS bus operation
-    Bus operations are composed of an instruction, and message source and destination
+    Bus operations are composed of an instruction
+    and message source and destination
     """
 
     def __init__(self, instruction, destination, source):
@@ -142,12 +143,12 @@ class HbusOperation(object):
         @param destination destination device address
         @param source source device address
         """
-        ##HBUS instruction
+        # HBUS instruction
         self.instruction = instruction
 
-        ##Destination address
+        # Destination address
         self.destination = destination
-        ##Source address
+        # Source address
         self.source = source
 
     def __repr__(self):
@@ -166,7 +167,8 @@ class HbusOperation(object):
     def get_string(self):
         """Generates data string to be sent by master
         @return data string to be sent to bus
-        @todo automatically generate parameter size field which depends on command
+        @todo automatically generate parameter size field which
+        depends on command
         """
 
         header = (

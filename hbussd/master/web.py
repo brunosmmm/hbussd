@@ -21,8 +21,7 @@ from bottle import (
     template,
 )
 
-from ..hbus.slaves import HbusDeviceObject
-from .master import *
+from hbussd.master.master import *
 
 
 class AttachToTwisted(ServerAdapter):
