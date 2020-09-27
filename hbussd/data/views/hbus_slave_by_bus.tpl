@@ -52,27 +52,27 @@
 </div>
 	
 	<div class="hbusMMain">
-	       
+
 	  <span class="center">
 	      <span class="centerWrap">
-	      
+
         	   <ul class="devGrid">
-        	       
+
         	       %for slave in slaveList:
-        	       
+
         	           %if slave.basicInformationRetrieved == False:
         	               %continue
         	           %end
-        	       
+
         	           <li>
         	               <a href="/slave-uid/{{hex(slave.hbusSlaveUniqueDeviceInfo)}}">
         	                   <div class="fill"> </div>
         	                   <p>{{slave.hbusSlaveDescription}}</p>
         	               </a>
         	           </li>
-        
+
         	       %end
-        	       
+
         	   </ul>
         </span>
       </span>

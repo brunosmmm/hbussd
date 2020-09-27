@@ -350,7 +350,6 @@ class HBUSWEB(object):
             for slave in list(self.hbusMaster.detectedSlaveList.values()):
                 if slave.hbusSlaveAddress.bus_number == int(busNumber):
                     slaveList.append(slave)
-
         return template(
             "hbus_slave_by_bus",
             slaveList=slaveList,
