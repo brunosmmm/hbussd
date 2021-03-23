@@ -51,7 +51,7 @@ class HbusPluginManager(object):
             path = os.path.join(self.path, pid)
             if os.path.isdir(
                 path
-            ) != True or PLUGIN_MAIN + ".py" not in os.listdir(path):
+            ) is False or PLUGIN_MAIN + ".py" not in os.listdir(path):
                 continue
 
             info = imp.find_module(PLUGIN_MAIN, [path])
@@ -72,13 +72,18 @@ class HbusPluginManager(object):
         if self.plugins[plugin].active == True:
             raise UserWarning("plugin is already loaded")
 
-        pid = imp.load_module(PLUGIN_MAIN, *self.plugins[plugin].data)
+        pid = imp.load_module(plugin, *self.plugins[plugin].data)
         self.plugins[plugin].module = pid
         # create logger for plugin
         self.plugins[plugin].logger = logging.getLogger(
             "hbussd.hbusPluginMgr." + plugin
         )
-        pid.register(self, plugin)  # plugin entry point
+        if not hasattr(pid, "register"):
+            raise UserWarning("error in plugin definition")
+        try:
+            pid.register(self, plugin)  # plugin entry point
+        except Exception as ex:
+            raise UserWarning(f"loading failed with: '{ex}'")
         self.plugins[plugin].active = True
 
     def m_unload_plugin(self, plugin):

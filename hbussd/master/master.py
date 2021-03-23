@@ -262,11 +262,11 @@ class HbusMaster:
         self.pluginManager.scan_plugins()
 
         for plugin in self.pluginManager.get_available_plugins():
-            # try:
-            #    self.logger.debug('loading plugin '+plugin)
-            self.pluginManager.m_load_plugin(plugin)
-            # except:
-            #    self.logger.debug('error loading plugin '+plugin)
+            try:
+                self.logger.debug("loading plugin " + plugin)
+                self.pluginManager.m_load_plugin(plugin)
+            except UserWarning as ex:
+                self.logger.warning(f"error loading plugin {plugin}: '{ex}'")
 
     # Master entering operational phase
     def enterOperational(self):
