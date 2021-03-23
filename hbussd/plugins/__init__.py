@@ -132,23 +132,40 @@ class HbusPluginManager(object):
 
     # Begin functions accessed by plugins
 
-    def p_register_vdev(self, plugin, devicenum, deviceinfo):
+    def p_register_vdev(self, plugin, devicenum, deviceinfo, request_uid=None):
         """Register a virtual device from a plugin
-        @param plugin plugin id
-        @param deviceNum plugin's device number
-        @param deviceInfo virtual device description
-        @return uuid generated
+        :param plugin: plugin id
+        :param devicenum: plugin's device number
+        :param deviceinfo: virtual device description
+        :param request_uid: optional uid request
+        :return: uuid generated
         """
-        # generate uuid
-        uid = uuid.uuid4()
+        if request_uid is not None:
+            if not isinstance(request_uid, int):
+                raise TypeError("UID must be an integer")
+            if self.__master.findDeviceByUID(request_uid) is not None:
+                # UID taken cannot use
+                self.logger.warning(
+                    f"cannot assign requested UID (request_uid)"
+                    "to virtual device, using generated UID"
+                )
+                uid = uuid.uuid4()
+                uid_int = uid.int
+            else:
+                uid = hex(request_uid)
+                uid_int = request_uid
+        else:
+            # generate uuid
+            uid = uuid.uuid4()
+            uid_int = uid.int
         # register a virtual device in the master, get an address
-        devnumber = self.__master.getnewvirtualaddress(uid.int)
+        devnumber = self.__master.getnewvirtualaddress(uid_int)
         # save generated uid
-        deviceinfo.device.hbusSlaveUniqueDeviceInfo = uid.int
+        deviceinfo.device.hbusSlaveUniqueDeviceInfo = uid_int
         # add to local translator
         self.vdevtranslator[devnumber] = (uid, plugin, devicenum, deviceinfo)
         self.__master.registerNewSlave(devnumber, deviceinfo.device)
-        return (uid.int, devnumber)
+        return (uid_int, devnumber)
 
     def p_unregister_vdev(self, plugin, devicenum):
         """Unregister a virtual device

@@ -40,7 +40,7 @@ class DummyDevice(HbusVirtualDevice):
 def register(plugin_manager, plugin_id):
     """Register plugin."""
     device_zero = DummyDevice(plugin_manager, plugin_id)
-    plugin.add_device(0, device_zero)
+    plugin.add_device(0, device_zero, request_uid=0xFE000001)
 
     # save id
     plugin.plugin_id = plugin_id

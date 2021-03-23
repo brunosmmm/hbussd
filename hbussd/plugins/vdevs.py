@@ -100,15 +100,17 @@ class HbusPlugin:
         """Log events."""
         self.plugin_manager.p_log(self.plugin_id, msg)
 
-    def add_device(self, devnum, device):
+    def add_device(self, devnum, device, request_uid=None):
         """Add device."""
         if not isinstance(device, HbusVirtualDevice):
             raise TypeError("device must be a HbusVirtualDevice object.")
         if devnum in self._devices:
             raise KeyError(f"device with id {devnum} already exists")
-        self._devices[devnum] = device
+        self._devices[devnum] = (device, request_uid)
 
     def register_devices(self):
         """Register devices."""
-        for num, vdev in self._devices.items():
-            self.plugin_manager.p_register_vdev(self._plugin_id, num, vdev)
+        for num, (vdev, requested_uid) in self._devices.items():
+            self.plugin_manager.p_register_vdev(
+                self._plugin_id, num, vdev, request_uid=requested_uid
+            )
