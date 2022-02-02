@@ -192,7 +192,7 @@ class HBUSWEB:
 
                     getN = int(obj)
 
-                    while self.wait == True:
+                    while self.wait:
                         pass
                 except:
                     pass
@@ -209,7 +209,7 @@ class HBUSWEB:
                     for x in list(s.hbusSlaveObjects.values())
                     if x.permissions & 0x02
                     and x.objectLevel >= self.objectLevel
-                    and x.hidden == False
+                    and x.hidden is False
                 ]
             )
             readObjectCount = len(
@@ -218,7 +218,7 @@ class HBUSWEB:
                     for x in list(s.hbusSlaveObjects.values())
                     if x.permissions & 0x01
                     and x.objectLevel >= self.objectLevel
-                    and x.hidden == False
+                    and x.hidden is False
                 ]
             )
 

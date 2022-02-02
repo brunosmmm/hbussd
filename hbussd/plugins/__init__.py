@@ -1,9 +1,8 @@
-# coding=utf-8
+"""Simple plugin management for hbussd.
 
-"""Simple plugin management for hbussd
-   @package hbussd_plugin
-   @since 11/23/2014
-   @author Bruno Morais <brunosmmm@gmail.com>
+@package hbussd_plugin
+@since 11/23/2014
+@author Bruno Morais <brunosmmm@gmail.com>
 """
 
 import imp
@@ -64,14 +63,14 @@ class HbusPluginManager:
         return list(self.plugins.keys())
 
     def m_load_plugin(self, plugin):
-        """Loads and activates plugin.
+        """Load and activate plugin.
 
         @param plugin plugin id
         """
         if plugin not in list(self.plugins.keys()):
             raise UserWarning("plugin is not available")
 
-        if self.plugins[plugin].active == True:
+        if self.plugins[plugin].active:
             raise UserWarning("plugin is already loaded")
 
         pid = imp.load_module(plugin, *self.plugins[plugin].data)
@@ -96,7 +95,7 @@ class HbusPluginManager:
         if plugin not in list(self.plugins.keys()):
             raise UserWarning("plugin is not available")
 
-        if self.plugins[plugin].active == False:
+        if self.plugins[plugin].active is False:
             raise UserWarning("plugin is not loaded")
 
         self.plugins[plugin].module.unregister(self)
@@ -108,7 +107,7 @@ class HbusPluginManager:
         @param event event container
         """
         for plugin in list(self.plugins.keys()):
-            if self.plugins[plugin].active == True:
+            if self.plugins[plugin].active:
                 if hasattr(self.plugins[plugin].module, "master_event"):
                     self.plugins[plugin].module.master_event(event)
 

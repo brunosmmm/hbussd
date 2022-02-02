@@ -136,7 +136,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if self._is_operational() is False:
             return {"status": "error", "error": "not_available"}
         # for now, make sure that we are not doing anything else (waiting)
-        if self.read_finished == False:
+        if self.read_finished is False:
             return {"status": "error", "error": "busy"}
 
         addr = hbus_address_from_string(address)
@@ -179,7 +179,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     def jsonrpc_readfinished(self):
         if self._is_operational() is False:
             return {"status": "error", "error": "not_available"}
-        if self.waiting_for_read == False:
+        if self.waiting_for_read is False:
             return {"status": "error", "error": "not_waiting"}
 
         return {"status": "ok", "value": self.read_finished}
@@ -190,10 +190,10 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     def jsonrpc_retrievelastdata(self, formatted=True):
         if self._is_operational() is False:
             return {"status": "error", "error": "not_available"}
-        if self.waiting_for_read == False:
+        if self.waiting_for_read is False:
             return {"status": "error", "error": "no_request"}
 
-        if self.read_finished == False:
+        if self.read_finished is False:
             return {"status": "error", "error": "waiting_read"}
 
         self.waiting_for_read = False

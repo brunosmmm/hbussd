@@ -60,7 +60,7 @@
 
         	       %for slave in slaveList:
 
-        	           %if slave.basicInformationRetrieved == False:
+        	           %if slave.basicInformationRetrieved is False:
         	               %continue
         	           %end
 

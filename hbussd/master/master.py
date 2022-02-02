@@ -292,7 +292,7 @@ class HbusMaster:
                 [
                     slave.hbusSlaveAddress.bus_number
                     for slave in list(self.detectedSlaveList.values())
-                    if slave.basicInformationRetrieved == True
+                    if slave.basicInformationRetrieved
                 ]
             )
         )
@@ -977,7 +977,7 @@ class HbusMaster:
 
     def unregister_slave(self, address, virtual=False):
         """Unregister slave by address."""
-        if virtual == True:
+        if virtual:
             del self.virtualDeviceList[
                 hbusSlaveAddress(VIRTUAL_BUS, address).global_id
             ]
