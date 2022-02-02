@@ -52,7 +52,7 @@ def register(plugin_manager, plugin_id):
 
 
 def unregister():
-    """Unregister plugin"""
+    """Unregister plugin."""
     plugin.log("Dummy plugin unregistered")
 
 

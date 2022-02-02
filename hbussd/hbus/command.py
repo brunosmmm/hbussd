@@ -39,5 +39,5 @@ class HbusCommand:
 
     # TODO: check if this is being used
     def __hash__(self):
-
+        """Get hash."""
         return hash(self.cmd_byte)
