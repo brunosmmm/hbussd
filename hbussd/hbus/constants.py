@@ -2,7 +2,7 @@
 from hbussd.hbus.command import HbusCommand
 
 # HBUS security key size in bytes
-# @todo Make this useful
+# TODO: Make this useful
 HBUS_PUBKEY_SIZE = 192
 
 # HBUS authentication key size in bytes

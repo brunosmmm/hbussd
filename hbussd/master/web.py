@@ -4,7 +4,7 @@
   @package hbus_web
   @author Bruno Morais <brunosmmm@gmail.com>
   @date 2013-2015
-  @todo better documentation"""
+  TODO: better documentation"""
 
 import logging
 import re
@@ -45,7 +45,7 @@ class HBUSWEB:
     ##wait for asynchronous operations
     wait = False
 
-    # @todo decouple master object
+    # TODO: decouple master object
     def __init__(self, port, hbusMaster):
         """Class constructor
         @param port HTTP port
@@ -202,7 +202,7 @@ class HBUSWEB:
 
             if s == None:
 
-                ##@todo retur error template, device not available
+                # TODO: retur error template, device not available
 
                 pass
 
@@ -237,7 +237,7 @@ class HBUSWEB:
             getNumber=getN,
         )
 
-    ##@todo document this properly
+    # TODO: document this properly
     def busList(self):
         """Generates a bus list"""
 
@@ -276,7 +276,7 @@ class HBUSWEB:
 
             if s == None:
 
-                ##@todo return error template, device not available
+                # TODO: return error template, device not available
 
                 pass
 
@@ -291,7 +291,7 @@ class HBUSWEB:
             percentToRange=self.percentToRange,
         )
 
-    ##@todo document this
+    # TODO: document this
     def slaveInfoSet(self, uid=None, obj=None):
 
         newObjValue = request.forms.get("value")

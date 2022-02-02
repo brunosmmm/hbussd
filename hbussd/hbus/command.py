@@ -37,7 +37,7 @@ class HbusCommand:
             return self.cmd_byte == other.cmd_byte
         return NotImplemented
 
-    ##@todo check if this is being used
+    # TODO: check if this is being used
     def __hash__(self):
 
         return hash(self.cmd_byte)

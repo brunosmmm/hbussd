@@ -181,7 +181,7 @@ class HbusOperation:
         """Generate data string to be sent by master.
 
         @return data string to be sent to bus
-        @todo automatically generate parameter size field which
+        TODO: automatically generate parameter size field which
         depends on command
         """
         header = (

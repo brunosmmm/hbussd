@@ -757,7 +757,7 @@ class HbusMaster:
                 self.masterState = HbusMasterState.hbusMasterInterrupted
 
                 # Process
-                # @todo missing interrupt mechanisms for master special objects subsystem implementation
+                # TODO: missing interrupt mechanisms for master special objects subsystem implementation
 
             if len(self.expectedResponseQueue) > 0:
 
@@ -1009,7 +1009,7 @@ class HbusMaster:
     def _slave_basic_read_end(self, *params):
         """Slave basic definition retrieval ended."""
         d = defer.Deferred()
-        d.addCallback(self.readExtendedSlaveInformation)
+        d.addCallback(self._slave_read_ext)
 
         if params[0].global_id == list(self.detectedSlaveList.keys())[-1]:
             self.slaveReadDeferred.addCallback(self._slave_read_end)
@@ -1035,9 +1035,7 @@ class HbusMaster:
 
         # try again at enumeration end
         if self.detectedSlaveList[address.global_id].scanRetryCount < 3:
-            self.slaveReadDeferred.addCallback(
-                self.readBasicSlaveInformation, address
-            )
+            self.slaveReadDeferred.addCallback(self._slave_read_basic, address)
             self.detectedSlaveList[address.global_id].scanRetryCount += 1
         else:
             if address.global_id == list(self.detectedSlaveList.keys())[-1]:
@@ -1060,13 +1058,12 @@ class HbusMaster:
         #    self.slaveHiddenDeferred.addCallback(self.readExtendedSlaveInformation,address)
         #    self.detectedSlaveList[address.global_id].scanRetryCount += 1
 
-    def readExtendedSlaveInformation(self, *params):
-
+    def _slave_read_ext(self, *params):
         self.logger.debug("Invisible objects being processed now")
 
         address = params[0]
 
-        if address == None:
+        if address is None:
             address = params[1]
 
         self.detectedSlaveList[address.global_id].scanRetryCount = 0
@@ -1079,7 +1076,7 @@ class HbusMaster:
             ].hbusSlaveHiddenObjects.keys()
         ):
             d.addCallback(self.readSlaveHiddenObject, address, obj)
-            d.addCallback(self.processHiddenObject, address, obj)
+            d.addCallback(self._slave_process_hidden_obj, address, obj)
 
         d.addCallback(self._slave_ext_read_end, address)
         d.addErrback(self._slave_ext_read_fail, address)
@@ -1090,10 +1087,8 @@ class HbusMaster:
 
         return d
 
-    def processHiddenObject(self, deferredResult, address, objectNumber):
-
-        # @todo look for exceptions here
-
+    def _slave_process_hidden_obj(self, deferredResult, address, objectNumber):
+        """Process hidden object."""
         obj = self.detectedSlaveList[address.global_id].hbusSlaveHiddenObjects[
             objectNumber
         ]
@@ -1111,7 +1106,7 @@ class HbusMaster:
 
                     if (
                         slave.hbusSlaveObjects[rangeObj].objectExtendedInfo
-                        == None
+                        is None
                     ):
                         slave.hbusSlaveObjects[
                             rangeObj
@@ -1124,7 +1119,7 @@ class HbusMaster:
             else:
                 if (
                     slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo
-                    == None
+                    is None
                 ):
                     slave.hbusSlaveObjects[int(objSel)].objectExtendedInfo = {}
 
@@ -1132,9 +1127,9 @@ class HbusMaster:
                         objFunction[1]
                     ] = obj.last_value
 
-    # @todo this method is horrible
-    def readBasicSlaveInformation(self, deferResult, address):
-
+    # TODO: this method is horrible
+    def _slave_read_basic(self, deferResult, address):
+        """Read basic slave information."""
         self.logger.debug(
             "Initializing device analysis " + str(address.global_id)
         )
@@ -1845,10 +1840,10 @@ class HbusMaster:
         self, callback, address, successCallback=None, failureCallback=None
     ):
 
-        if successCallback == None:
+        if successCallback is None:
             successCallback = self.slavePongOK
 
-        if failureCallback == None:
+        if failureCallback is None:
             failureCallback = self.slavePongFailed
 
         d = self._push_command(
@@ -1959,9 +1954,7 @@ class HbusMaster:
 
         for slave in list(self.detectedSlaveList.values()):
             if slave.basicInformationRetrieved == False:
-                d.addCallback(
-                    self.readBasicSlaveInformation, slave.hbusSlaveAddress
-                )
+                d.addCallback(self._slave_read_basic, slave.hbusSlaveAddress)
 
         self.slaveReadDeferred = d
         reactor.callLater(0.1, self._slave_read_start)  # @UndefinedVariable
@@ -2005,7 +1998,7 @@ class HbusMaster:
                     continue
 
                 d.addCallback(
-                    self.readBasicSlaveInformation,
+                    self._slave_read_basic,
                     self.detectedSlaveList[slave].hbusSlaveAddress,
                 )
                 i += 1

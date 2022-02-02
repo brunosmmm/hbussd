@@ -14,7 +14,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
     ##Constructor
     # @param master main HBUS master object reference for manipulation
-    # @todo decouple main hbus master and peripheral modules
+    # TODO: decouple main hbus master and peripheral modules
     def __init__(self, master):
 
         ##Master object reference

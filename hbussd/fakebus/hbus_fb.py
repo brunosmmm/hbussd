@@ -4,8 +4,8 @@
   @package hbus_fb
   @author Bruno Morais <brunosmmm@gmail.com>
   @since 11/17/2014
-  @todo implement fake bus device structure
-  @todo load device configuration from files
+  TODO: implement fake bus device structure
+  TODO: load device configuration from files
 """
 
 import configparser  # #for fakebus device tree emulation
@@ -167,7 +167,7 @@ class FakeBusDevice(HbusDevice):
 
         elif objnum in list(self.hbusSlaveObjects.keys()):
 
-            ##@todo generate proper object size!
+            # TODO: generate proper object size!
             value_list = []
             last_value = self.hbusSlaveObjects[objnum].last_value
             for i in range(0, self.hbusSlaveObjects[objnum].size):
@@ -266,8 +266,8 @@ class FakeBusSerialPort(Protocol):
                         self.rxState = HbusRXState.STP
             elif self.rxState == HbusRXState.PRM:
                 # softreset has no addr field
-                ##@todo must update whole specification and force softreset command to have an addr field to avoid further problems
-                ##@todo undo this hack when modification is done
+                # TODO: must update whole specification and force softreset command to have an addr field to avoid further problems
+                # TODO: undo this hack when modification is done
                 # start hack
                 if self.dataBuffer[4] == HBUSCOMMAND_SOFTRESET.cmd_byte:
                     count = 5
@@ -356,7 +356,7 @@ class FakeBusSerialPort(Protocol):
                     == FakeBusDeviceStatus.deviceAddressing2
                 ):
                     # send object 0 to master
-                    ##@todo MAKE object 0 from internal info
+                    # TODO: MAKE object 0 from internal info
                     # self.send_packet()
                     params = self.deviceList[
                         self.addressingDevice
@@ -612,7 +612,7 @@ class FakeBusSerialPort(Protocol):
             )
 
             # capabilities, must generate flags
-            ##@todo generate flags for capabilities from configuration file
+            # TODO: generate flags for capabilities from configuration file
 
             # store addr->id correlation
             if static_addr is not None:
@@ -715,7 +715,7 @@ class FakeBusSerialPort(Protocol):
 
             return int_value
         elif valuetype == HbusObjDataType.dataTypeFixedPoint:
-            return 0  ##@todo fixed point parsing
+            return 0  # TODO: fixed point parsing
         elif valuetype == HbusObjDataType.dataTypeUnsignedInt:
             try:
                 return int(value)

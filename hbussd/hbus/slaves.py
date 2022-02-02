@@ -347,7 +347,7 @@ class HbusObjDataType:
             milli_sec + tenth_sec * 10,
         )
 
-        # @todo missing encode portion
+        # TODO: missing encode portion
 
     @staticmethod
     def format_date(data, extinfo, size, decode=False):
@@ -359,7 +359,7 @@ class HbusObjDataType:
         @param decode indicates if encoding or decoding data
         @return formatted string
         """
-        # @todo implement this parser
+        # TODO: implement this parser
         if decode:
             return [0 * x for x in range(0, size)]
 
@@ -416,7 +416,7 @@ class HbusDeviceObject:
     # Indicates if data is encrypted
     is_crypto = False
     # Indicates if object is invisible
-    # @todo makes no sense as invisible and visible objects are separated into
+    # TODO: makes no sense as invisible and visible objects are separated into
     # two different lists
     hidden = False
     # Object descriptor string
@@ -516,7 +516,7 @@ class HbusDevice:
     # Device UID
     hbusSlaveUniqueDeviceInfo = None
     # Object count
-    # @todo verify if invisible objects are being counted here
+    # TODO: verify if invisible objects are being counted here
     hbusSlaveObjectCount = 0
     # Endpoint count
     hbusSlaveEndpointCount = 0
@@ -539,7 +539,7 @@ class HbusDevice:
     # Device invisible object dictionary
     hbusSlaveHiddenObjects = {}
 
-    # @todo see where is this used
+    # TODO: see where is this used
     waitFlag = False
 
     # Failure flags

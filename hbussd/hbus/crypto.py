@@ -1,8 +1,8 @@
 """Legacy cryptographic routines."""
 
 # cryptographic routines
-# @todo Document this
-# @todo Actually implement this functionality
+# TODO: Document this
+# TODO: Actually implement this functionality
 
 import hashlib
 import random

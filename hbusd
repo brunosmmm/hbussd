@@ -65,11 +65,11 @@ class HBUSFakeBus(ClientFactory):
 #
 # Cpntains control elements for external connections
 #
-# @todo stable: Verify behavior in case addressing timeouts occur
-# @todo stable: Finishing up test version, include byte type value modifier for web page
-# @todo stable: incluir código para permitir edição de objetos tipo Byte, Int e Unsigned Int
-# @todo default: Implement integrated twisted http server for JSON data exchange
-# @todo default: Explore feasibility of doing an automatic data dump of all system objects when enumeration is done
+# TODO: stable: Verify behavior in case addressing timeouts occur
+# TODO: stable: Finishing up test version, include byte type value modifier for web page
+# TODO: stable: incluir código para permitir edição de objetos tipo Byte, Int e Unsigned Int
+# TODO: default: Implement integrated twisted http server for JSON data exchange
+# TODO: default: Explore feasibility of doing an automatic data dump of all system objects when enumeration is done
 class TwistedhbusMaster(HbusMaster):
 
     hbusSerial = None
@@ -193,7 +193,7 @@ def main():
     hbusSlaveChecker.start(args["c"], False)
 
     # web server start
-    # #@todo start server only after enumeration
+    # #TODO: start server only after enumeration
 
     webif_announcer = None
     rpc_announcer = None
