@@ -107,7 +107,7 @@ class HBUSWEB:
 
         addr = self.hbusMaster.find_device_by_uid(int(devUID, 16))
 
-        if addr == None:
+        if addr is None:
             s = None
         else:
             if addr.bus_number == 254:
@@ -115,8 +115,7 @@ class HBUSWEB:
             else:
                 s = self.hbusMaster.detectedSlaveList[addr.global_id]
 
-        if obj is None:
-
+        if obj is not None:
             try:
                 self.wait = True
                 self.hbusMaster.readSlaveObject(
@@ -132,7 +131,7 @@ class HBUSWEB:
                 self.logger.debug("error reading device object: {}".format(ex))
                 raise
 
-        if s is None:
+        if s is not None:
             try:
                 data = s.hbusSlaveObjects[int(obj)].getFormattedValue()
             except TypeError:
@@ -141,7 +140,7 @@ class HBUSWEB:
         else:
             data = "?"
 
-        if data == None:
+        if data is None:
             data = "?"
 
         return data
@@ -161,20 +160,18 @@ class HBUSWEB:
 
             self.wait = False
 
-        if addr is None:
-
+        if addr is not None:
             devAddr = string.split(addr, ":")
             device = HbusDeviceAddress(int(devAddr[0]), int(devAddr[1]))
 
             s = self.hbusMaster.detectedSlaveList[device.global_id]
-        elif uid is None:
-
+        elif uid is not None:
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
 
             addr = self.hbusMaster.find_device_by_uid(int(devUID, 16))
 
-            if addr == None:
+            if addr is None:
                 s = None
             else:
                 if addr.bus_number == 254:
@@ -182,7 +179,7 @@ class HBUSWEB:
                 else:
                     s = self.hbusMaster.detectedSlaveList[addr.global_id]
 
-            if obj is None:
+            if obj is not None:
 
                 try:
                     self.wait = True
@@ -200,7 +197,7 @@ class HBUSWEB:
                 except:
                     pass
 
-            if s == None:
+            if s is None:
 
                 # TODO: retur error template, device not available
 
@@ -259,14 +256,13 @@ class HBUSWEB:
         @param obj object number
         @return template HTML with updated data"""
 
-        if uid is None:
-
+        if uid is not None:
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
 
             addr = self.hbusMaster.find_device_by_uid(int(devUID, 16))
 
-            if addr == None:
+            if addr is None:
                 s = None
             else:
                 if addr.bus_number == 254:
@@ -274,7 +270,7 @@ class HBUSWEB:
                 else:
                     s = self.hbusMaster.detectedSlaveList[addr.global_id]
 
-            if s == None:
+            if s is None:
 
                 # TODO: return error template, device not available
 
@@ -296,14 +292,13 @@ class HBUSWEB:
 
         newObjValue = request.forms.get("value")
 
-        if uid is None:
-
+        if uid is not None:
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
 
             addr = self.hbusMaster.find_device_by_uid(int(devUID, 16))
 
-            if addr == None:
+            if addr is None:
                 s = None
             else:
                 if addr.bus_number == 254:
@@ -311,8 +306,7 @@ class HBUSWEB:
                 else:
                     s = self.hbusMaster.detectedSlaveList[addr.global_id]
 
-            if obj is None:
-
+            if obj is not None:
                 # try:
                 self.hbusMaster.writeFormattedSlaveObject(
                     addr, int(obj), newObjValue
@@ -364,7 +358,7 @@ class HBUSWEB:
         """Sets level filter for visible objects on web interface
         @param level minimum level"""
 
-        if level == None:
+        if level is None:
             return
 
         try:
@@ -384,7 +378,7 @@ class HBUSWEB:
         @param percentStr percent string
         @return value"""
 
-        if percentStr == "?" or percentStr == None:
+        if percentStr == "?" or percentStr is None:
             return "0"
 
         s = re.sub(r"\.[0-9]+%$", "", percentStr)

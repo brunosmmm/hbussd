@@ -110,15 +110,15 @@ class HbusPendingAnswer:
         self.dCallback = callBackDefer
         # self.dCallback = defer.Deferred()
 
-        # if action is None:
+        # if action is not None:
         #    self.dCallback.addCallback(action)
 
-        # self.action= action
+        # self.action = action
         self.actionParameters = actionParameters
         self.timeoutActionParameters = timeoutActionParameters
 
         # self.tCallback = defer.Deferred()
-        # if timeoutAction is None:
+        # if timeoutAction is not None:
         #    self.tCallback.addCallback(timeoutAction)
 
         # self.timeoutAction = timeoutAction
@@ -777,8 +777,8 @@ class HbusMaster:
                         self.removeQueue.append(r)
                         break
 
-            if selectedR is None:
-                if selectedR.actionParameters is None:
+            if selectedR is not None:
+                if selectedR.actionParameters is not None:
                     selectedR.dCallback.callback(
                         (selectedR.actionParameters, busOp.instruction.params)
                     )
@@ -829,8 +829,7 @@ class HbusMaster:
 
             return d
         else:
-            if callBack is None:
-
+            if callBack is not None:
                 try:
                     d = self._expect_response(
                         HBUS_RESPONSEPAIRS[command],
@@ -954,8 +953,8 @@ class HbusMaster:
         @param address device address
         @param slaveInfo for virtual devices, complete description
         """
-        if slaveInfo is None:
-            if slaveInfo.hbusSlaveIsVirtual == True:
+        if slaveInfo is not None:
+            if slaveInfo.hbusSlaveIsVirtual:
                 # virtual device
                 # doesn't know virtual bus number
                 addr = HbusDeviceAddress(VIRTUAL_BUS, address)
@@ -1100,8 +1099,7 @@ class HbusMaster:
         for objSel in objList:
             x = re.match(r"([0-9]+)-([0-9]+)", objSel)
 
-            if x is None:
-
+            if x is not None:
                 for rangeObj in range(int(x.group(1)), int(x.group(2)) + 1):
 
                     if (
@@ -1412,7 +1410,7 @@ class HbusMaster:
                         self.detectedSlaveList[
                             data[0][1].global_id
                         ].readEndedCallback
-                        is None
+                        is not None
                     ):
                         reactor.callLater(
                             HBUS_SLAVE_QUERY_INTERVAL,
@@ -1517,7 +1515,7 @@ class HbusMaster:
                         self.detectedSlaveList[
                             data[0][1].global_id
                         ].readEndedCallback
-                        is None
+                        is not None
                     ):
                         reactor.callLater(
                             HBUS_SLAVE_QUERY_INTERVAL,
@@ -1595,7 +1593,7 @@ class HbusMaster:
                     self.detectedSlaveList[
                         data[0][1].global_id
                     ].readEndedCallback
-                    is None
+                    is not None
                 ):
                     reactor.callLater(
                         HBUS_SLAVE_QUERY_INTERVAL,
@@ -1628,7 +1626,7 @@ class HbusMaster:
                 number
             ].last_value = result
 
-            if callBack is None:
+            if callBack is not None:
                 callBack(result)
             return
 
@@ -1658,8 +1656,7 @@ class HbusMaster:
             )
             raise IOError("cannot read write-only object")
 
-            if callBack is None:
-
+            if callBack is not None:
                 callBack(None)
 
         return d
@@ -1704,8 +1701,7 @@ class HbusMaster:
                 address,
             )
 
-            # if callBack is None:
-            #
+            # if callBack is not None:
             #    callBack(None)
 
         return d
@@ -1715,8 +1711,7 @@ class HbusMaster:
         self.detectedSlaveList[data[0][0].global_id].hbusSlaveObjects[
             data[0][1]
         ].last_value = data[1][:]
-        if data[0][2] is None:
-
+        if data[0][2] is not None:
             data[0][2](data[1])
 
     def _slave_hidden_obj_data_rx(self, data):
@@ -1725,8 +1720,7 @@ class HbusMaster:
             data[0][1]
         ].last_value = data[1][:]
 
-        if data[0][2] is None:
-
+        if data[0][2] is not None:
             data[0][2](data[1])
 
     def _slave_object_write(self, address, number, value):
@@ -2047,7 +2041,7 @@ class HbusMaster:
 
         self.expectedResponseQueue.remove(response)
 
-        # if response.timeoutAction is None:
+        # if response.timeoutAction is not None:
         #    response.timeoutAction(response.source)
 
         # response.tCallback.callback(response.source)
