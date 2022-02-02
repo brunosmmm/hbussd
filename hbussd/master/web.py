@@ -80,7 +80,7 @@ class HBUSWEB:
         return template(
             "hbus_index",
             slaves=list(self.hbusMaster.detectedSlaveList.values()),
-            masterStatus=self.hbusMaster.getInformationData(),
+            masterStatus=self.hbusMaster.get_information_data(),
             re=re,
         )
 
@@ -118,14 +118,14 @@ class HBUSWEB:
         if obj is not None:
             try:
                 self.wait = True
-                self.hbusMaster.readSlaveObject(
+                self.hbusMaster.slave_object_read(
                     addr,
                     int(obj),
                     callBack=waitForSlaveRead,
                     timeoutCallback=waitForSlaveRead,
                 )
 
-                while self.wait == True:
+                while self.wait:
                     pass
             except Exception as ex:
                 self.logger.debug("error reading device object: {}".format(ex))
@@ -183,7 +183,7 @@ class HBUSWEB:
 
                 try:
                     self.wait = True
-                    self.hbusMaster.readSlaveObject(
+                    self.hbusMaster.slave_object_read(
                         addr,
                         int(obj),
                         callBack=waitForSlaveRead,
@@ -227,7 +227,7 @@ class HBUSWEB:
             slave=s,
             hbusSlaveObjectDataType=HbusObjDataType(),
             objectLevel=self.objectLevel,
-            masterStatus=self.hbusMaster.getInformationData(),
+            masterStatus=self.hbusMaster.get_information_data(),
             readObjCount=readObjectCount,
             writeObjCount=writeObjectCount,
             re=re,
@@ -243,7 +243,7 @@ class HBUSWEB:
         from bottle import response
 
         rv = []
-        for bus in self.hbusMaster.getInformationData().activeBusses:
+        for bus in self.hbusMaster.get_information_data().activeBusses:
 
             rv.append([{"busNumber": bus}])
 
@@ -281,7 +281,7 @@ class HBUSWEB:
             slave=s,
             hbusSlaveObjectDataType=HbusObjDataType,
             objectLevel=self.objectLevel,
-            masterStatus=self.hbusMaster.getInformationData(),
+            masterStatus=self.hbusMaster.get_information_data(),
             objectNumber=int(obj),
             re=re,
             percentToRange=self.percentToRange,
@@ -308,7 +308,7 @@ class HBUSWEB:
 
             if obj is not None:
                 # try:
-                self.hbusMaster.writeFormattedSlaveObject(
+                self.hbusMaster.slave_object_write_fmt(
                     addr, int(obj), newObjValue
                 )
 
@@ -323,7 +323,7 @@ class HBUSWEB:
             slave=s,
             hbusSlaveObjectDataType=HbusObjDataType(),
             objectLevel=self.objectLevel,
-            masterStatus=self.hbusMaster.getInformationData(),
+            masterStatus=self.hbusMaster.get_information_data(),
             objectNumber=int(obj),
             re=re,
             percentToRange=self.percentToRange,
@@ -349,7 +349,7 @@ class HBUSWEB:
         return template(
             "hbus_slave_by_bus",
             slaveList=slaveList,
-            masterStatus=self.hbusMaster.getInformationData(),
+            masterStatus=self.hbusMaster.get_information_data(),
             busNumber=busNumber,
             re=re,
         )
@@ -409,4 +409,4 @@ class HBUSWEB:
         # hidden options
         route("/set-level/<level>")(self.setLevel)
 
-        run(host="0.0.0.0", port=self.port, server=AttachToTwisted)
+        run(host="0.0.0.0", port=self.port, server=AttachToTwisted, debug=True)

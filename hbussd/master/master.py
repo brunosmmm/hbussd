@@ -1611,7 +1611,7 @@ class HbusMaster:
             # info dump
             pass
 
-    def _slave_object_read(
+    def slave_object_read(
         self, address, number, callBack=None, timeoutCallback=None
     ):
         """Read slave object."""
@@ -1811,7 +1811,7 @@ class HbusMaster:
 
         return True
 
-    def _slave_object_write_fmt(self, address, number, value):
+    def slave_object_write_fmt(self, address, number, value):
         """Write slave object with formatted data."""
         # decode formatting and write data to object
         if address.bus_number == VIRTUAL_BUS:
