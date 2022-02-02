@@ -77,7 +77,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
             return {"status": "error", "error": "not_available"}
         address = self.master.find_device_by_uid(uid)
 
-        if address == None:
+        if address is None:
             return {"status": "error", "error": "invalid_uid"}
 
         slave = self.master.detectedSlaveList[address.global_id]
@@ -96,7 +96,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
             return {"status": "error", "error": "not_available"}
         address = self.master.find_device_by_uid(slaveuid)
 
-        if address == None:
+        if address is None:
             return {"status": "error", "error": "invalid_uid"}
 
         slave = self.master.detectedSlaveList[address.global_id]

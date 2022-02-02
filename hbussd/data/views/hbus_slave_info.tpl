@@ -212,7 +212,7 @@
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.description}}</p>                               
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -228,7 +228,7 @@
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -247,7 +247,7 @@
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -262,7 +262,7 @@
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -279,7 +279,7 @@
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -294,7 +294,7 @@
                                 <a onclick="loadObject({{i}})">
                                     <p>{{object.description}}</p>
                                     <span id="OVAL-{{i}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}

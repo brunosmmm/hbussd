@@ -104,7 +104,7 @@
                                     <p>{{object.description}}</p>
                                     %if canRead:                               
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -136,7 +136,7 @@
                                     <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -198,7 +198,7 @@
                                     <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -241,7 +241,7 @@
                                     <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -260,7 +260,7 @@
                                     <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}
@@ -277,7 +277,7 @@
                                     <p>{{object.description}}</p>
                                     %if canRead:
                                     <span id="OVAL-{{objectNumber}}" class="hbusObjectValue">
-                                        %if object.last_value == None:
+                                        %if object.last_value is None:
                                             ?
                                         %else:
                                             {{object.getFormattedValue()}}

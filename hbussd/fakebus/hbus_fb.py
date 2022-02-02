@@ -465,7 +465,7 @@ class FakeBusSerialPort(Protocol):
             params = self.deviceList[target_uid].create_query_response(
                 packet[5]
             )
-            if params == None:
+            if params is None:
                 # problem retrieving object, ignore
                 return
             self.send_packet(
@@ -480,7 +480,7 @@ class FakeBusSerialPort(Protocol):
             params = self.deviceList[target_uid].create_read_response(
                 packet[5]
             )
-            if params == None:
+            if params is None:
                 # problem retrieving object, ignore
                 return
             self.send_packet(
@@ -508,7 +508,7 @@ class FakeBusSerialPort(Protocol):
     ##Process addressing of devices
     def address_next_dev(self):
 
-        if self.addressingDevice == None:
+        if self.addressingDevice is None:
             if len(self.addressingQueue) > 0:
                 self.addressingDevice = self.addressingQueue.pop()
             else:
@@ -622,7 +622,7 @@ class FakeBusSerialPort(Protocol):
 
             for section in devconf.sections():
                 m = re.match(r"object([0-9]+)", section)
-                if m == None:
+                if m is None:
                     continue
 
                 obj = HbusDeviceObject()
