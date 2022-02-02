@@ -629,7 +629,7 @@ class HbusMaster:
             return addressByUid[uid].dev_number
         else:
             self.virtualSlaveCount += 1
-            return HbusDeviceAddress(VIRTUAL_BUS, self.virtualSlaveCount)
+            return self.virtualSlaveCount
 
     def _set_slave_capabilities(self, params):
         """Set slave capabilities."""
@@ -967,10 +967,11 @@ class HbusMaster:
                 )
                 return
         else:
+            addr = address
             self.detectedSlaveList[address.global_id] = HbusDevice(address)
 
-        self.logger.info("New device registered at " + str(address))
-        self.logger.debug("New device UID is " + str(address.global_id))
+        self.logger.info("New device registered at " + str(addr))
+        self.logger.debug("New device UID is " + str(addr.global_id))
 
         # self.readBasicSlaveInformation(address)
 
