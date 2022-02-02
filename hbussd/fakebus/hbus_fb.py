@@ -1,11 +1,9 @@
-# coding=utf-8
+"""Fake bus for debugging without actual hardware connected.
 
-"""Fake bus for debugging without actual hardware connected
-  @package hbus_fb
-  @author Bruno Morais <brunosmmm@gmail.com>
-  @since 11/17/2014
-  TODO: implement fake bus device structure
-  TODO: load device configuration from files
+@author Bruno Morais <brunosmmm@gmail.com>
+@since 11/17/2014
+TODO: implement fake bus device structure
+TODO: load device configuration from files
 """
 
 import configparser  # #for fakebus device tree emulation
@@ -81,7 +79,7 @@ SYS_CONFIG_PATH = "/etc/hbussd/fakebus"
 
 
 class FakeBusDeviceStatus:
-    """Device internal status emulation for addressing simulation"""
+    """Device internal status emulation for addressing simulation."""
 
     deviceIdle = 0
     deviceAddressing1 = 1  # first stage, device does buslock
@@ -91,10 +89,14 @@ class FakeBusDeviceStatus:
 
 
 class FakeBusDevice(HbusDevice):
-    """Device data structure, inherits HbusSlaveInfo
-    and adds objects to emulate adressing"""
+    """Device data structure.
+
+    inherits HbusSlaveInfo
+    and adds objects to emulate adressing.
+    """
 
     def __init__(self, static_address=None):
+        """Initialize."""
         super(FakeBusDevice, self).__init__(static_address)
 
         # Device internal status emulation
@@ -104,7 +106,8 @@ class FakeBusDevice(HbusDevice):
             self.deviceStatus = FakeBusDeviceStatus.deviceEnumerated
 
     def create_query_response(self, objnum):
-        """Creates a response to a QUERY command sent by the master
+        """Create a response to a QUERY command sent by the master.
+
         @param objnum object number
         """
         if objnum == 0:
@@ -147,8 +150,10 @@ class FakeBusDevice(HbusDevice):
             return None
 
     def create_read_response(self, objnum):
-        """Creates a response to a GETCH command sent by the master
-        @param objnum object number"""
+        """Create a response to a GETCH command sent by the master.
+
+        @param objnum object number.
+        """
         if objnum == 0:
 
             uid = struct.pack("I", self.hbusSlaveUniqueDeviceInfo)
@@ -182,10 +187,11 @@ class FakeBusDevice(HbusDevice):
 
 
 class FakeBusSerialPort(Protocol):
-    """Fake bus main class"""
+    """Fake bus main class."""
 
     # Constructor, initializes
     def __init__(self):
+        """Initialize."""
         self.logger = logging.getLogger("hbussd.fakebus")
         self.logger.debug("fakebus active")
         self.dataBuffer = []
@@ -199,7 +205,7 @@ class FakeBusSerialPort(Protocol):
             self.config.read_file(
                 open(os.path.join(self.config_path, "fakebus.config"))
             )
-        except:
+        except Exception:
             self.logger.info("reading default configuration file")
             self.config.read_file(
                 open(os.path.join(SYS_CONFIG_PATH, "fakebus.config"))
@@ -212,15 +218,14 @@ class FakeBusSerialPort(Protocol):
         self.addressingDevice = None
         self.addressingQueue = deque()
 
-    # Master connected to fakebus
     def connectionMade(self):
+        """Handle connection."""
         self.logger.debug("hbus master connected to fakebus")
 
     # Data reception state machine, similar to master's
     # @param data data chunk received
     def dataReceived(self, data):
-
-        # make state machine work byte by byte
+        """Receive data."""
         for byte in data:
 
             if self.rxState == HbusRXState.SBID:
@@ -266,7 +271,8 @@ class FakeBusSerialPort(Protocol):
                         self.rxState = HbusRXState.STP
             elif self.rxState == HbusRXState.PRM:
                 # softreset has no addr field
-                # TODO: must update whole specification and force softreset command to have an addr field to avoid further problems
+                # TODO: must update whole specification and force softreset
+                # command to have an addr field to avoid further problems
                 # TODO: undo this hack when modification is done
                 # start hack
                 if self.dataBuffer[4] == HBUSCOMMAND_SOFTRESET.cmd_byte:
@@ -332,11 +338,9 @@ class FakeBusSerialPort(Protocol):
                 self.dataBuffer = []
                 return
 
-    # Parse a complete packet
-    # @param packet packet received by state machine
     def parse_packet(self, packet):
-
-        psource = HbusDeviceAddress(packet[0], packet[1])
+        """Parse complete packet."""
+        # psource = HbusDeviceAddress(packet[0], packet[1])
         pdest = HbusDeviceAddress(packet[2], packet[3])
 
         # decode packets, respond on BUS 0
@@ -347,7 +351,8 @@ class FakeBusSerialPort(Protocol):
         if self.busState == HbusBusState.LOCKED_OTHER:
             return  # locked with others, we do nothing
         elif self.busState == HbusBusState.LOCKED_THIS:
-            # look for special cases such as when receiving SEARCH or KEYSET commands indicating attribution of an address
+            # look for special cases such as when receiving SEARCH or KEYSET
+            # commands indicating attribution of an address
             if self.addressingDevice is None:
                 if (
                     packet[4] == HBUSCOMMAND_GETCH.cmd_byte
@@ -388,7 +393,8 @@ class FakeBusSerialPort(Protocol):
                     self.busAddrToUID[pdest.global_id] = self.deviceList[
                         self.addressingDevice
                     ].hbusSlaveUniqueDeviceInfo
-                    # self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceEnumerated
+                    # self.deviceList[self.addressingDevice].deviceStatus =
+                    # FakeBusDeviceStatus.deviceEnumerated
 
                     # addressing will finish when device sends a busunlock
                     self.address_next_dev()
@@ -441,14 +447,14 @@ class FakeBusSerialPort(Protocol):
             elif packet[4] == HBUSCOMMAND_KEYRESET.cmd_byte:
                 return
             elif packet[4] == HBUSCOMMAND_SETCH.cmd_byte:
-                # might be a broadcast object, this is not really implemented yet
+                # might be a broadcast object, this is not implemented yet
                 return
             else:
                 return  # other commands cannot be used on broadcast
 
         try:
             target_uid = self.busAddrToUID[pdest.global_id]
-        except:
+        except KeyError:
             # device is not enumerated in this bus
             return
 
@@ -492,7 +498,7 @@ class FakeBusSerialPort(Protocol):
             return
 
     def send_packet(self, command, dest, source, params=()):
-
+        """Send packet."""
         busop = HbusOperation(
             HbusInstruction(command, len(params), params), dest, source
         )
@@ -507,7 +513,7 @@ class FakeBusSerialPort(Protocol):
 
     # Process addressing of devices
     def address_next_dev(self):
-
+        """Handle addressing."""
         if self.addressingDevice is None:
             if len(self.addressingQueue) > 0:
                 self.addressingDevice = self.addressingQueue.pop()
@@ -551,9 +557,8 @@ class FakeBusSerialPort(Protocol):
 
             return
 
-    # Parse configuration files and builds bus structure
     def build_bus(self):
-
+        """Build bus structure from configuration files."""
         self.logger.debug("start adding fake devices...")
         # get device path
         devpath = os.path.join(
@@ -573,7 +578,7 @@ class FakeBusSerialPort(Protocol):
             static_addr = None
             try:
                 static_addr = devconf.get("device", "static_addr")
-            except:
+            except Exception:
                 pass
 
             if static_addr is not None:
@@ -588,12 +593,12 @@ class FakeBusSerialPort(Protocol):
 
             # start building device
             try:
-                if devconf.getboolean("device", "dont_read") == True:
+                if devconf.getboolean("device", "dont_read"):
                     self.logger.debug(
                         "ignored device description in {}".format(devfile)
                     )
                     continue
-            except:
+            except Exception:
                 pass
 
             # UID
@@ -631,12 +636,12 @@ class FakeBusSerialPort(Protocol):
                 can_read = devconf.getboolean(section, "can_read")
                 can_write = devconf.getboolean(section, "can_write")
 
-                if can_read == True:
-                    if can_write == True:
+                if can_read:
+                    if can_write:
                         obj.permissions = HbusObjectPermissions.READ_WRITE
                     else:
                         obj.permissions = HbusObjectPermissions.READ
-                elif can_write == True:
+                elif can_write:
                     obj.permissions = HbusObjectPermissions.WRITE
                 else:
                     # error!
@@ -673,7 +678,7 @@ class FakeBusSerialPort(Protocol):
                     else:
                         obj.objectDataTypeInfo = int(data_type_info)
                     obj.objectLevel = CONFIG_LEVEL[level]
-                except:
+                except Exception:
                     # invalid data type
                     obj.objectDataType = CONFIG_DATA_TYPE["U"]
                     obj.objectDataTypeInfo = CONFIG_DATA_TYPE_INFO["u"]
@@ -700,11 +705,11 @@ class FakeBusSerialPort(Protocol):
             )
 
     def list_val_to_int(self, value, valuetype):
-
+        """Convert list value to an integer type."""
         if valuetype == HbusObjDataType.dataTypeInt:
             try:
                 return int(value)
-            except:
+            except ValueError:
                 self.logger.warning("invalid value in config file")
                 return 0
         elif valuetype == HbusObjDataType.type_byte:
@@ -719,7 +724,7 @@ class FakeBusSerialPort(Protocol):
         elif valuetype == HbusObjDataType.dataTypeUnsignedInt:
             try:
                 return int(value)
-            except:
+            except ValueError:
                 self.logger.warning("invalid value in virtual device config")
                 return 0
         else:
