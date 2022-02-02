@@ -186,10 +186,10 @@ def main():
         args["s"], baudrate=args["b"], conf_file=conf
     )
 
-    hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodicCall)
+    hbusMasterPeriodicTask = LoopingCall(hbusMaster.periodic_task)
     hbusMasterPeriodicTask.start(1)
 
-    hbusSlaveChecker = LoopingCall(hbusMaster.checkSlaves)
+    hbusSlaveChecker = LoopingCall(hbusMaster.slave_verify)
     hbusSlaveChecker.start(args["c"], False)
 
     # web server start

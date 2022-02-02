@@ -105,7 +105,7 @@ class HBUSWEB:
         m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
         devUID = m.group(1)
 
-        addr = self.hbusMaster.findDeviceByUID(int(devUID, 16))
+        addr = self.hbusMaster.find_device_by_uid(int(devUID, 16))
 
         if addr == None:
             s = None
@@ -172,7 +172,7 @@ class HBUSWEB:
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
 
-            addr = self.hbusMaster.findDeviceByUID(int(devUID, 16))
+            addr = self.hbusMaster.find_device_by_uid(int(devUID, 16))
 
             if addr == None:
                 s = None
@@ -264,7 +264,7 @@ class HBUSWEB:
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
 
-            addr = self.hbusMaster.findDeviceByUID(int(devUID, 16))
+            addr = self.hbusMaster.find_device_by_uid(int(devUID, 16))
 
             if addr == None:
                 s = None
@@ -301,7 +301,7 @@ class HBUSWEB:
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
 
-            addr = self.hbusMaster.findDeviceByUID(int(devUID, 16))
+            addr = self.hbusMaster.find_device_by_uid(int(devUID, 16))
 
             if addr == None:
                 s = None

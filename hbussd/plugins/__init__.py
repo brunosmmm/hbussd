@@ -153,7 +153,7 @@ class HbusPluginManager:
         if request_uid is not None:
             if not isinstance(request_uid, int):
                 raise TypeError("UID must be an integer")
-            if self.__master.findDeviceByUID(request_uid) is not None:
+            if self.__master.find_device_by_uid(request_uid) is not None:
                 # UID taken cannot use
                 self.logger.warning(
                     f"cannot assign requested UID {hex(request_uid)} "

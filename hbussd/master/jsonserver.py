@@ -75,7 +75,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     def jsonrpc_slaveinformation(self, uid):
         if self._is_operational() is False:
             return {"status": "error", "error": "not_available"}
-        address = self.master.findDeviceByUID(uid)
+        address = self.master.find_device_by_uid(uid)
 
         if address == None:
             return {"status": "error", "error": "invalid_uid"}
@@ -94,7 +94,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     def jsonrpc_slaveobjectlist(self, slaveuid):
         if self._is_operational() is False:
             return {"status": "error", "error": "not_available"}
-        address = self.master.findDeviceByUID(slaveuid)
+        address = self.master.find_device_by_uid(slaveuid)
 
         if address == None:
             return {"status": "error", "error": "invalid_uid"}
@@ -264,7 +264,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
     def jsonrpc_checkslaves(self):
         if self._is_operational() is False:
             return {"status": "error", "error": "not_available"}
-        self.master.checkSlaves()
+        self.master.slave_verify()
 
     def jsonrpc_masterstate(self):
         return {"status": "ok", "value": self.master.masterState}
