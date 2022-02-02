@@ -12,13 +12,13 @@ class HbusCommand:
         @param maximumSize minimum command length in bytes
         @param descStr descriptive string
         """
-        ##byte value (ID)
+        # byte value (ID)
         self.cmd_byte = value
-        ##minimum length
+        # minimum length
         self.min_len = minimumSize
-        ##maximum length
+        # maximum length
         self.max_len = maximumSize
-        ##descriptive string
+        # descriptive string
         self.desc_str = descStr
 
     def __repr__(self):

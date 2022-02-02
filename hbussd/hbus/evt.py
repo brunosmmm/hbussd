@@ -8,17 +8,17 @@
 class HbusMasterEventType:
     """Master event types."""
 
-    ##Master started
+    # Master started
     eventStarted = 0
-    ##Master entered operational phase
+    # Master entered operational phase
     eventOperational = 1
-    ##Master received interruption
+    # Master received interruption
     eventInterruption = 2
-    ##Master kicked device from bus
+    # Master kicked device from bus
     eventDeviceKicked = 3
-    ##Master registered new device in bus
+    # Master registered new device in bus
     eventDeviceAdded = 4
-    ##Unknown
+    # Unknown
     eventNone = 5
 
 

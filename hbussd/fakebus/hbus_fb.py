@@ -47,7 +47,7 @@ from ..hbus.slaves import (
     HbusObjLevel,
 )
 
-##Configuration file options equivalence
+# Configuration file options equivalence
 CONFIG_DATA_TYPE = {
     "I": HbusObjDataType.dataTypeInt,
     "U": HbusObjDataType.dataTypeUnsignedInt,
@@ -97,7 +97,7 @@ class FakeBusDevice(HbusDevice):
     def __init__(self, static_address=None):
         super(FakeBusDevice, self).__init__(static_address)
 
-        ##Device internal status emulation
+        # Device internal status emulation
         self.deviceStatus = FakeBusDeviceStatus.deviceIdle
 
         if static_address is not None:
@@ -184,7 +184,7 @@ class FakeBusDevice(HbusDevice):
 class FakeBusSerialPort(Protocol):
     """Fake bus main class"""
 
-    ##Constructor, initializes
+    # Constructor, initializes
     def __init__(self):
         self.logger = logging.getLogger("hbussd.fakebus")
         self.logger.debug("fakebus active")
@@ -212,11 +212,11 @@ class FakeBusSerialPort(Protocol):
         self.addressingDevice = None
         self.addressingQueue = deque()
 
-    ##Master connected to fakebus
+    # Master connected to fakebus
     def connectionMade(self):
         self.logger.debug("hbus master connected to fakebus")
 
-    ##Data reception state machine, similar to master's
+    # Data reception state machine, similar to master's
     # @param data data chunk received
     def dataReceived(self, data):
 
@@ -332,7 +332,7 @@ class FakeBusSerialPort(Protocol):
                 self.dataBuffer = []
                 return
 
-    ##Parse a complete packet
+    # Parse a complete packet
     # @param packet packet received by state machine
     def parse_packet(self, packet):
 
@@ -505,7 +505,7 @@ class FakeBusSerialPort(Protocol):
         # self.logger.debug('writing: {}'.format(busop.get_string()))
         self.transport.write(busop.get_packed())
 
-    ##Process addressing of devices
+    # Process addressing of devices
     def address_next_dev(self):
 
         if self.addressingDevice is None:
@@ -551,7 +551,7 @@ class FakeBusSerialPort(Protocol):
 
             return
 
-    ##Parse configuration files and builds bus structure
+    # Parse configuration files and builds bus structure
     def build_bus(self):
 
         self.logger.debug("start adding fake devices...")
@@ -685,11 +685,11 @@ class FakeBusSerialPort(Protocol):
                 )
 
                 # when finished
-                ##add to obj list
+                # add to obj list
                 device.hbusSlaveObjects[int(m.group(1))] = obj
 
             # when finished
-            ##add to device list
+            # add to device list
             self.deviceList[device.hbusSlaveUniqueDeviceInfo] = device
             self.logger.debug(
                 'fake device "'

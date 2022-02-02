@@ -9,15 +9,15 @@ from hbussd.master.master import HbusMasterState
 import logging
 
 
-##HTTP server for JSON connection
+# HTTP server for JSON connection
 class HBUSJSONServer(jsonrpc.JSONRPC):
 
-    ##Constructor
+    # Constructor
     # @param master main HBUS master object reference for manipulation
     # TODO: decouple main hbus master and peripheral modules
     def __init__(self, master):
 
-        ##Master object reference
+        # Master object reference
         self.master = master
         self.logger = logging.getLogger("hbussd.jsonsrv")
         self.read_data = None
@@ -34,7 +34,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         return state
 
-    ##Gets a list of the busses currently active
+    # Gets a list of the busses currently active
     # @return data to be JSON structured
     def jsonrpc_activebusses(self):
         if self._is_operational() is False:
@@ -44,7 +44,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
             "list": self.master.getInformationData().activeBusses,
         }
 
-    ##Gets the current active device count
+    # Gets the current active device count
     # @return data to be JSON structured
 
     def jsonrpc_activeslavecount(self):
@@ -55,7 +55,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
             "list": self.master.getInformationData().activeSlaveCount,
         }
 
-    ##Gets a list of the UIDs from all currently active devices
+    # Gets a list of the UIDs from all currently active devices
     # @return data to be JSON structured
 
     def jsonrpc_activeslavelist(self):
@@ -68,7 +68,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         return {"status": "ok", "list": slaveList}
 
-    ##Gets detailed information from a device
+    # Gets detailed information from a device
     # @param uid device's UID
     # @return data to be JSON structured
 
@@ -87,7 +87,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         return ret
 
-    ##Gets a list of a device's objects
+    # Gets a list of a device's objects
     # @param slaveuid device's UID
     # @return data to be JSON structured
 
@@ -108,7 +108,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         return {"status": "ok", "list": objectList}
 
-    ##Gets a list of all active devices UIDs in a bus
+    # Gets a list of all active devices UIDs in a bus
     # @param bus bus number
     # @return data to be JSON structured
 
@@ -127,7 +127,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         return {"status": "ok", "list": returnList}
 
-    ##Reads value from an object
+    # Reads value from an object
     # @param address device address
     # @param number object number
     # @return data to be JSON structured
@@ -171,10 +171,10 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         self.read_finished = False
         return {
             "status": "deferred"
-        }  ##deffered, use readfinished and retrievelastdata to receive
+        }  # deffered, use readfinished and retrievelastdata to receive
 
-    ##Check if last read request has been finished
-    ##@return error or value
+    # Check if last read request has been finished
+    # @return error or value
 
     def jsonrpc_readfinished(self):
         if self._is_operational() is False:
@@ -184,8 +184,8 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         return {"status": "ok", "value": self.read_finished}
 
-    ##Retrieve last data read from slave, if avaiable
-    ##@return error or data
+    # Retrieve last data read from slave, if avaiable
+    # @return error or data
 
     def jsonrpc_retrievelastdata(self, formatted=True):
         if self._is_operational() is False:
@@ -215,20 +215,20 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         return {"status": "ok", "value": ret_data}
 
-    ##Data read finished callback
+    # Data read finished callback
 
     def _read_object_callback(self, data):
         self.read_finished = True
         # self.logger.debug('got: {}'.format(data))
         self.read_data = data
 
-    ##Data read timeout callback
+    # Data read timeout callback
 
     def _read_object_timeout_callback(self, data):
         self.read_finished = True
         self.read_data = {"status": "error", "error": "read_timeout"}
 
-    ##Writes a value to an object
+    # Writes a value to an object
     # @param address device address
     # @param number object number
     # @param value value to be written

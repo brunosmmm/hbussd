@@ -55,37 +55,37 @@ class HbusSlaveSerializer(GenericSerializer):
         # Device capabilities
         self.capabilities = slave.hbusSlaveCapabilities
 
-    ##Generates device information dictionary
+    # Generates device information dictionary
     # @return dictionary for serialization
     def getDict(self):
         return self.__dict__
 
 
-##hbusSlaveInformation object type preserializer
+# hbusSlaveInformation object type preserializer
 class HbusObjectSerializer:
 
-    ##Constructor
+    # Constructor
     # @param obj device object object for data extraction
     def __init__(self, obj):
 
-        ##Object permissions
+        # Object permissions
         self.permissions = obj.permissions
-        ##Object descriptor string (name)
+        # Object descriptor string (name)
         self.description = obj.description
-        ##Object size in bytes
+        # Object size in bytes
         self.size = obj.size
-        ##Object last known value
+        # Object last known value
         self.lastvalue = obj.last_value
-        ##Object data type
+        # Object data type
         self.datatype = obj.objectDataType
-        ##Object data type information
+        # Object data type information
         self.datatypeinfo = obj.objectDataTypeInfo
-        ##Object extended information
+        # Object extended information
         self.extendedinfo = obj.objectExtendedInfo
-        ##Object level
+        # Object level
         self.objectlevel = obj.objectLevel
 
-    ##Generates device object information dictionary
+    # Generates device object information dictionary
     # @return dictionary for serialization
     def getDict(self):
         return self.__dict__

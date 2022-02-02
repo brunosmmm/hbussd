@@ -42,7 +42,7 @@ class AttachToTwisted(ServerAdapter):
 class HBUSWEB:
     """HBUS Web server class"""
 
-    ##wait for asynchronous operations
+    # wait for asynchronous operations
     wait = False
 
     # TODO: decouple master object
@@ -63,11 +63,11 @@ class HBUSWEB:
         except pkg_resources.DistributionNotFound:
             pass
 
-        ##Server port
+        # Server port
         self.port = port
-        ##main master object
+        # main master object
         self.hbusMaster = hbusMaster
-        ##Minimum object level visible on web interface
+        # Minimum object level visible on web interface
         self.objectLevel = 0
 
         # get logger
