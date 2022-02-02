@@ -39,7 +39,7 @@ class AttachToTwisted(ServerAdapter):
         reactor.listenTCP(self.port, factory, interface=self.host)
 
 
-class HBUSWEB(object):
+class HBUSWEB:
     """HBUS Web server class"""
 
     ##wait for asynchronous operations
@@ -111,11 +111,11 @@ class HBUSWEB(object):
             s = None
         else:
             if addr.bus_number == 254:
-                s = self.hbusMaster.virtualDeviceList[addr.global_id()]
+                s = self.hbusMaster.virtualDeviceList[addr.global_id]
             else:
-                s = self.hbusMaster.detectedSlaveList[addr.global_id()]
+                s = self.hbusMaster.detectedSlaveList[addr.global_id]
 
-        if obj != None:
+        if obj is None:
 
             try:
                 self.wait = True
@@ -132,7 +132,7 @@ class HBUSWEB(object):
                 self.logger.debug("error reading device object: {}".format(ex))
                 raise
 
-        if s != None:
+        if s is None:
             try:
                 data = s.hbusSlaveObjects[int(obj)].getFormattedValue()
             except TypeError:
@@ -161,13 +161,13 @@ class HBUSWEB(object):
 
             self.wait = False
 
-        if addr != None:
+        if addr is None:
 
             devAddr = string.split(addr, ":")
             device = HbusDeviceAddress(int(devAddr[0]), int(devAddr[1]))
 
-            s = self.hbusMaster.detectedSlaveList[device.global_id()]
-        elif uid != None:
+            s = self.hbusMaster.detectedSlaveList[device.global_id]
+        elif uid is None:
 
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
@@ -178,11 +178,11 @@ class HBUSWEB(object):
                 s = None
             else:
                 if addr.bus_number == 254:
-                    s = self.hbusMaster.virtualDeviceList[addr.global_id()]
+                    s = self.hbusMaster.virtualDeviceList[addr.global_id]
                 else:
-                    s = self.hbusMaster.detectedSlaveList[addr.global_id()]
+                    s = self.hbusMaster.detectedSlaveList[addr.global_id]
 
-            if obj != None:
+            if obj is None:
 
                 try:
                     self.wait = True
@@ -259,7 +259,7 @@ class HBUSWEB(object):
         @param obj object number
         @return template HTML with updated data"""
 
-        if uid != None:
+        if uid is None:
 
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
@@ -270,9 +270,9 @@ class HBUSWEB(object):
                 s = None
             else:
                 if addr.bus_number == 254:
-                    s = self.hbusMaster.virtualDeviceList[addr.global_id()]
+                    s = self.hbusMaster.virtualDeviceList[addr.global_id]
                 else:
-                    s = self.hbusMaster.detectedSlaveList[addr.global_id()]
+                    s = self.hbusMaster.detectedSlaveList[addr.global_id]
 
             if s == None:
 
@@ -296,7 +296,7 @@ class HBUSWEB(object):
 
         newObjValue = request.forms.get("value")
 
-        if uid != None:
+        if uid is None:
 
             m = re.match(r"0x([0-9A-Fa-f]+)L?", uid)
             devUID = m.group(1)
@@ -307,11 +307,11 @@ class HBUSWEB(object):
                 s = None
             else:
                 if addr.bus_number == 254:
-                    s = self.hbusMaster.virtualDeviceList[addr.global_id()]
+                    s = self.hbusMaster.virtualDeviceList[addr.global_id]
                 else:
-                    s = self.hbusMaster.detectedSlaveList[addr.global_id()]
+                    s = self.hbusMaster.detectedSlaveList[addr.global_id]
 
-            if obj != None:
+            if obj is None:
 
                 # try:
                 self.hbusMaster.writeFormattedSlaveObject(

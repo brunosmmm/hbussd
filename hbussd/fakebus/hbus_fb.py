@@ -80,7 +80,7 @@ FAKEBUS_MASTER_ADDRESS = HbusDeviceAddress(0, 0)
 SYS_CONFIG_PATH = "/etc/hbussd/fakebus"
 
 
-class FakeBusDeviceStatus(object):
+class FakeBusDeviceStatus:
     """Device internal status emulation for addressing simulation"""
 
     deviceIdle = 0
@@ -348,7 +348,7 @@ class FakeBusSerialPort(Protocol):
             return  # locked with others, we do nothing
         elif self.busState == HbusBusState.LOCKED_THIS:
             # look for special cases such as when receiving SEARCH or KEYSET commands indicating attribution of an address
-            if self.addressingDevice != None:
+            if self.addressingDevice is None:
                 if (
                     packet[4] == HBUSCOMMAND_GETCH.cmd_byte
                     and packet[5] == 0
@@ -385,7 +385,7 @@ class FakeBusSerialPort(Protocol):
                     ].hbusSlaveAddress = HbusDeviceAddress(
                         packet[2], packet[3]
                     )
-                    self.busAddrToUID[pdest.global_id()] = self.deviceList[
+                    self.busAddrToUID[pdest.global_id] = self.deviceList[
                         self.addressingDevice
                     ].hbusSlaveUniqueDeviceInfo
                     # self.deviceList[self.addressingDevice].deviceStatus = FakeBusDeviceStatus.deviceEnumerated
@@ -399,7 +399,7 @@ class FakeBusSerialPort(Protocol):
 
         # detect buslock commands globally
         if packet[4] == HBUSCOMMAND_BUSLOCK.cmd_byte:
-            if pdest.global_id() in list(self.busAddrToUID.keys()):
+            if pdest.global_id in list(self.busAddrToUID.keys()):
                 # locking with one of the fake devices
                 self.busState = HbusBusState.LOCKED_THIS
             else:
@@ -447,7 +447,7 @@ class FakeBusSerialPort(Protocol):
                 return  # other commands cannot be used on broadcast
 
         try:
-            target_uid = self.busAddrToUID[pdest.global_id()]
+            target_uid = self.busAddrToUID[pdest.global_id]
         except:
             # device is not enumerated in this bus
             return
@@ -503,7 +503,7 @@ class FakeBusSerialPort(Protocol):
             self.busState = HbusBusState.FREE
 
         # self.logger.debug('writing: {}'.format(busop.get_string()))
-        self.transport.write(busop.get_string())
+        self.transport.write(busop.get_packed())
 
     ##Process addressing of devices
     def address_next_dev(self):
@@ -617,7 +617,7 @@ class FakeBusSerialPort(Protocol):
             # store addr->id correlation
             if static_addr is not None:
                 self.busAddrToUID[
-                    static_addr.global_id()
+                    static_addr.global_id
                 ] = device.hbusSlaveUniqueDeviceInfo
 
             for section in devconf.sections():

@@ -225,8 +225,8 @@ HBUS_SLAVE_QUERY_INTERVAL = 0.1
 # @{
 
 
-class HbusRXState(object):
-    """Packet receiving on master"""
+class HbusRXState:
+    """Packet receiving on master."""
 
     # SBID received
     SBID = 0
@@ -256,7 +256,7 @@ class HbusRXState(object):
 
 
 class HbusBusState:
-    """Bus State"""
+    """Bus State."""
 
     # Bus is FREE
     FREE = 0
@@ -266,8 +266,8 @@ class HbusBusState:
     LOCKED_OTHER = 2
 
 
-class HbusObjectPermissions(object):
-    """Object read and write permissions"""
+class HbusObjectPermissions:
+    """Object read and write permissions."""
 
     # Object has read permission
     READ = 1
@@ -277,8 +277,8 @@ class HbusObjectPermissions(object):
     READ_WRITE = 3
 
 
-class HbusDeviceCapabilities(object):
-    """Device capabilities"""
+class HbusDeviceCapabilities:
+    """Device capabilities."""
 
     # Device has master authentication support
     AUTHSUP = 8

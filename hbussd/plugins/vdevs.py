@@ -8,7 +8,7 @@ class VirtualDeviceError(Exception):
 
 
 class HbusVirtualDevice:
-    """Container for virtual devices, add data and handles onto HbusDevice"""
+    """Container for virtual devices, add data and handles onto HbusDevice."""
 
     def __init__(self, pid, pmgr, description=""):
         """Initialize."""
@@ -37,13 +37,15 @@ class HbusVirtualDevice:
         self.device.hbusSlaveObjectCount += 1  # why?
 
     def read_object(self, objnum):
-        """Prototype for reading virtual object
+        """Prototype for reading virtual object.
+
         @param objnum virtual device's object number
         """
         raise VirtualDeviceError("not implemented")
 
     def write_object(self, objnum, value):
-        """Prototype for writing virtual object
+        """Prototype for writing virtual object.
+
         @param objnum virtual device's object number
         @param value value to be written
         """

@@ -1,15 +1,19 @@
 """HBUS exceptions."""
 
 
-class HBUSDoNotRetryException(Exception):
+class HbusException(Exception):
+    """Base HBUS exception."""
+
+
+class HBUSDoNotRetryException(HbusException):
     """Do not retry exception."""
 
 
-class HBUSDataAlreadyReceived(Exception):
+class HBUSDataAlreadyReceived(HbusException):
     """Data already received exception."""
 
 
-class HBUSTimeoutException(IOError):
+class HBUSTimeoutException(HbusException):
     """Timeout exception."""
 
 

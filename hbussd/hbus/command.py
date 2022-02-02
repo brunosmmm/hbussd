@@ -1,17 +1,17 @@
 """HBUS command."""
 
 
-class HbusCommand(object):
-    """HBUS commands"""
+class HbusCommand:
+    """HBUS commands."""
 
     def __init__(self, value, minimumSize, maximumSize, descStr):
-        """Constructor
+        """Initialize.
+
         @param value command identifier byte value
         @param minimumSize maximum command length in bytes
         @param maximumSize minimum command length in bytes
         @param descStr descriptive string
         """
-
         ##byte value (ID)
         self.cmd_byte = value
         ##minimum length
@@ -22,13 +22,15 @@ class HbusCommand(object):
         self.desc_str = descStr
 
     def __repr__(self):
-        """Command representation
+        """Get command representation.
+
         @return string representation of command
         """
         return self.desc_str + "(" + str(hex(self.cmd_byte)) + ")"
 
     def __eq__(self, other):
-        """Equal operator
+        """Check equality.
+
         @return returns equal or not
         """
         if isinstance(other, HbusCommand):

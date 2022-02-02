@@ -1,12 +1,12 @@
-#coding=utf-8
+"""HBUS master events."""
 
-##@package hbussd_evt
 # @brief Master event system
 # @since 11/23/2014
 # @author Bruno Morais <brunosmmm@gmail.com>
 
-##Types of events that are broadcasted
-class hbusMasterEventType:
+
+class HbusMasterEventType:
+    """Master event types."""
 
     ##Master started
     eventStarted = 0
@@ -21,10 +21,12 @@ class hbusMasterEventType:
     ##Unknown
     eventNone = 5
 
-##Complete event information class
-class hbusMasterEvent:
 
-    eventType = hbusMasterEventType.eventNone
+class HbusMasterEvent:
+    """Master event."""
 
-    def __init__(self, eventType=hbusMasterEventType.eventNone):
+    eventType = HbusMasterEventType.eventNone
+
+    def __init__(self, eventType=HbusMasterEventType.eventNone):
+        """Initialize."""
         self.eventType = eventType

@@ -1,6 +1,5 @@
-# coding=utf-8
+"""General purpose data structures for hbuss.
 
-"""hbussd general purpose data structures
 @package hbus_base
 @author Bruno Morais <brunosmmm@gmail.com>
 @date 2013
@@ -11,16 +10,16 @@ import re
 import hbussd.hbus.constants as hbusconst
 
 
-class HbusInstruction(object):
-    """HBUS bus instructions (complete commands)"""
+class HbusInstruction:
+    """HBUS bus instructions (complete commands)."""
 
     def __init__(self, command, paramSize=0, params=()):
-        """Constructor
+        """Initialize.
+
         @param command instruction command
         @param paramSize parameter size in bytes
         @param params parameters to be sent
         """
-
         # Parameter list
         self.params = []
         # Parameter list size
@@ -56,7 +55,8 @@ class HbusInstruction(object):
             )
 
     def __repr__(self):
-        """Instruction representation
+        """Get instruction representation.
+
         @return string representation of instruction
         """
         if self.param_size > 0:
@@ -71,11 +71,12 @@ class HbusInstruction(object):
             return str(self.command)
 
 
-class HbusDeviceAddress(object):
-    """HBUS device addresses"""
+class HbusDeviceAddress:
+    """HBUS device addresses."""
 
     def __init__(self, busID, devID):
-        """Constructor
+        """Initialize.
+
         @param busID bus number
         @param devID device number
         """
@@ -88,13 +89,15 @@ class HbusDeviceAddress(object):
         self.dev_number = devID
 
     def __repr__(self):
-        """Address representation
+        """Get legible address representation.
+
         @return string representation of address
         """
         return "(" + str(self.bus_number) + ":" + str(self.dev_number) + ")"
 
     def __eq__(self, other):
-        """Equal operator for addresses
+        """Check equality.
+
         @return equal or not
         """
         if isinstance(other, HbusDeviceAddress):
@@ -102,10 +105,16 @@ class HbusDeviceAddress(object):
                 self.bus_number == other.bus_number
                 and self.dev_number == other.dev_number
             )
-        return NotImplemented
+        return False
 
+    def __hash__(self):
+        """Get hash."""
+        return hash(tuple(self.bus_number, self.dev_number))
+
+    @property
     def global_id(self):
-        """Calculates a global ID for an address
+        """Calculate global ID for an address.
+
         Global IDs are calculated by doing ID = busNumber*32 + deviceNumber
         @return address global ID
         """
@@ -113,7 +122,8 @@ class HbusDeviceAddress(object):
 
 
 def hbus_address_from_string(addr):
-    """Parse a string and create an address from it
+    """Parse a string and create an address from it.
+
     String format is (X:Y) where X is the bus number and Y the device number
     @return HBUS address object
     """
@@ -131,14 +141,16 @@ def hbus_address_from_string(addr):
         raise ValueError
 
 
-class HbusOperation(object):
-    """HBUS bus operation
+class HbusOperation:
+    """HBUS bus operation.
+
     Bus operations are composed of an instruction
     and message source and destination
     """
 
     def __init__(self, instruction, destination, source):
-        """Constructor
+        """Initialize.
+
         @param instruction a HbusInstruction object
         @param destination destination device address
         @param source source device address
@@ -152,7 +164,8 @@ class HbusOperation(object):
         self.source = source
 
     def __repr__(self):
-        """Operation representation
+        """Get operation representation.
+
         @return string representation of operation
         """
         return (
@@ -164,13 +177,13 @@ class HbusOperation(object):
             + str(self.instruction)
         )
 
-    def get_string(self):
-        """Generates data string to be sent by master
+    def get_packed(self):
+        """Generate data string to be sent by master.
+
         @return data string to be sent to bus
         @todo automatically generate parameter size field which
         depends on command
         """
-
         header = (
             bytes([self.source.bus_number])
             + bytes([self.source.dev_number])

@@ -7,7 +7,7 @@ except ImportError:
     ZEROCONF_ABLE = False
 
 
-class ZeroconfService(object):
+class ZeroconfService:
     """A simple class to publish a network service with zeroconf using
     avahi.
 

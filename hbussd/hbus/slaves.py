@@ -7,8 +7,8 @@ from hbussd.hbus.datahandlers import HbusFixPHandler, HbusIntHandler
 from hbussd.hbus.constants import HBUS_UNITS
 
 
-class HbusObjLevel(object):
-    """Object level identifier"""
+class HbusObjLevel:
+    """Object level identifier."""
 
     # Object has level 0
     level0 = 0x00
@@ -20,8 +20,8 @@ class HbusObjLevel(object):
     level3 = 0xC0
 
 
-class HbusObjDataType(object):
-    """Object data type identifier"""
+class HbusObjDataType:
+    """Object data type identifier."""
 
     # Byte type
     type_byte = 0x30
@@ -60,7 +60,8 @@ class HbusObjDataType(object):
 
     @staticmethod
     def unpack_uint(data):
-        """Unpacks received data string
+        """Unpack received data string.
+
         @param data Data string received from device
         @return value parsed as unsigned integer
         """
@@ -76,7 +77,8 @@ class HbusObjDataType(object):
 
     @staticmethod
     def format_byte_bool(data, extinfo, size, decode=False):
-        """Parses data as boolean
+        """Parse data as boolean.
+
         @param data received data
         @param extinfo dummy parameter
         @param size dummy parameter
@@ -96,7 +98,8 @@ class HbusObjDataType(object):
 
     @staticmethod
     def format_byte_hex(data, extinfo, size, decode=False):
-        """Parses data as a hexadecimal number
+        """Parse data as a hexadecimal number.
+
         @param data received data
         @param extinfo dummy parameter
         @param size data size in bytes
@@ -110,7 +113,8 @@ class HbusObjDataType(object):
 
     @staticmethod
     def format_byte_dec(data, extinfo, size, decode=False):
-        """Parses data as a decimal number
+        """Parse data as a decimal number.
+
         @param data received data
         @param extinfo dummy parameter
         @param size data size in bytes
@@ -124,7 +128,8 @@ class HbusObjDataType(object):
 
     @staticmethod
     def format_byte_oct(data, extinfo, size, decode=False):
-        """Parses data as an octal number
+        """Parse data as an octal number.
+
         @param data received data
         @param extinfo dummy parameter
         @param size data size in bytes
@@ -138,7 +143,8 @@ class HbusObjDataType(object):
 
     @staticmethod
     def format_byte_bin(data, extinfo, size, decode=False):
-        """Parses data as a binary number
+        """Parse data as a binary number.
+
         @param data received data
         @param extinfo dummy parameter
         @param size data size in bytes
@@ -152,7 +158,9 @@ class HbusObjDataType(object):
 
     @classmethod
     def format_uint(cls, data, extinfo, size, decode=False):
-        """Parses data as raw unsigned integer. Allows the use of units
+        """Parse data as raw unsigned integer.
+
+        Allows the use of units
         @param data received data
         @param extinfo extended object property list
         @param size data size in bytes
@@ -174,14 +182,14 @@ class HbusObjDataType(object):
 
     @staticmethod
     def format_percent(data, extinfo, size, decode=False):
-        """Parses data as percent (0-100)
+        """Parse data as percent (0-100).
+
         @param data received data
         @param extinfo dummy parameter
         @param size dummy parameter
         @param decode indicates if decoding or encoding data
         @return formatted string
         """
-
         if decode:
 
             data = int(data)
@@ -203,7 +211,8 @@ class HbusObjDataType(object):
 
     @classmethod
     def format_lin_percent(cls, data, extinfo, size, decode=False):
-        """Parses data as a value in a linear scale
+        """Parse data as a value in a linear scale.
+
         @param data received data
         @param extinfo extended object property list
         @param size dummy parameter
@@ -253,7 +262,8 @@ class HbusObjDataType(object):
 
     @classmethod
     def format_log_percent(cls, data, extinfo, size, decode=False):
-        """Parse data as a value in a logarithmic scale
+        """Parse data as a value in a logarithmic scale.
+
         @param data received data
         @param extinfo extended object property list
         @param size dummy parameter
@@ -308,7 +318,8 @@ class HbusObjDataType(object):
 
     @staticmethod
     def format_time(data, extinfo, size, decode=False):
-        """Parses data as time format
+        """Parse data as time format.
+
         @param data received data
         @param extinfo dummy parameter
         @param size dummy parameter
@@ -340,16 +351,15 @@ class HbusObjDataType(object):
 
     @staticmethod
     def format_date(data, extinfo, size, decode=False):
-        """Parse data as date format
+        """Parse data as date format.
+
         @param data received data
         @param extinfo dummy parameter
         @param size dummy parameter
         @param decode indicates if encoding or decoding data
         @return formatted string
         """
-
         # @todo implement this parser
-
         if decode:
             return [0 * x for x in range(0, size)]
 
@@ -386,8 +396,8 @@ HBUS_DTYPE_OPTIONS = {
 }
 
 
-class HbusDeviceObjExtInfo(object):
-    """Device object extended information"""
+class HbusDeviceObjExtInfo:
+    """Device object extended information."""
 
     # Maximum value
     max_value = None
@@ -398,8 +408,8 @@ class HbusDeviceObjExtInfo(object):
     ext_string = None
 
 
-class HbusDeviceObject(object):
-    """Device object main class"""
+class HbusDeviceObject:
+    """Device object main class."""
 
     # Object permissions
     permissions = 0
@@ -461,7 +471,7 @@ class HbusDeviceObject(object):
 
 
 # Device endpoint main class
-class HbusEndpoint(object):
+class HbusEndpoint:
 
     # Endpoint direction: read, write or both
     endpointDirection = 0
@@ -478,7 +488,7 @@ class HbusEndpoint(object):
 
 
 # Device interrupts main class
-class HbusInterrupt(object):
+class HbusInterrupt:
 
     # Interrupt flags
     interruptFlags = 0
@@ -493,7 +503,7 @@ class HbusInterrupt(object):
 
 
 # Device information main class
-class HbusDevice(object):
+class HbusDevice:
 
     # Virtual devices
     hbusSlaveIsVirtual = False

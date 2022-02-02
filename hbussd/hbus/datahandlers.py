@@ -1,4 +1,4 @@
-"""Data parsers for data received and sent by master. """
+"""Data parsers for data received and sent by master."""
 
 import struct
 from array import array
@@ -7,13 +7,34 @@ from bitstring import BitArray
 from hbussd.hbus.constants import HBUS_UNITS
 
 
-class HbusFixPHandler(object):
-    """Fixed point formatting"""
+class HbusDataFormatter:
+    """Data formatter."""
+
+    def format_data(self, data, extinfo, size, decode=False):
+        """Format data."""
+        raise NotImplementedError
+
+    def prepare_data(self, requested_key):
+        """Prepare data."""
+        pass
+
+    def __getitem__(self, key):
+        """Get byte from formatted data."""
+        self.prepare_data(key)
+        return self.format_data
+
+
+class HbusFixPHandler(HbusDataFormatter):
+    """Fixed point formatting."""
 
     point_loc = None
 
-    def format_fixed_point(self, data, extinfo, size, decode=False):
+    def prepare_data(self, requested_key):
+        """Prepare data."""
+        self.point_loc = int(requested_key)
 
+    def format_data(self, data, extinfo, size, decode=False):
+        """Format fixed point data."""
         # currently the working/testing device is sending data in
         # BIG endian format
         # because of this, invert data here before any other operations
@@ -38,18 +59,12 @@ class HbusFixPHandler(object):
 
         return value
 
-    def __getitem__(self, key):
 
-        # hack
-        self.point_loc = int(key)
+class HbusIntHandler(HbusDataFormatter):
+    """Integer type formatting."""
 
-        return self.format_fixed_point
-
-
-class HbusIntHandler(object):
-    """Integer type formatting"""
-
-    def format_int(self, data, extinfo, size, decode=False):
+    def format_data(self, data, extinfo, size, decode=False):
+        """Format data."""
         value = BitArray(bytes="".join([chr(x) for x in data])).int
 
         try:
@@ -59,7 +74,3 @@ class HbusIntHandler(object):
             pass
 
         return str(value)
-
-    def __getitem__(self, key):
-
-        return self.format_int

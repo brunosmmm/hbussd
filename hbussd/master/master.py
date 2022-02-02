@@ -10,7 +10,7 @@ import hbussd.hbus.crypto
 from hbussd.fakebus import hbus_fb
 from hbussd.hbus.base import HbusDeviceAddress, HbusInstruction, HbusOperation
 from hbussd.hbus.constants import *
-from hbussd.hbus.evt import hbusMasterEvent, hbusMasterEventType
+from hbussd.hbus.evt import HbusMasterEvent, HbusMasterEventType
 from hbussd.hbus.exceptions import HBUSTimeoutException
 from hbussd.hbus.slaves import (
     HBUS_DTYPE_OPTIONS,
@@ -28,25 +28,15 @@ BROADCAST_BUS = 255
 VIRTUAL_BUS = 254
 
 
-def getMillis(td):
+def get_millis(td):
     """Get actual time in milliseconds."""
     return (
         td.days * 24 * 60 * 60 + td.seconds
     ) * 1000 + td.microseconds / 1000.0
 
 
-def blockingDelay(td):
-
-    now = datetime.now()
-
-    while getMillis(datetime.now() - now) < td:
-        time.sleep(0.01)
-
-
-# HBUS security key set
-# @todo this is not useful at all currently
-# key is a number tuple (p,q)
-class hbusKeySet:
+class HbusKeySet:
+    """Set of HBUS keys."""
 
     # Key p
     privateq = None
@@ -54,16 +44,18 @@ class hbusKeySet:
     privatep = None
 
     def __init__(self, p, q):
-
+        """Initialize."""
         self.privatep = p
         self.privateq = q
 
-    def pubKeyInt(self):
-
+    @property
+    def intpubkey(self):
+        """Get public key as integer."""
         return self.privatep * self.privateq
 
-    def pubKeyStr(self):
-
+    @property
+    def strpubkey(self):
+        """Get public key as hexadecimal string."""
         h = hex(self.privatep * self.privateq)[2:].rstrip("L")
         if len(h) % 2:
             h = "0%s" % h
@@ -80,10 +72,11 @@ class hbusKeySet:
 
 p = 342604160482313166816112334007089110910258720251016392985178072980194817098198724574409056226636958394678465934459619696622719424740669649868502396485869067283396294556282972464396510025180816154985285048268006216979372669280971
 q = 609828164381195487560324418811535461583859042182887774624946398207269636262857827797730598026846661116173290667288561275278714668006770186716586859843775717295061922379022086436506552898287802124771661400922779346993469164594119
-HBUS_ASYMMETRIC_KEYS = hbusKeySet(p, q)
+HBUS_ASYMMETRIC_KEYS = HbusKeySet(p, q)
 
-# HBUS master machine state
-class hbusMasterState:
+
+class HbusMasterState:
+    """HBUS master states."""
 
     hbusMasterStarting = 0
     hbusMasterIdle = 1
@@ -95,8 +88,9 @@ class hbusMasterState:
     hbusMasterInterrupted = 7
 
 
-# Pending answer system using deferreds
-class hbusPendingAnswer:
+class HbusPendingAnswer:
+    """Pending answer system using deferreds."""
+
     def __init__(
         self,
         command,
@@ -107,7 +101,7 @@ class hbusPendingAnswer:
         timeoutAction=None,
         timeoutActionParameters=None,
     ):
-
+        """Initialize."""
         self.command = command
         self.source = source
         self.timeout = timeout
@@ -116,7 +110,7 @@ class hbusPendingAnswer:
         self.dCallback = callBackDefer
         # self.dCallback = defer.Deferred()
 
-        # if action != None:
+        # if action is None:
         #    self.dCallback.addCallback(action)
 
         # self.action= action
@@ -124,24 +118,39 @@ class hbusPendingAnswer:
         self.timeoutActionParameters = timeoutActionParameters
 
         # self.tCallback = defer.Deferred()
-        # if timeoutAction != None:
+        # if timeoutAction is None:
         #    self.tCallback.addCallback(timeoutAction)
 
         # self.timeoutAction = timeoutAction
+        self._timeout_handler = None
 
-    def addTimeoutHandler(self, timeoutHandler):
+    @property
+    def timeout_handler(self):
+        """Get timeout handler."""
+        return self._timeout_handler
 
-        self.timeoutHandler = timeoutHandler
+    @timeout_handler.setter
+    def timeout_handler(self, value):
+        """Set timeout handler."""
+        self._timeout_handler = value
+
+    def cancel_timeout_handler(self):
+        """Cancel timeout handler."""
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
 
 
-class hbusMasterInformationData:
+class HbusMasterInformationData:
+    """Master information."""
+
     def __init__(self, slaveCount, activeBusses):
-
+        """Initialize."""
         self.activeSlaveCount = slaveCount
         self.activeBusses = activeBusses
 
 
 class HbusMaster:
+    """HBUS master."""
 
     pluginManager = None
 
@@ -170,7 +179,7 @@ class HbusMaster:
     registeredSlaveCount = 0
     virtualSlaveCount = 0
 
-    masterState = hbusMasterState.hbusMasterStarting
+    masterState = HbusMasterState.hbusMasterStarting
 
     commandDelay = datetime.now()
 
@@ -189,16 +198,18 @@ class HbusMaster:
     txBytes = 0
 
     def __init__(self, port, baudrate=100000, busno=0, conf_file=None):
+        """Initialize."""
+
         def fake_bus():
             f = Factory()
             f.protocol = hbus_fb.FakeBusSerialPort
             reactor.listenTCP(9090, f)
 
-            self.serialCreate(fake=True)
+            self.serial_create(fake=True)
 
         def system_start():
             # system started event
-            event = hbusMasterEvent(hbusMasterEventType.eventStarted)
+            event = HbusMasterEvent(HbusMasterEventType.eventStarted)
             self.pluginManager.m_evt_broadcast(event)
 
         self.serialBaud = baudrate
@@ -206,7 +217,7 @@ class HbusMaster:
 
         self.logger = logging.getLogger("hbussd.hbusmaster")
         self.pluginManager = HbusPluginManager("./plugins", self)
-        self.searchAndLoadPlugins()
+        self.search_and_load_plugins()
 
         # configuration parameters
         self.conf_param = {}
@@ -231,7 +242,7 @@ class HbusMaster:
                 self.serialPort = self.conf_param["serial_port"]
             else:
                 self.serialPort = port
-            self.serialCreate(fake=False)
+            self.serial_create(fake=False)
 
         system_start()
 
@@ -254,9 +265,8 @@ class HbusMaster:
                     HbusDeviceAddress(int(addr["busNum"]), int(addr["devNum"]))
                 )
 
-    # Search and load plugins using plugin manager
-    def searchAndLoadPlugins(self):
-
+    def search_and_load_plugins(self):
+        """Search and load plugins using plugin manager."""
         self.logger.debug("scanning plugins")
 
         self.pluginManager.scan_plugins()
@@ -268,15 +278,14 @@ class HbusMaster:
             except UserWarning as ex:
                 self.logger.warning(f"error loading plugin {plugin}: '{ex}'")
 
-    # Master entering operational phase
-    def enterOperational(self):
-
+    def enter_operational(self):
+        """Enter operational stage."""
         # broadcast event to plugin system
-        event = hbusMasterEvent(hbusMasterEventType.eventOperational)
+        event = HbusMasterEvent(HbusMasterEventType.eventOperational)
         self.pluginManager.m_evt_broadcast(event)
 
-    def getInformationData(self):
-
+    def get_information_data(self):
+        """Get master information."""
         busses = list(
             set(
                 [
@@ -290,14 +299,14 @@ class HbusMaster:
         if len(self.virtualDeviceList) > 0:
             busses.append(VIRTUAL_BUS)
 
-        return hbusMasterInformationData(len(self.detectedSlaveList), busses)
+        return HbusMasterInformationData(len(self.detectedSlaveList), busses)
 
-    def serialCreate(self):
+    def serial_create(self, fake=False):
+        """Create serial port."""
+        raise NotImplementedError
 
-        pass  # overload!!
-
-    def serialConnected(self):
-
+    def serial_connected(self):
+        """Connect serial port callback."""
         # reset all devices
         self.logger.debug("Connected. Resetting all devices now")
 
@@ -328,7 +337,7 @@ class HbusMaster:
 
         myParamList.extend(sig.getByteString())
 
-        self.pushCommand(HBUSCOMMAND_SOFTRESET, address, params=myParamList)
+        self._push_command(HBUSCOMMAND_SOFTRESET, address, params=myParamList)
 
         self.logger.debug("Waiting for device RESET to complete...")
 
@@ -336,25 +345,21 @@ class HbusMaster:
         reactor.callLater(1, self.handleAlarm)  # @UndefinedVariable
 
         # self.detectSlaves()
-        self.serialRXMachineEnterIdle()
+        self._rx_enter_idle()
 
-    def serialWrite(self, string):
+    def serial_write(self, string):
+        """Write to serial port."""
+        raise NotImplementedError
 
-        pass
-
-    def serialRead(self, size):
-
-        pass  # overload
-
-    def serialRXMachineTimeout(self):
-
+    def _serial_timeout(self):
+        """Flag timeout in communication."""
         self.logger.warning("Packet receive timeout")
         self.logger.debug("packet dump: %s", self.communicationBuffer)
 
-        self.serialRXMachineEnterIdle()
+        self._rx_enter_idle()
 
-    def serialRXMachineEnterIdle(self):
-
+    def _rx_enter_idle(self):
+        """Enter idle state in RX state machine."""
         self.communicationBuffer = []
 
         self.hbusRxState = HbusRXState.SBID
@@ -363,8 +368,8 @@ class HbusMaster:
             d = self.outgoingCommands.pop()
             d.callback(None)
 
-    def serialNewData(self, data):
-
+    def _rx_new_data(self, data):
+        """Receive new data."""
         for d in data:
 
             self.rxBytes += 1
@@ -376,7 +381,7 @@ class HbusMaster:
                 self.hbusRxState = HbusRXState.SDID
 
                 self.RXTimeout = reactor.callLater(
-                    0.2, self.serialRXMachineTimeout
+                    0.2, self._serial_timeout
                 )  # @UndefinedVariable
 
             elif self.hbusRxState == HbusRXState.SDID:
@@ -385,7 +390,7 @@ class HbusMaster:
 
                 # check address
                 if (d > 32) and (d != 255):
-                    self.serialRXMachineEnterIdle()
+                    self._rx_enter_idle()
 
                     self.logger.debug("Invalid address in received packet")
                     return
@@ -395,7 +400,7 @@ class HbusMaster:
                 self.hbusRxState = HbusRXState.TBID
 
                 self.RXTimeout = reactor.callLater(
-                    0.2, self.serialRXMachineTimeout
+                    0.2, self._serial_timeout
                 )  # @UndefinedVariable
 
             elif self.hbusRxState == HbusRXState.TBID:
@@ -407,7 +412,7 @@ class HbusMaster:
                 self.hbusRxState = HbusRXState.TDID
 
                 self.RXTimeout = reactor.callLater(
-                    0.2, self.serialRXMachineTimeout
+                    0.2, self._serial_timeout
                 )  # @UndefinedVariable
 
             elif self.hbusRxState == HbusRXState.TDID:
@@ -416,7 +421,7 @@ class HbusMaster:
 
                 # check address
                 if (d > 32) and (d != 255):
-                    self.serialRXMachineEnterIdle()
+                    self._rx_enter_idle()
 
                     self.logger.debug("Invalid address in received packet")
                     return
@@ -426,7 +431,7 @@ class HbusMaster:
                 self.hbusRxState = HbusRXState.CMD
 
                 self.RXTimeout = reactor.callLater(
-                    0.2, self.serialRXMachineTimeout
+                    0.2, self._serial_timeout
                 )  # @UndefinedVariable
 
             elif self.hbusRxState == HbusRXState.CMD:
@@ -447,7 +452,7 @@ class HbusMaster:
                     self.hbusRxState = HbusRXState.ADDR
 
                 self.RXTimeout = reactor.callLater(
-                    0.2, self.serialRXMachineTimeout
+                    0.2, self._serial_timeout
                 )  # @UndefinedVariable
 
             elif self.hbusRxState == HbusRXState.ADDR:
@@ -470,7 +475,7 @@ class HbusMaster:
                     self.hbusRxState = HbusRXState.PSZ
 
                 self.RXTimeout = reactor.callLater(
-                    0.2, self.serialRXMachineTimeout
+                    0.2, self._serial_timeout
                 )  # @UndefinedVariable
 
             elif self.hbusRxState == HbusRXState.PSZ:
@@ -501,7 +506,7 @@ class HbusMaster:
                         self.hbusRxState = HbusRXState.STP
 
                 self.RXTimeout = reactor.callLater(
-                    0.2, self.serialRXMachineTimeout
+                    0.2, self._serial_timeout
                 )  # @UndefinedVariable
 
             elif self.hbusRxState == HbusRXState.PRM:
@@ -520,9 +525,9 @@ class HbusMaster:
 
                         dataToParse = self.communicationBuffer
 
-                        self.serialRXMachineEnterIdle()
+                        self._rx_enter_idle()
 
-                        self.parseReceivedData(dataToParse)
+                        self._parse_received_data(dataToParse)
 
                         return
 
@@ -535,12 +540,12 @@ class HbusMaster:
                             % [hex(ord(x)) for x in self.communicationBuffer]
                         )
 
-                        self.serialRXMachineEnterIdle()
+                        self._rx_enter_idle()
 
                         return
 
                 self.RXTimeout = reactor.callLater(
-                    0.2, self.serialRXMachineTimeout
+                    0.2, self._serial_timeout
                 )  # @UndefinedVariable
 
             elif self.hbusRxState == HbusRXState.STP:
@@ -553,9 +558,9 @@ class HbusMaster:
 
                     dataToParse = self.communicationBuffer
 
-                    self.serialRXMachineEnterIdle()
+                    self._rx_enter_idle()
 
-                    self.parseReceivedData(dataToParse)
+                    self._parse_received_data(dataToParse)
 
                     return
 
@@ -566,28 +571,29 @@ class HbusMaster:
                         % [hex(ord(x)) for x in self.communicationBuffer]
                     )
 
-                    self.serialRXMachineEnterIdle()
+                    self._rx_enter_idle()
                     return
 
             else:
                 self.logger.error("Fatal error receiving HBUSOP")
                 raise IOError("Fatal error receiving")
 
-                self.serialRXMachineEnterIdle()
+                self._rx_enter_idle()
 
                 return
 
-    def getCommand(self, cmdbyte):
-
+    @classmethod
+    def find_command(cmdbyte):
+        """Find HBUS command definition."""
         for c in HBUS_COMMANDLIST:
-
             if c.cmd_byte == cmdbyte:
                 return c
 
         return None
 
-    def getNewAddress(self, uid):
-        """Get address for new slave
+    def get_new_address(self, uid):
+        """Get address for new slave.
+
         @param uid slave's UID
         """
         UIDList = [
@@ -607,7 +613,8 @@ class HbusMaster:
         else:
             return self.registeredSlaveCount + 1
 
-    def getnewvirtualaddress(self, uid):
+    def get_new_virtual_address(self, uid):
+        """Get address for new virtual slave."""
         uidList = [
             x.hbusSlaveUniqueDeviceInfo
             for x in list(self.virtualDeviceList.values())
@@ -620,15 +627,17 @@ class HbusMaster:
         if uid in list(addressByUid.keys()):
             return addressByUid[uid].dev_number
         else:
-            return self.virtualSlaveCount + 1
+            self.virtualSlaveCount += 1
+            return self.virtualSlaveCount
 
-    def setNextSlaveCapabilities(self, params):
+    def _set_slave_capabilities(self, params):
+        """Set slave capabilities."""
         self.logger.debug("enumerating new device")
         self.nextSlaveCapabilities = params[3]
         (self.nextSlaveUID,) = struct.unpack("I", bytes(params[4:8]))
 
         # get new address
-        nextAddress = self.getNewAddress(self.nextSlaveUID)
+        nextAddress = self.get_new_address(self.nextSlaveUID)
 
         if self.nextSlaveCapabilities & HbusDeviceCapabilities.AUTHSUP:
             self.logger.debug("New device has AUTH support")
@@ -638,13 +647,13 @@ class HbusMaster:
 
         # registers slave address with next available address
         if self.nextSlaveCapabilities & HbusDeviceCapabilities.AUTHSUP:
-            self.pushCommand(
+            self._push_command(
                 HBUSCOMMAND_KEYSET,
                 HbusDeviceAddress(self.hbusMasterAddr.bus_number, nextAddress),
                 myParamList,
             )
         else:
-            self.pushCommand(
+            self._push_command(
                 HBUSCOMMAND_SEARCH,
                 HbusDeviceAddress(self.hbusMasterAddr.bus_number, nextAddress),
             )
@@ -655,22 +664,22 @@ class HbusMaster:
         )
 
         # sends BUSUNLOCK immediately
-        self.pushCommand(
+        self._push_command(
             HBUSCOMMAND_BUSUNLOCK,
             HbusDeviceAddress(self.hbusMasterAddr.bus_number, nextAddress),
         )
 
-        self.registerNewSlave(
+        self.register_new_slave(
             HbusDeviceAddress(self.hbusMasterAddr.bus_number, nextAddress)
         )
 
         if nextAddress == (self.registeredSlaveCount + 1):
             self.registeredSlaveCount = self.registeredSlaveCount + 1
 
-        self.masterState = hbusMasterState.hbusMasterSearching
+        self.masterState = HbusMasterState.hbusMasterSearching
 
-    def parseReceivedData(self, data):
-
+    def _parse_received_data(self, data):
+        """Parse received data and verify correctness."""
         selectedR = None
 
         if len(data) < 7:
@@ -682,11 +691,11 @@ class HbusMaster:
 
         try:
             busOp = HbusOperation(
-                HbusInstruction(self.getCommand(data[4]), pSize, params),
+                HbusInstruction(self.find_command(data[4]), pSize, params),
                 HbusDeviceAddress(data[2], data[3]),
                 HbusDeviceAddress(data[0], data[1]),
             )
-        except:
+        except ValueError:
 
             self.logger.warning("Invalid packet was received")
             return
@@ -715,22 +724,22 @@ class HbusMaster:
                     busOp.source.dev_number == HBUS_BROADCAST_ADDRESS
                     and self.masterState
                     in [
-                        hbusMasterState.hbusMasterSearching,
-                        hbusMasterState.hbusMasterChecking,
+                        HbusMasterState.hbusMasterSearching,
+                        HbusMasterState.hbusMasterChecking,
                     ]
                 ):
 
-                    self.pushCommand(
+                    self._push_command(
                         HBUSCOMMAND_GETCH,
                         HbusDeviceAddress(
                             self.hbusMasterAddr.bus_number,
                             HBUS_BROADCAST_ADDRESS,
                         ),
                         params=[0],
-                        callBack=self.setNextSlaveCapabilities,
+                        callBack=self._set_slave_capabilities,
                     )
 
-                    self.masterState = hbusMasterState.hbusMasterAddressing
+                    self.masterState = HbusMasterState.hbusMasterAddressing
 
             elif busOp.instruction.command == HBUSCOMMAND_BUSUNLOCK:
                 self.logger.debug(
@@ -744,7 +753,7 @@ class HbusMaster:
             # Interrupts
             elif busOp.instruction.command == HBUSCOMMAND_INT:
                 self.logger.debug("received INT from {}".format(busOp.source))
-                self.masterState = hbusMasterState.hbusMasterInterrupted
+                self.masterState = HbusMasterState.hbusMasterInterrupted
 
                 # Process
                 # @todo missing interrupt mechanisms for master special objects subsystem implementation
@@ -763,12 +772,12 @@ class HbusMaster:
                     ):
 
                         selectedR = r
-                        r.timeoutHandler.cancel()
+                        r.cancel_timeout_handler()
                         self.removeQueue.append(r)
                         break
 
-            if selectedR != None:
-                if selectedR.actionParameters != None:
+            if selectedR is None:
+                if selectedR.actionParameters is None:
                     selectedR.dCallback.callback(
                         (selectedR.actionParameters, busOp.instruction.params)
                     )
@@ -787,7 +796,7 @@ class HbusMaster:
 
                 self.onBusFree()
 
-    def pushCommand(
+    def _push_command(
         self,
         command,
         dest,
@@ -800,12 +809,12 @@ class HbusMaster:
         immediate=False,
         deferredReturn=None,
     ):
-
+        """Push command into outgoing queue."""
         d = None
-        if self.hbusRxState != HbusRXState.SBID and immediate == False:
+        if self.hbusRxState != HbusRXState.SBID and immediate is False:
             d = defer.Deferred()
             d.addCallback(
-                self.pushCommand,
+                self._push_command,
                 command,
                 dest,
                 params,
@@ -819,10 +828,10 @@ class HbusMaster:
 
             return d
         else:
-            if callBack != None:
+            if callBack is None:
 
                 try:
-                    d = self.expectResponse(
+                    d = self._expect_response(
                         HBUS_RESPONSEPAIRS[command],
                         dest,
                         action=callBack,
@@ -834,10 +843,10 @@ class HbusMaster:
                 except:
                     d = None
 
-            elif timeoutCallBack != None:
+            elif timeoutCallBack is None:
 
                 try:
-                    d = self.expectResponse(
+                    d = self._expect_response(
                         HBUS_RESPONSEPAIRS[command],
                         dest,
                         None,
@@ -850,12 +859,12 @@ class HbusMaster:
                     d = None
 
             self.lastSent = (command, dest, params)
-            self.sendCommand(command, dest, params)
+            self._send_command(command, dest, params)
 
             return d
 
-    def sendCommand(self, command, dest, params=(), block=False):
-
+    def _send_command(self, command, dest, params=(), block=False):
+        """Send the actual complete command."""
         # warning: blocking
         if block:
             while self.hbusRxState != 0:
@@ -893,16 +902,16 @@ class HbusMaster:
                     % (self.hbusBusLockedWith, dest)
                 )
 
-        op_str = busOp.get_string()
+        op_str = busOp.get_packed()
         self.txBytes += len(op_str)
-        if self.masterState == hbusMasterState.hbusMasterScanning:
+        if self.masterState == HbusMasterState.hbusMasterScanning:
             reactor.callFromThread(
-                self.serialWrite, op_str
+                self.serial_write, op_str
             )  # @UndefinedVariable
         else:
-            self.serialWrite(op_str)
+            self.serial_write(op_str)
 
-    def expectResponse(
+    def _expect_response(
         self,
         command,
         source,
@@ -912,13 +921,13 @@ class HbusMaster:
         timeoutAction=None,
         timeoutActionParameters=None,
     ):
-
+        """Expect a response to an outgoing command."""
         d = defer.Deferred()
 
         d.addCallback(action)
         d.addErrback(timeoutAction)
 
-        pending = hbusPendingAnswer(
+        pending = HbusPendingAnswer(
             command,
             source,
             timeout,
@@ -932,24 +941,25 @@ class HbusMaster:
         timeoutHandler = reactor.callLater(
             timeout / 1000, self.responseTimeoutCallback, pending
         )  # @UndefinedVariable
-        pending.addTimeoutHandler(timeoutHandler)
+        pending.timeout_handler = timeoutHandler
 
         self.expectedResponseQueue.append(pending)
 
         return d
 
-    def registerNewSlave(self, address, slaveInfo=None):
-        """Registers a new device in the bus.
+    def register_new_slave(self, address, slaveInfo=None):
+        """Register new device in the bus.
+
         @param address device address
         @param slaveInfo for virtual devices, complete description
         """
-        if slaveInfo != None:
+        if slaveInfo is None:
             if slaveInfo.hbusSlaveIsVirtual == True:
                 # virtual device
                 # doesn't know virtual bus number
                 addr = HbusDeviceAddress(VIRTUAL_BUS, address)
                 slaveInfo.hbusSlaveAddress = addr
-                self.virtualDeviceList[addr.global_id()] = slaveInfo
+                self.virtualDeviceList[addr.global_id] = slaveInfo
             else:
                 # not supported
                 raise UserWarning(
@@ -958,99 +968,97 @@ class HbusMaster:
                 return
         else:
             addr = address
-            self.detectedSlaveList[address.global_id()] = HbusDevice(address)
+            self.detectedSlaveList[address.global_id] = HbusDevice(address)
 
         self.logger.info("New device registered at " + str(addr))
-        self.logger.debug("New device UID is " + str(addr.global_id()))
+        self.logger.debug("New device UID is " + str(addr.global_id))
 
         # self.readBasicSlaveInformation(address)
 
-    def unRegisterSlave(self, address, virtual=False):
-
+    def unregister_slave(self, address, virtual=False):
+        """Unregister slave by address."""
         if virtual == True:
             del self.virtualDeviceList[
-                hbusSlaveAddress(VIRTUAL_BUS, address).global_id()
+                hbusSlaveAddress(VIRTUAL_BUS, address).global_id
             ]
         else:
-            del self.detectedSlaveList[address.global_id()]
+            del self.detectedSlaveList[address.global_id]
 
         self.logger.info("Device at " + str(address) + " removed")
 
-    def slaveReadStart(self):
-
+    def _slave_read_start(self):
+        """Start reading slave definition."""
         try:
             self.slaveReadDeferred.callback(None)
         except defer.AlreadyCalledError:
             pass
 
-    def slaveReadEnded(self, callBackResult):
-
+    def _slave_read_end(self, callBackResult):
+        """Slave definition retrieval ended."""
         # self.logger.debug("Device information retrieval ended.")
 
         # self.slaveReadDeferred = None
 
-        self.masterState = hbusMasterState.hbusMasterOperational
+        self.masterState = HbusMasterState.hbusMasterOperational
         # reactor.callInThread(self.processHiddenObjects)
         self.logger.info("Device information retrieval finished.")
         self.logger.debug("tx: %d, rx %d bytes", self.txBytes, self.rxBytes)
 
-        self.enterOperational()
+        self.enter_operational()
 
-    def readBasicSlaveInformationEnded(self, *params):
-
+    def _slave_basic_read_end(self, *params):
+        """Slave basic definition retrieval ended."""
         d = defer.Deferred()
         d.addCallback(self.readExtendedSlaveInformation)
 
-        if params[0].global_id() == list(self.detectedSlaveList.keys())[-1]:
-            self.slaveReadDeferred.addCallback(self.slaveReadEnded)
+        if params[0].global_id == list(self.detectedSlaveList.keys())[-1]:
+            self.slaveReadDeferred.addCallback(self._slave_read_end)
 
         reactor.callLater(0.1, d.callback, *params)  # @UndefinedVariable
 
         return d
 
-    def readSlaveObjectInformationFailed(self, params):
-
+    def _slave_read_object_fail(self, params):
+        """Slave object read failed callback."""
         self.logger.warning("Failure while analyzing device")
 
         self.slaveScanDeferred.errback(
             IOError("Failure while analyzing device")
         )
 
-    def readBasicSlaveInformationFailed(self, *params):
-
+    def _slave_basic_read_fail(self, *params):
+        """Slave basic read has failed."""
         (
             failure,
             address,
         ) = params
 
         # try again at enumeration end
-        if self.detectedSlaveList[address.global_id()].scanRetryCount < 3:
+        if self.detectedSlaveList[address.global_id].scanRetryCount < 3:
             self.slaveReadDeferred.addCallback(
                 self.readBasicSlaveInformation, address
             )
-            self.detectedSlaveList[address.global_id()].scanRetryCount += 1
+            self.detectedSlaveList[address.global_id].scanRetryCount += 1
         else:
-            if address.global_id() == list(self.detectedSlaveList.keys())[-1]:
-                self.slaveReadDeferred.addCallback(self.slaveReadEnded)
+            if address.global_id == list(self.detectedSlaveList.keys())[-1]:
+                self.slaveReadDeferred.addCallback(self._slave_read_end)
 
-    def readExtendedSlaveInformationEnded(self, *params):
-
+    def _slave_ext_read_end(self, *params):
+        """Slave extended information retrieval ended."""
         result, address = params
 
-        self.detectedSlaveList[
-            address.global_id()
-        ].hbusSlaveHiddenObjects = None
+        self.detectedSlaveList[address.global_id].hbusSlaveHiddenObjects = None
 
-    def readExtendedSlaveInformationFailed(self, *params):
-
+    def _slave_ext_read_fail(self, *params):
+        """Slave extended retrieval failed."""
         (
             failure,
             address,
         ) = params
 
-        # if self.detectedSlaveList[address.global_id()].scanRetryCount < 3:
+        # if self.detectedSlaveList[address.global_id].scanRetryCount < 3:
         #    self.slaveHiddenDeferred.addCallback(self.readExtendedSlaveInformation,address)
-        #    self.detectedSlaveList[address.global_id()].scanRetryCount += 1
+        #    self.detectedSlaveList[address.global_id].scanRetryCount += 1
 
     def readExtendedSlaveInformation(self, *params):
 
@@ -1061,20 +1069,20 @@ class HbusMaster:
         if address == None:
             address = params[1]
 
-        self.detectedSlaveList[address.global_id()].scanRetryCount = 0
+        self.detectedSlaveList[address.global_id].scanRetryCount = 0
 
         d = defer.Deferred()
 
         for obj in list(
             self.detectedSlaveList[
-                address.global_id()
+                address.global_id
             ].hbusSlaveHiddenObjects.keys()
         ):
             d.addCallback(self.readSlaveHiddenObject, address, obj)
             d.addCallback(self.processHiddenObject, address, obj)
 
-        d.addCallback(self.readExtendedSlaveInformationEnded, address)
-        d.addErrback(self.readExtendedSlaveInformationFailed, address)
+        d.addCallback(self._slave_ext_read_end, address)
+        d.addErrback(self._slave_ext_read_fail, address)
         self.slaveHiddenDeferred = d
 
         # inicia
@@ -1086,10 +1094,10 @@ class HbusMaster:
 
         # @todo look for exceptions here
 
-        obj = self.detectedSlaveList[
-            address.global_id()
-        ].hbusSlaveHiddenObjects[objectNumber]
-        slave = self.detectedSlaveList[address.global_id()]
+        obj = self.detectedSlaveList[address.global_id].hbusSlaveHiddenObjects[
+            objectNumber
+        ]
+        slave = self.detectedSlaveList[address.global_id]
 
         objFunction = obj.description.split(":")
         objList = objFunction[0].split(",")
@@ -1097,7 +1105,7 @@ class HbusMaster:
         for objSel in objList:
             x = re.match(r"([0-9]+)-([0-9]+)", objSel)
 
-            if x != None:
+            if x is None:
 
                 for rangeObj in range(int(x.group(1)), int(x.group(2)) + 1):
 
@@ -1128,28 +1136,28 @@ class HbusMaster:
     def readBasicSlaveInformation(self, deferResult, address):
 
         self.logger.debug(
-            "Initializing device analysis " + str(address.global_id())
+            "Initializing device analysis " + str(address.global_id)
         )
 
         d = defer.Deferred()
-        d.addCallback(self.readBasicSlaveInformationEnded)
-        d.addErrback(self.readBasicSlaveInformationFailed, address)
+        d.addCallback(self._slave_basic_read_end)
+        d.addErrback(self._slave_basic_read_fail, address)
         self.slaveScanDeferred = d
 
-        self.detectedSlaveList[address.global_id()].readEndedCallback = d
-        self.detectedSlaveList[address.global_id()].readEndedParams = address
+        self.detectedSlaveList[address.global_id].readEndedCallback = d
+        self.detectedSlaveList[address.global_id].readEndedParams = address
 
         # BUSLOCK
         # self.sendCommand(HBUSCOMMAND_BUSLOCK,address)
 
         # self.expectResponse(HBUSCOMMAND_QUERY_RESP,address,self.receiveSlaveInformation,actionParameters=("Q",address))
-        self.pushCommand(
+        self._push_command(
             HBUSCOMMAND_QUERY,
             address,
             params=[0],
             callBack=self.receiveSlaveInformation,
             callBackParams=("Q", address),
-            timeoutCallBack=self.readSlaveObjectInformationFailed,
+            timeoutCallBack=self._slave_read_object_fail,
         )
 
         return d
@@ -1159,62 +1167,58 @@ class HbusMaster:
         if data[0][0] == "Q":
 
             self.detectedSlaveList[
-                data[0][1].global_id()
+                data[0][1].global_id
             ].hbusSlaveDescription = bytes(data[1][4::]).decode("ascii")
 
             # read device's objects information
             # self.expectResponse(HBUSCOMMAND_RESPONSE,data[0][1],self.receiveSlaveInformation,actionParameters=("V",data[0][1]))
-            self.pushCommand(
+            self._push_command(
                 HBUSCOMMAND_GETCH,
                 data[0][1],
                 params=[0],
                 callBack=self.receiveSlaveInformation,
                 callBackParams=("V", data[0][1]),
-                timeoutCallBack=self.readSlaveObjectInformationFailed,
+                timeoutCallBack=self._slave_read_object_fail,
             )
 
         elif data[0][0] == "V":
 
             self.detectedSlaveList[
-                data[0][1].global_id()
+                data[0][1].global_id
             ].hbusSlaveObjectCount = data[1][0]
 
             self.detectedSlaveList[
-                data[0][1].global_id()
+                data[0][1].global_id
             ].hbusSlaveEndpointCount = data[1][1]
 
             self.detectedSlaveList[
-                data[0][1].global_id()
+                data[0][1].global_id
             ].hbusSlaveInterruptCount = data[1][2]
 
             self.detectedSlaveList[
-                data[0][1].global_id()
+                data[0][1].global_id
             ].hbusSlaveCapabilities = data[1][3]
 
             # capabilities
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveHasAUTH = (
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveHasAUTH = (
                 True if data[1][3] & HbusDeviceCapabilities.AUTHSUP else False
             )
-            self.detectedSlaveList[
-                data[0][1].global_id()
-            ].hbusSlaveHasCRYPTO = (
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveHasCRYPTO = (
                 True
                 if data[1][3] & HbusDeviceCapabilities.CRYPTOSUP
                 else False
             )
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveHasEP = (
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveHasEP = (
                 True if data[1][3] & HbusDeviceCapabilities.EPSUP else False
             )
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveHasINT = (
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveHasINT = (
                 True if data[1][3] & HbusDeviceCapabilities.INTSUP else False
             )
-            self.detectedSlaveList[
-                data[0][1].global_id()
-            ].hbusSlaveHasUCODE = (
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveHasUCODE = (
                 True if data[1][3] & HbusDeviceCapabilities.UCODESUP else False
             )
             self.detectedSlaveList[
-                data[0][1].global_id()
+                data[0][1].global_id
             ].hbusSlaveHasREVAUTH = (
                 True
                 if data[1][3] & HbusDeviceCapabilities.REVAUTHSUP
@@ -1223,11 +1227,11 @@ class HbusMaster:
 
             (
                 self.detectedSlaveList[
-                    data[0][1].global_id()
+                    data[0][1].global_id
                 ].hbusSlaveUniqueDeviceInfo,
             ) = struct.unpack("I", bytes(data[1][4:8]))
 
-            # self.detectedSlaveList[data[0][1].global_id()].basicInformationRetrieved = True
+            # self.detectedSlaveList[data[0][1].global_id].basicInformationRetrieved = True
 
             self.logger.info(
                 "Device at "
@@ -1235,7 +1239,7 @@ class HbusMaster:
                 + " identified as "
                 + str(
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].hbusSlaveDescription
                 )
                 + "("
@@ -1248,7 +1252,7 @@ class HbusMaster:
                 + str(
                     hex(
                         self.detectedSlaveList[
-                            data[0][1].global_id()
+                            data[0][1].global_id
                         ].hbusSlaveUniqueDeviceInfo
                     )
                 )
@@ -1257,21 +1261,19 @@ class HbusMaster:
 
             self.logger.debug(
                 "Retrieving device's objects information "
-                + str(data[0][1].global_id())
+                + str(data[0][1].global_id)
             )
 
-            self.detectedSlaveList[
-                data[0][1].global_id()
-            ].hbusSlaveObjects = {}
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects = {}
 
             # self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("O",data[0][1]))
-            self.pushCommand(
+            self._push_command(
                 HBUSCOMMAND_QUERY,
                 data[0][1],
                 params=[1],
                 callBack=self.receiveSlaveInformation,
                 callBackParams=("O", data[0][1]),
-                timeoutCallBack=self.readSlaveObjectInformationFailed,
+                timeoutCallBack=self._slave_read_object_fail,
             )
 
         elif data[0][0] == "O":
@@ -1279,7 +1281,7 @@ class HbusMaster:
             currentObject = (
                 len(
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].hbusSlaveObjects
                 )
                 + 1
@@ -1289,88 +1291,84 @@ class HbusMaster:
                 "Analysing object "
                 + str(currentObject)
                 + ", in device with ID "
-                + str(data[0][1].global_id())
+                + str(data[0][1].global_id)
             )
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
                 currentObject
             ] = HbusDeviceObject()
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
                 currentObject
             ].permissions = (data[1][0] & 0x03)
 
             if data[1][0] & 0x04:
-                self.detectedSlaveList[
-                    data[0][1].global_id()
-                ].hbusSlaveObjects[currentObject].is_crypto = True
+                self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
+                    currentObject
+                ].is_crypto = True
 
             if data[1][0] & 0x08:
-                self.detectedSlaveList[
-                    data[0][1].global_id()
-                ].hbusSlaveObjects[currentObject].hidden = True
+                self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
+                    currentObject
+                ].hidden = True
 
             if data[1][0] & 0x30 == 0:
-                self.detectedSlaveList[
-                    data[0][1].global_id()
-                ].hbusSlaveObjects[
+                self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
                     currentObject
                 ].objectDataType = HbusObjDataType.dataTypeInt
             else:
-                self.detectedSlaveList[
-                    data[0][1].global_id()
-                ].hbusSlaveObjects[currentObject].objectDataType = (
-                    data[1][0] & 0x30
-                )
+                self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
+                    currentObject
+                ].objectDataType = (data[1][0] & 0x30)
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
                 currentObject
             ].objectLevel = (data[1][0] & 0xC0) >> 6
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
                 currentObject
             ].size = data[1][1]
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
                 currentObject
             ].objectDataTypeInfo = data[1][2]
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveObjects[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveObjects[
                 currentObject
             ].description = "".join(bytes(data[1][4::]).decode("ascii"))
 
             if (
                 currentObject + 1
                 < self.detectedSlaveList[
-                    data[0][1].global_id()
+                    data[0][1].global_id
                 ].hbusSlaveObjectCount
             ):
 
                 # self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("O",data[0][1]))
-                self.pushCommand(
+                self._push_command(
                     HBUSCOMMAND_QUERY,
                     data[0][1],
                     params=[currentObject + 1],
                     callBack=self.receiveSlaveInformation,
                     callBackParams=("O", data[0][1]),
-                    timeoutCallBack=self.readSlaveObjectInformationFailed,
+                    timeoutCallBack=self._slave_read_object_fail,
                 )
             else:
 
                 # RECEIVES ENDPOINT INFO
                 if (
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].hbusSlaveEndpointCount
                     > 0
                 ):
 
                     self.logger.debug(
                         "Retrieving device's endpoints information "
-                        + str(data[0][1].global_id())
+                        + str(data[0][1].global_id)
                     )
 
                     # self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("E",data[0][1]))
-                    self.pushCommand(
+                    self._push_command(
                         HBUSCOMMAND_QUERY_EP,
                         data[0][1],
                         params=[0],
@@ -1380,55 +1378,53 @@ class HbusMaster:
 
                 elif (
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].hbusSlaveInterruptCount
                     > 0
                 ):
 
                     self.logger.debug(
                         "Retrieving device's interrupts information "
-                        + str(data[0][1].global_id())
+                        + str(data[0][1].global_id)
                     )
 
                     # self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("I",data[0][1]))
-                    self.pushCommand(
+                    self._push_command(
                         HBUSCOMMAND_QUERY_INT,
                         data[0][1],
                         params=[0],
                         callBack=self.receiveSlaveInformation,
                         callBackParams=("I", data[0][1]),
-                        timeoutCallBack=self.readSlaveObjectInformationFailed,
+                        timeoutCallBack=self._slave_read_object_fail,
                     )
 
                 else:
                     # self.pushCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                     self.logger.debug(
                         "Analysis of device "
-                        + str(data[0][1].global_id())
+                        + str(data[0][1].global_id)
                         + " finished"
                     )
-                    # self.processHiddenObjects(self.detectedSlaveList[data[0][1].global_id()])
+                    # self.processHiddenObjects(self.detectedSlaveList[data[0][1].global_id])
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].basicInformationRetrieved = True
 
-                    self.detectedSlaveList[
-                        data[0][1].global_id()
-                    ].sortObjects()
+                    self.detectedSlaveList[data[0][1].global_id].sortObjects()
 
                     if (
                         self.detectedSlaveList[
-                            data[0][1].global_id()
+                            data[0][1].global_id
                         ].readEndedCallback
-                        != None
+                        is None
                     ):
                         reactor.callLater(
                             HBUS_SLAVE_QUERY_INTERVAL,
                             self.detectedSlaveList[
-                                data[0][1].global_id()
+                                data[0][1].global_id
                             ].readEndedCallback.callback,
                             self.detectedSlaveList[
-                                data[0][1].global_id()
+                                data[0][1].global_id
                             ].readEndedParams,
                         )  # @UndefinedVariable
 
@@ -1439,7 +1435,7 @@ class HbusMaster:
             currentEndpoint = (
                 len(
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].hbusSlaveEndpoints
                 )
                 + 1
@@ -1449,38 +1445,38 @@ class HbusMaster:
                 "Analysing endpoint "
                 + str(currentEndpoint)
                 + ", device with ID "
-                + str(data[0][1].global_id())
+                + str(data[0][1].global_id)
             )
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveEndpoints[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveEndpoints[
                 currentEndpoint
             ] = HbusEndpoint()
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveEndpoints[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveEndpoints[
                 currentEndpoint
             ].endpointDirection = ord(data[1][0])
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveEndpoints[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveEndpoints[
                 currentEndpoint
             ].endpointBlockSize = ord(data[1][1])
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveEndpoints[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveEndpoints[
                 currentEndpoint
             ].endpointDescription = "".join(data[1][3::])
 
             if (
                 currentEndpoint + 1
                 < self.detectedSlaveList[
-                    data[0][1].global_id()
+                    data[0][1].global_id
                 ].hbusSlaveEndpointCount
             ):
 
                 # self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("E",data[0][1]))
-                self.pushCommand(
+                self._push_command(
                     HBUSCOMMAND_QUERY_EP,
                     data[0][1],
                     params=[currentEndpoint + 1],
                     callBack=self.receiveSlaveInformation,
                     callBackParams=("E", data[0][1]),
-                    timeoutCallBack=self.readSlaveObjectInformationFailed,
+                    timeoutCallBack=self._slave_read_object_fail,
                 )
 
             else:
@@ -1488,54 +1484,52 @@ class HbusMaster:
                 # INTERRUPT INFO
                 if (
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].hbusSlaveInterruptCount
                     > 0
                 ):
 
                     self.logger.debug(
                         "Retrieving device's endpoints information "
-                        + str(data[0][1].global_id())
+                        + str(data[0][1].global_id)
                     )
 
                     # self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("I",data[0][1]))
-                    self.pushCommand(
+                    self._push_command(
                         HBUSCOMMAND_QUERY_INT,
                         data[0][1],
                         params=[0],
                         callBack=self.receiveSlaveInformation,
                         callBackParams=("I", data[0][1]),
-                        timeoutCallBack=self.readSlaveObjectInformationFailed,
+                        timeoutCallBack=self._slave_read_object_fail,
                     )
 
                 else:
                     # self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                     self.logger.debug(
                         "Analysis of device "
-                        + str(data[0][1].global_id())
+                        + str(data[0][1].global_id)
                         + " finished"
                     )
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].basicInformationRetrieved = True
 
-                    self.detectedSlaveList[
-                        data[0][1].global_id()
-                    ].sortObjects()
+                    self.detectedSlaveList[data[0][1].global_id].sortObjects()
 
                     if (
                         self.detectedSlaveList[
-                            data[0][1].global_id()
+                            data[0][1].global_id
                         ].readEndedCallback
-                        != None
+                        is None
                     ):
                         reactor.callLater(
                             HBUS_SLAVE_QUERY_INTERVAL,
                             self.detectedSlaveList[
-                                data[0][1].global_id()
+                                data[0][1].global_id
                             ].readEndedCallback.callback,
                             self.detectedSlaveList[
-                                data[0][1].global_id()
+                                data[0][1].global_id
                             ].readEndedParams,
                         )  # @UndefinedVariable
 
@@ -1546,7 +1540,7 @@ class HbusMaster:
             currentInterrupt = (
                 len(
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].hbusSlaveInterrupts
                 )
                 + 1
@@ -1556,64 +1550,64 @@ class HbusMaster:
                 "Analyzing interrupt "
                 + str(currentInterrupt)
                 + ", device ID "
-                + str(data[0][1].global_id())
+                + str(data[0][1].global_id)
             )
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveInterrupts[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveInterrupts[
                 currentInterrupt
             ] = HbusInterrupt()
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveInterrupts[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveInterrupts[
                 currentInterrupt
             ].interruptFlags = ord(data[1][0])
 
-            self.detectedSlaveList[data[0][1].global_id()].hbusSlaveInterrupts[
+            self.detectedSlaveList[data[0][1].global_id].hbusSlaveInterrupts[
                 currentInterrupt
             ].interruptDescription = "".join(data[1][2::])
 
             if (
                 currentInterrupt + 1
                 < self.detectedSlaveList[
-                    data[0][1].global_id()
+                    data[0][1].global_id
                 ].hbusSlaveInterruptCount
             ):
 
                 # self.expectResponse(HBUSCOMMAND_QUERY_RESP,data[0][1],self.receiveSlaveInformation,actionParameters=("I",data[0][1]))
-                self.pushCommand(
+                self._push_command(
                     HBUSCOMMAND_QUERY_INT,
                     data[0][1],
                     params=[currentInterrupt + 1],
                     callBack=self.receiveSlaveInformation,
                     callBackParams=("I", data[0][1]),
-                    timeoutCallBack=self.readSlaveObjectInformationFailed,
+                    timeoutCallBack=self._slave_read_object_fail,
                 )
 
             else:
                 # self.sendCommand(HBUSCOMMAND_BUSUNLOCK,data[0][1])
                 self.logger.debug(
                     "device analysis "
-                    + str(data[0][1].global_id())
+                    + str(data[0][1].global_id)
                     + " finished"
                 )
-                # self.processHiddenObjects(self.detectedSlaveList[data[0][1].global_id()])
+                # self.processHiddenObjects(self.detectedSlaveList[data[0][1].global_id])
                 self.detectedSlaveList[
-                    data[0][1].global_id()
+                    data[0][1].global_id
                 ].basicInformationRetrieved = True
 
-                self.detectedSlaveList[data[0][1].global_id()].sortObjects()
+                self.detectedSlaveList[data[0][1].global_id].sortObjects()
 
                 if (
                     self.detectedSlaveList[
-                        data[0][1].global_id()
+                        data[0][1].global_id
                     ].readEndedCallback
-                    != None
+                    is None
                 ):
                     reactor.callLater(
                         HBUS_SLAVE_QUERY_INTERVAL,
                         self.detectedSlaveList[
-                            data[0][1].global_id()
+                            data[0][1].global_id
                         ].readEndedCallback.callback,
                         self.detectedSlaveList[
-                            data[0][1].global_id()
+                            data[0][1].global_id
                         ].readEndedParams,
                     )  # @UndefinedVariable
 
@@ -1634,22 +1628,22 @@ class HbusMaster:
             result = self.pluginManager.m_read_vdev_obj(
                 address.dev_number, number
             )
-            self.virtualDeviceList[address.global_id()].hbusSlaveObjects[
+            self.virtualDeviceList[address.global_id].hbusSlaveObjects[
                 number
             ].last_value = result
 
-            if callBack != None:
+            if callBack is None:
                 callBack(result)
             return
 
         if (
-            self.detectedSlaveList[address.global_id()]
+            self.detectedSlaveList[address.global_id]
             .hbusSlaveObjects[number]
             .permissions
             != HbusObjectPermissions.WRITE
         ):
 
-            d = self.pushCommand(
+            d = self._push_command(
                 HBUSCOMMAND_GETCH,
                 address,
                 params=[chr(number)],
@@ -1668,7 +1662,7 @@ class HbusMaster:
             )
             raise IOError("cannot read write-only object")
 
-            if callBack != None:
+            if callBack is None:
 
                 callBack(None)
 
@@ -1688,7 +1682,7 @@ class HbusMaster:
         d = None
 
         if (
-            self.detectedSlaveList[address.global_id()]
+            self.detectedSlaveList[address.global_id]
             .hbusSlaveHiddenObjects[number]
             .permissions
             != HbusObjectPermissions.WRITE
@@ -1696,7 +1690,7 @@ class HbusMaster:
 
             # self.expectResponse(HBUSCOMMAND_RESPONSE,address,self.receiveSlaveObjectData,actionParameters=(address,number,callBack),timeoutAction=timeoutCallback)
             # self.pushCommand(HBUSCOMMAND_GETCH,address,params=[chr(number)],callBack=self.receiveSlaveObjectData,callBackParams=(address,number,callBack))
-            d = self.pushCommand(
+            d = self._push_command(
                 HBUSCOMMAND_GETCH,
                 address,
                 params=[chr(number)],
@@ -1714,7 +1708,7 @@ class HbusMaster:
                 address,
             )
 
-            # if callBack != None:
+            # if callBack is None:
             #
             #    callBack(None)
 
@@ -1722,20 +1716,20 @@ class HbusMaster:
 
     def receiveSlaveObjectData(self, data):
 
-        self.detectedSlaveList[data[0][0].global_id()].hbusSlaveObjects[
+        self.detectedSlaveList[data[0][0].global_id].hbusSlaveObjects[
             data[0][1]
         ].last_value = data[1][:]
-        if data[0][2] != None:
+        if data[0][2] is None:
 
             data[0][2](data[1])
 
     def receiveSlaveHiddenObjectData(self, data):
 
-        self.detectedSlaveList[data[0][0].global_id()].hbusSlaveHiddenObjects[
+        self.detectedSlaveList[data[0][0].global_id].hbusSlaveHiddenObjects[
             data[0][1]
         ].last_value = data[1][:]
 
-        if data[0][2] != None:
+        if data[0][2] is None:
 
             data[0][2](data[1])
 
@@ -1743,7 +1737,7 @@ class HbusMaster:
 
         # check if is virtual bus
         if address.bus_number == VIRTUAL_BUS:
-            self.virtualDeviceList[address.global_id()].hbusSlaveObjects[
+            self.virtualDeviceList[address.global_id].hbusSlaveObjects[
                 number
             ].last_value = value
             self.pluginManager.m_write_vdev_obj(
@@ -1752,17 +1746,17 @@ class HbusMaster:
             return True
 
         if (
-            self.detectedSlaveList[address.global_id()]
+            self.detectedSlaveList[address.global_id]
             .hbusSlaveObjects[number]
             .permissions
             != HbusObjectPermissions.READ
         ):
 
-            self.detectedSlaveList[address.global_id()].hbusSlaveObjects[
+            self.detectedSlaveList[address.global_id].hbusSlaveObjects[
                 number
             ].last_value = value
             size = (
-                self.detectedSlaveList[address.global_id()]
+                self.detectedSlaveList[address.global_id]
                 .hbusSlaveObjects[number]
                 .size
             )
@@ -1786,9 +1780,7 @@ class HbusMaster:
                 myParamList.extend(byte_list)
 
             if (
-                self.detectedSlaveList[
-                    address.global_id()
-                ].hbusSlaveCapabilities
+                self.detectedSlaveList[address.global_id].hbusSlaveCapabilities
                 & HbusDeviceCapabilities.AUTHSUP
             ):
 
@@ -1820,7 +1812,7 @@ class HbusMaster:
 
                 myParamList.extend(sig.getByteString())
 
-            self.pushCommand(HBUSCOMMAND_SETCH, address, params=myParamList)
+            self._push_command(HBUSCOMMAND_SETCH, address, params=myParamList)
 
         else:
             return False
@@ -1832,11 +1824,11 @@ class HbusMaster:
 
         # decode formatting and write data to object
         if address.bus_number == VIRTUAL_BUS:
-            obj = self.virtualDeviceList[address.global_id()].hbusSlaveObjects[
+            obj = self.virtualDeviceList[address.global_id].hbusSlaveObjects[
                 number
             ]
         else:
-            obj = self.detectedSlaveList[address.global_id()].hbusSlaveObjects[
+            obj = self.detectedSlaveList[address.global_id].hbusSlaveObjects[
                 number
             ]
 
@@ -1859,7 +1851,7 @@ class HbusMaster:
         if failureCallback == None:
             failureCallback = self.slavePongFailed
 
-        d = self.pushCommand(
+        d = self._push_command(
             HBUSCOMMAND_SEARCH,
             address,
             callBack=successCallback,
@@ -1890,14 +1882,14 @@ class HbusMaster:
 
         address = params[0][0]
 
-        if address.global_id() not in list(self.detectedSlaveList.keys()):
+        if address.global_id not in list(self.detectedSlaveList.keys()):
             if address in self.staticSlaveList:
                 self.logger.info("Device with static address present")
-                self.registerNewSlave(address)
+                self.register_new_slave(address)
 
-        if self.detectedSlaveList[address.global_id()].pingRetryCount > 0:
-            self.detectedSlaveList[address.global_id()].pingRetryCount = 0
-            self.detectedSlaveList[address.global_id()].pingFailures += 1
+        if self.detectedSlaveList[address.global_id].pingRetryCount > 0:
+            self.detectedSlaveList[address.global_id].pingRetryCount = 0
+            self.detectedSlaveList[address.global_id].pingFailures += 1
 
         return self.deferredDelay(0.1)
 
@@ -1905,15 +1897,15 @@ class HbusMaster:
 
         address = params[0].value.args[0]
 
-        if address.global_id() in list(self.detectedSlaveList.keys()):
+        if address.global_id in list(self.detectedSlaveList.keys()):
 
-            if self.detectedSlaveList[address.global_id()].pingRetryCount < 3:
-                self.detectedSlaveList[address.global_id()].pingRetryCount += 1
+            if self.detectedSlaveList[address.global_id].pingRetryCount < 3:
+                self.detectedSlaveList[address.global_id].pingRetryCount += 1
             else:
                 self.logger.warning(
                     "Removing device from bus for unresponsiveness"
                 )
-                self.unRegisterSlave(address)
+                self.unregister_slave(address)
         else:
             # this is a static device
             pass
@@ -1922,15 +1914,15 @@ class HbusMaster:
 
     def detectSlaves(self, callBack=None, allBusses=False):
 
-        self.pushCommand(
+        self._push_command(
             HBUSCOMMAND_SEARCH,
             HbusDeviceAddress(self.hbusMasterAddr.bus_number, 255),
         )
 
-        if self.masterState == hbusMasterState.hbusMasterOperational:
-            self.masterState = hbusMasterState.hbusMasterChecking
+        if self.masterState == HbusMasterState.hbusMasterOperational:
+            self.masterState = HbusMasterState.hbusMasterChecking
         else:
-            self.masterState = hbusMasterState.hbusMasterSearching
+            self.masterState = HbusMasterState.hbusMasterSearching
             self.logger.info("Starting device search")
 
         reactor.callLater(5, self.handleAlarm)  # @UndefinedVariable
@@ -1972,34 +1964,34 @@ class HbusMaster:
                 )
 
         self.slaveReadDeferred = d
-        reactor.callLater(0.1, self.slaveReadStart)  # @UndefinedVariable
+        reactor.callLater(0.1, self._slave_read_start)  # @UndefinedVariable
 
         return d
 
     def handleAlarm(self):
 
         if self.masterState in [
-            hbusMasterState.hbusMasterSearching,
-            hbusMasterState.hbusMasterChecking,
+            HbusMasterState.hbusMasterSearching,
+            HbusMasterState.hbusMasterChecking,
         ]:
 
-            if self.masterState == hbusMasterState.hbusMasterSearching:
+            if self.masterState == HbusMasterState.hbusMasterSearching:
                 self.logger.info(
                     "Device search ended, "
                     + str(self.registeredSlaveCount)
                     + " found"
                 )
 
-            if self.detectSlavesEnded != None:
+            if self.detectSlavesEnded is None:
 
                 self.detectSlavesEnded()
 
             self.logger.debug("Retrieving devices information...")
 
-            if self.masterState == hbusMasterState.hbusMasterSearching:
+            if self.masterState == HbusMasterState.hbusMasterSearching:
                 self.processStaticSlaves()
 
-            self.masterState = hbusMasterState.hbusMasterScanning
+            self.masterState = HbusMasterState.hbusMasterScanning
 
             d = defer.Deferred()
 
@@ -2022,16 +2014,16 @@ class HbusMaster:
                 self.slaveReadDeferred = d
 
                 reactor.callLater(
-                    0.1, self.slaveReadStart
+                    0.1, self._slave_read_start
                 )  # @UndefinedVariable
 
             else:
 
-                self.masterState = hbusMasterState.hbusMasterOperational
+                self.masterState = HbusMasterState.hbusMasterOperational
 
-        elif self.masterState == hbusMasterState.hbusMasterStarting:
+        elif self.masterState == HbusMasterState.hbusMasterStarting:
 
-            self.masterState = hbusMasterState.hbusMasterIdle
+            self.masterState = HbusMasterState.hbusMasterIdle
 
             self.detectSlaves()
 
@@ -2058,9 +2050,9 @@ class HbusMaster:
         self.logger.debug("Response timed out: %s", response)
 
         if self.hbusBusState == HbusBusState.LOCKED_THIS:
-            self.pushCommand(HBUSCOMMAND_BUSUNLOCK, self.hbusBusLockedWith)
+            self._push_command(HBUSCOMMAND_BUSUNLOCK, self.hbusBusLockedWith)
 
-        if self.masterState == hbusMasterState.hbusMasterScanning:
+        if self.masterState == HbusMasterState.hbusMasterScanning:
             self.hbusDeviceScanningTimeout = True
 
         response.dCallback.errback(
@@ -2069,7 +2061,7 @@ class HbusMaster:
 
         self.expectedResponseQueue.remove(response)
 
-        # if response.timeoutAction != None:
+        # if response.timeoutAction is None:
         #    response.timeoutAction(response.source)
 
         # response.tCallback.callback(response.source)
@@ -2106,12 +2098,12 @@ class HbusMaster:
 
         for addr in self.staticSlaveList:
 
-            if addr.global_id() in self.detectedSlaveList:
+            if addr.global_id in self.detectedSlaveList:
                 continue
 
             self.logger.info("Device with static address in %s", str(addr))
 
-            self.registerNewSlave(addr)
+            self.register_new_slave(addr)
 
     def onBusLocked(self):
 

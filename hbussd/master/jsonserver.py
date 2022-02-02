@@ -1,14 +1,11 @@
-# coding=utf-8
-
-##@package hbusjsonserver
-# Manages information exchange & control with HTTP/JSON
+"""Manages information exchange & control with HTTP/JSON."""
 # @author Bruno Morais <brunosmmm@gmail.com>
 # @since 13/02/2014
 
 from txjsonrpc.web import jsonrpc
 from hbussd.master.serializers import HbusSlaveSerializer, HbusObjectSerializer
 from hbussd.hbus.base import hbus_address_from_string
-from hbussd.master.master import hbusMasterState
+from hbussd.master.master import HbusMasterState
 import logging
 
 
@@ -31,7 +28,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
     def _is_operational(self):
 
-        state = self.master.masterState != hbusMasterState.hbusMasterStarting
+        state = self.master.masterState != HbusMasterState.hbusMasterStarting
         if state is False:
             self.logger.warning("master not operational")
 
@@ -83,7 +80,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if address == None:
             return {"status": "error", "error": "invalid_uid"}
 
-        slave = self.master.detectedSlaveList[address.global_id()]
+        slave = self.master.detectedSlaveList[address.global_id]
 
         ret = HbusSlaveSerializer(slave).getDict()
         ret["status"] = "ok"
@@ -102,7 +99,7 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         if address == None:
             return {"status": "error", "error": "invalid_uid"}
 
-        slave = self.master.detectedSlaveList[address.global_id()]
+        slave = self.master.detectedSlaveList[address.global_id]
 
         objectList = [
             HbusObjectSerializer(x).getDict()
@@ -144,14 +141,14 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
 
         addr = hbus_address_from_string(address)
 
-        if not addr.global_id() in list(self.master.detectedSlaveList.keys()):
+        if not addr.global_id in list(self.master.detectedSlaveList.keys()):
 
             # device does not exist
             return {"status": "error", "error": "invalid_device"}
 
         if not int(number) in list(
             self.master.detectedSlaveList[
-                addr.global_id()
+                addr.global_id
             ].hbusSlaveObjects.keys()
         ):
 
@@ -205,9 +202,9 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
             # get slave
             addr = self.read_slave_addr
             if addr.bus_number == 254:
-                s = self.master.virtualDeviceList[addr.global_id()]
+                s = self.master.virtualDeviceList[addr.global_id]
             else:
-                s = self.master.detectedSlaveList[addr.global_id()]
+                s = self.master.detectedSlaveList[addr.global_id]
 
             # send formatted data
             ret_data = s.hbusSlaveObjects[
@@ -244,14 +241,14 @@ class HBUSJSONServer(jsonrpc.JSONRPC):
         except ValueError:
             return {"status": "error", "error": "malformed address"}
 
-        if not addr.global_id() in list(self.master.detectedSlaveList.keys()):
+        if not addr.global_id in list(self.master.detectedSlaveList.keys()):
 
             # device does not exist
             return {"status": "error", "error": "invalid_device"}
 
         if not int(number) in list(
             self.master.detectedSlaveList[
-                addr.global_id()
+                addr.global_id
             ].hbusSlaveObjects.keys()
         ):
 

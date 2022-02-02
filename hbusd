@@ -33,7 +33,7 @@ class TwistedSerialPort(Protocol):
 
     def connectionMade(self):
         """Prototype for connection made event."""
-        self.master.serialConnected()
+        self.master.serial_connected()
 
     # @param data received data
     def dataReceived(self, data):
@@ -74,8 +74,8 @@ class TwistedhbusMaster(HbusMaster):
 
     hbusSerial = None
 
-    ##Serial port system initialization
-    def serialCreate(self, fake=False):
+    def serial_create(self, fake=False):
+        """Initialize serial port."""
 
         if fake is False:
             self.hbusSerial = TwistedSerialPort(self)
@@ -100,13 +100,9 @@ class TwistedhbusMaster(HbusMaster):
             reactor.connectTCP("localhost", 9090, f)
             # connect to ourselves!
 
-    ##Writes data to serial port
-    # @param string data string to be written
-    def serialWrite(self, string):
-
+    def serial_write(self, string):
+        """Write to serial port."""
         self.hbusSerial.transport.write(string)
-
-        pass
 
     def initWebServer(self):
 
