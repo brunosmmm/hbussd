@@ -109,7 +109,7 @@ class HbusDeviceAddress:
 
     def __hash__(self):
         """Get hash."""
-        return hash(tuple(self.bus_number, self.dev_number))
+        return hash((self.bus_number, self.dev_number))
 
     @property
     def global_id(self):
